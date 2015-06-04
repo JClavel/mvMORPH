@@ -136,7 +136,7 @@ mvLL(tree,data,method="pic",param=list(estim=TRUE))
 # Pic with arbitrary values
 mvLL(tree,data,method="pic",param=list(estim=FALSE, mu=0, sigma=1))
 mvLL(tree,data,method="pic",param=list(estim=FALSE))
-mvLL(tree,data,method="pic",param=list(estim=FALSE, sigma=1))
+mvLL(tree,data,method="pic",param=list(estim=FALSE, sigma=1)) # similar to mu=NULL
 
 ## Multivariate cases
 # Simulate traits
