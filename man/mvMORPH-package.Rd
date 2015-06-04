@@ -12,7 +12,7 @@ Fits of multivariate evolutionary models on trees (with one or multiple selectiv
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.0.5\cr
+Version: \tab 1.0.6\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }
@@ -23,7 +23,7 @@ Julien Clavel
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 }
 \references{
-  Clavel et al. (submitted to Methods in Ecology and Evolution)
+  Clavel et al. (in press). mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution.
 }
 \keyword{ OU }
 \keyword{ BM }
