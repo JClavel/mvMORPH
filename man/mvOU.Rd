@@ -26,7 +26,7 @@ Phylogenetic tree with mapped ancestral states in SIMMAP format.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns.
+Matrix or data frame with species in rows and continuous traits in columns. NA values allowed with the "rpf", "inverse", and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{

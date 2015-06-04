@@ -12,10 +12,22 @@ mvEB<-function(tree, data, error=NULL, param=list(up=0), method=c("rpf","sparse"
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
-# bind error to a vector
-if(!is.null(error)){error<-as.vector(error)}
 # select default model
 method<-method[1]
+# Check if there is missing cases
+NA_val<-FALSE
+Indice_NA<-NULL
+if(any(is.na(data))){
+    if(method!="pic" & method!="sparse"){
+    NA_val<-TRUE
+    }else{
+     stop("NA values are allowed only with the \"rpf\",\"inverse\" or \"pseudoinverse\" methods")
+    }
+    Indice_NA<-which(is.na(as.vector(data)))
+}
+# bind error to a vector
+if(!is.null(error)){error<-as.vector(error)}
+
 # number of species (tip)
 n<-dim(data)[1]
 # number of variables
@@ -97,28 +109,28 @@ switch(method,
 "rpf"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
         V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D)) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
         return(loglik)
     }
 },
 "sparse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
         V<-.Call("kroneckerSparEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n),  IA=as.integer(precalcMat@rowpointers-1), JA=as.integer(precalcMat@colindices-1), A=precalcMat@entries)
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D)) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=NULL) ######### A modif pour sparse
         return(loglik)
     }
 },
 "pseudoinverse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
         V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D)) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
         return(loglik)
     }
 },
 "inverse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
     V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-    loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D)) ######### A modif pour sparse
+    loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
     return(loglik)
     }
 },

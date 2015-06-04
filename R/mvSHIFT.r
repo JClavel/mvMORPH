@@ -12,17 +12,28 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
    
     #set data as a matrix if a vector is provided instead
     if(!is.matrix(data)){data<-as.matrix(data)}
+    # choose method for the likelihood computation
+    method=method[1]
+    if(method!="rpf" & method!="inverse" & method!="pseudoinverse" & method!="sparse"){
+        stop("Please choose either the \"rpf\", \"inverse\", \"pseudoinverse\", or \"sparse\" method")
+    }
+    # Check if there is missing cases
+    NA_val<-FALSE
+    Indice_NA<-NULL
+    if(any(is.na(data))){
+        if(method!="pic" & method!="sparse"){
+            NA_val<-TRUE
+        }else{
+            stop("NA values are allowed only with the \"rpf\",\"inverse\" or \"pseudoinverse\" methods")
+        }
+        Indice_NA<-which(is.na(as.vector(data)))
+    }
     # number of species (tip)
     n<-dim(data)[1]
     # number of variables
     p<-dim(data)[2]
     # choose model
     model=model[1]
-    # choose method for the likelihood computation
-    method=method[1]
-    if(method!="rpf" & method!="inverse" & method!="pseudoinverse" & method!="sparse"){
-        stop("Please choose either the \"rpf\", \"inverse\", \"pseudoinverse\", or \"sparse\" method")
-    }
     # choose a method for the optimizer
     optimization=optimization[1]
     if(is.null(param[["up"]])){up<-param$up<-2}else{up<-param$up}
@@ -243,7 +254,7 @@ lik.shift_oubm<-function(alpha,sigma,sig,dat,error,vcvList,p){
   }
   V<-.Call("kronecker_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou)
   
-  loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD)
+  loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
 
      list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -257,7 +268,7 @@ lik.shift_ebou<-function(alpha,sigma,sig,beta,dat,error,vcvList,p){
     }
     V<-.Call("kronecker_shiftEB_OU", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou)
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -267,7 +278,7 @@ lik.shift_ebbm<-function(beta,sigma,sig,dat,error,vcvList,p){
     # C2 is the EB matrix
     V<-.Call("kronecker_shiftEB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
     
     list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -277,7 +288,7 @@ lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p){
     Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     V<-.Call("kroneckerSpar_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse",ch=ch,precalcMat=precalcMat,sizeD=sizeD)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse",ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -298,7 +309,7 @@ lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p){
     Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     V<-.Call("kroneckerSpar_shift_OU_EB", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
 
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse", ch=ch, precalcMat=precalcMat,sizeD=sizeD)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse", ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
 
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -307,7 +318,7 @@ lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p){
 lik.shift_ebbm_sparse<-function(beta,sigma,sig,dat,error,vcvList,p){
     V<-.Call("kroneckerSpar_shift_EB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc, method="sparse",ch=ch, precalcMat=precalcMat,sizeD=sizeD)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc, method="sparse",ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }

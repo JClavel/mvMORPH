@@ -195,6 +195,10 @@ eval_polytom<-function(tree){
 
 # Estimate starting values for the variance matrix
 varBM<-function(tree,data,n,k){
+    if(any(is.na(data))){
+        res<-diag(0.1,k)
+        return(res)
+    }
     nb.tip <- length(tree$tip.label)
     nb.node <- tree$Nnode
     if (nb.node != nb.tip - 1) {
@@ -277,20 +281,27 @@ build.chol<-function(b,p){
 
 ##----------------------mvfit_likelihood--------------------------------------##
 
-loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL){
+loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL,NA_val=NULL,Indice_NA=NULL){
 
 data<-as.numeric(as.matrix(data))
+size<-k*n
+if(NA_val==TRUE){
+    V<-V[-Indice_NA,-Indice_NA]
+    D<-D[-Indice_NA,]
+    data<-data[-Indice_NA]
+    size<-length(data)
+}
+
 switch(method,
 
 "rpf"={
     if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0} # length of the error vector should be the same as the data vector
-    size<-k*n
     cholres<-.Call("Chol_RPF",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
     beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
     det<-cholres[[2]]
     residus=D%*%beta-data
     quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(size))
-    logl<--.5*quad-.5*as.numeric(det)-.5*(n*k*log(2*pi))
+    logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=beta)
 },
 "univarpf"={
@@ -301,7 +312,7 @@ switch(method,
     det<-cholres[[2]]
     residus=D%*%beta-data
     quad<-.Call("Chol_RPF_quadprod_column", cholres[[1]], residus, as.integer(size))
-    logl<--.5*quad-.5*as.numeric(det)-.5*(n*k*log(2*pi))
+    logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=beta)
 },
 "sparse"={
@@ -337,7 +348,7 @@ switch(method,
     beta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
     DET<-determinant(V, logarithm=TRUE)
     res<-D%*%beta-data
-    logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(n*k*log(2*pi))
+    logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=beta)
 },
 "inverse"={
@@ -349,7 +360,7 @@ switch(method,
     beta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
     DET<-determinant(V, logarithm=TRUE)
     res<-D%*%beta-data
-    logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(n*k*log(2*pi))
+    logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=beta)
 })
 

@@ -12,6 +12,19 @@ mvOU<-function(tree,data,error=NULL,model=c("OUM","OU1"),param=list(sigma=NULL,a
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
+# choose method for the likelihood computation
+method=method[1]
+# Check if there is missing cases
+NA_val<-FALSE
+Indice_NA<-NULL
+if(any(is.na(data))){
+    if(method!="pic" & method!="sparse"){
+        NA_val<-TRUE
+    }else{
+        stop("NA values are allowed only with the \"rpf\",\"inverse\" or \"pseudoinverse\" methods")
+    }
+    Indice_NA<-which(is.na(as.vector(data)))
+}
 
 # Check the order of the dataset and the phylogeny 
 
@@ -34,8 +47,7 @@ if(!is.matrix(data)){data<-as.matrix(data)}
 n<-length(tree$tip.label)
   # choose model
 model=model[1]
-  # choose method for the likelihood computation
-method=method[1]
+
   # choose the optimization method
 optimization=optimization[1]
   # Pull (alpha) matrix decomposition
@@ -367,7 +379,7 @@ devianc<-function(alpha,sigma,dat,error,mt){
 
      # if (any(is.nan(diag(matEstim$V))) || any(is.infinite(diag(matEstim$V)))) return(1000000)
   
-     loglik<-loglik_mvmorph(dat,matEstim$V,matEstim$W,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=sizeD)
+     loglik<-loglik_mvmorph(dat,matEstim$V,matEstim$W,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
     
 
 		if(is.infinite(loglik$logl)){
@@ -395,7 +407,7 @@ est.theta<-function(estimML){
     V<-matEstim$V
     W<-matEstim$W
 
-    mvmorphEstim<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,ch=ch,precalcMat=precalcMat,sizeD=sizeD)
+    mvmorphEstim<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
 		
     list(theta=mvmorphEstim$anc, V=V, W=W)
 	}
