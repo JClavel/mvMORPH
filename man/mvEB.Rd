@@ -141,6 +141,7 @@ mvEB(tree, data, method="pic")
 mvEB(tree, data, method="pic", param=list(low=log(10^-5)/10)) # avoid internal estimation
 
 # ACDC
+# Note that the AC model is not differentiable from an OU model on ultrametric trees.
 beta<- 0.34
 data<-mvSIM(tree, param=list(sigma=sigma, beta=beta, ntraits=2, mu=theta,
             names_traits=c("head.size","mouth.size")), model="EB", nsim=1)
