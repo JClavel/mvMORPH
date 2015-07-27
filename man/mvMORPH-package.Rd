@@ -23,7 +23,7 @@ Julien Clavel
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 }
 \references{
-  Clavel et al. (in press). mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution.
+  Clavel et al. (2015). mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution: doi: 10.1111/2041-210X.12420.
 }
 \keyword{ OU }
 \keyword{ BM }
