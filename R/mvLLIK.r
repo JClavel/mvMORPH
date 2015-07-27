@@ -14,7 +14,8 @@ mvLL<-function(tree,data,error=NULL,method=c("pic","rpf","sparse","inverse","pse
 
     # select default method depending on data type for the tree object
  method<-method[1]
- ntrait<-ncol(as.matrix(data))
+ dim_data<-dim(as.matrix(data))
+ ntrait<-dim_data[2]
  if(class(tree)=="phylo" | class(tree[[1]])=="phylo"){
             datatype<-"tree"
             
@@ -193,8 +194,9 @@ switch(method,
         if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0}
         k<-ncol(D)
         if(is.null(k)){k=1}
-        n<-ncol(V)
-        cholres<-.Call("Chol_RPF",V,D,data,as.integer(k),as.integer(n),mserr=error,ismserr=as.integer(ms))
+        n<-dim_data[1]
+        ntot<-n*ntrait
+        cholres<-.Call("Chol_RPF",V,D,data,as.integer(k),as.integer(ntot),mserr=error,ismserr=as.integer(ms))
         beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
         det<-cholres[[2]]
         residus=D%*%beta-data
@@ -213,7 +215,7 @@ switch(method,
         }else{
             U<-update(precalc$ch,precalc$V)
         }
-        n=nrow(D)
+        n<-dim_data[1]
         if(is.null(n)){n=length(D)}
         k=ncol(D)
         if(is.null(k)){k=1}
@@ -232,8 +234,8 @@ switch(method,
             diag(V)<-diag(V)+error
         }
 
-        n=ncol(V)
-        k=ncol(D)
+        n<-dim_data[1]
+        k<-ncol(D)
         if(is.null(k)){k=1}
         inv<-pseudoinverse(V)
         beta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
@@ -247,8 +249,8 @@ switch(method,
             diag(V)<-diag(V)+error
         }
 
-        n=ncol(V)
-        k=ncol(D)
+        n<-dim_data[1]
+        k<-ncol(D)
         if(is.null(k)){k=1}
         inv<-solve(V)
         beta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
