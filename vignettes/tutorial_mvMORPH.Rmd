@@ -155,7 +155,7 @@ The simulations in this example shows that both type I and type II errors are qu
 -------------- ------------- -------------- 
    Type II         0.538         0.669             
                             
-   Type I          0.221         0.217          
+   Type I          0.221         0.217        
 -------------------------------------------
 
 
