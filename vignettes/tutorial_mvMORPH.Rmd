@@ -93,17 +93,18 @@ AIC(OUM); AIC(OU1)
 
 After model fitting, we extract their related AIC or AICc using the expression “$AIC” or with the AIC() generic method. Despite of the low number of parameters to estimate in the univariate analysis (3 and 4 for the OU1 and OUM models, respectively), it is difficult to distinguish between the two models and the unique optimum OU1 is slightly preferred. In stark contrast, the multivariate analysis clearly favors the actual simulated (generating) model (two optima) with a delta AIC > 35.
 
-  We can further assess the type I and type II error rates through simulations. Note that parametric bootstrapping and simulations could be parallelized using forking with the **parallel** package to speed up the computations:
+  We can further assess the type I and type II error rates through simulations - using the generic simulate() function or mvSIM(). Note that parametric bootstrapping and simulations could be parallelized using forking with the **parallel** package to speed up the computations:
   
 ```{r, eval=FALSE}
 
-# Simulate 1000 traits under a two optima and unique OU process
+# Simulate 1000 traits under the two optima (OUM) and the unique optimum OU (OU1) process
 library(parallel)
 nsim=1000
-data1<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
-          names_traits=c("head.size","mouth.size")), model="OUM", nsim=nsim)
-data2<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta2,
-          names_traits=c("head.size","mouth.size")), model="OU1", nsim=nsim)
+
+# Dataset simulated with the OUM maximum likelihood estimates
+data1<-simulate(OUM, nsim=nsim, tree=tree)
+# Dataset simulated with the MLE of the OU1 model
+data2<-simulate(OU1, nsim=nsim, tree=tree)
 
 # Fit of the models using the parallel package (we will use 2 cores), can take a while…
 
@@ -120,11 +121,11 @@ ou1_data1<- mclapply(1:nsim, function(x){
 
 # Now same simulations on the second dataset
 oum_data2<- mclapply(1:nsim, function(x){
-    mvOU(tree, data1[[x]], model="OUM", method="sparse", diagnostic=F, echo=F)
+    mvOU(tree, data2[[x]], model="OUM", method="sparse", diagnostic=F, echo=F)
 }, mc.cores = getOption("mc.cores", nb_cores))
 
 ou1_data2<- mclapply(1:nsim, function(x){
-    mvOU(tree, data1[[x]], model="OU1", method="sparse", diagnostic=F, echo=F)
+    mvOU(tree, data2[[x]], model="OU1", method="sparse", diagnostic=F, echo=F)
 }, mc.cores = getOption("mc.cores", nb_cores))
 
 # Retrieve the results from the simulations
@@ -136,9 +137,9 @@ OU1_simul<-sapply(1:nsim, function(x){
     c(oum_data2[[x]]$AICc,ou1_data2[[x]]$AICc)
 })
 
-# Now compute the type I & II errors
+# Now compute the type I error and power (type II)
 sum(OU1_simul[1,]<OU1_simul[2,])/nsim
-[1] 0.141
+[1] 0.135
 sum(OUM_simul[1,]<OUM_simul[2,])/nsim
 [1] 1
 
@@ -153,9 +154,9 @@ The simulations in this example shows that both type I and type II errors are qu
 -------------------------------------------
                 **Trait 1**    **Trait 2**   
 -------------- ------------- -------------- 
-   Type II         0.538         0.669             
+   Type II         0.52         0.527             
                             
-   Type I          0.221         0.217        
+   Type I          0.213        0.22           
 -------------------------------------------
 
 
