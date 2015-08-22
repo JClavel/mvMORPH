@@ -16,7 +16,7 @@ mvLL<-function(tree,data,error=NULL,method=c("pic","rpf","sparse","inverse","pse
  method<-method[1]
  dim_data<-dim(as.matrix(data))
  ntrait<-dim_data[2]
- if(class(tree)=="phylo" | class(tree[[1]])=="phylo"){
+ if(inherits(tree,"phylo") | inherits(tree[[1]],"phylo")){
             datatype<-"tree"
             
         if(method!="pic"){
@@ -72,7 +72,7 @@ switch(method,
         
         # Preparing the phylo
         if(is.null(precalc)==TRUE){
-            if(class(tree[[1]])=="phylo"){
+            if(inherits(tree[[1]],"phylo")){
                 n=length(tree[[1]]$tip.label)
                 k=dim(matrix(data,nrow=n))[2]
                 if(length(tree)!=k){ stop("The number of trees in the list object for the \"tree\" argument must be the same as the number of traits ")}

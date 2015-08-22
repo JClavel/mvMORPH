@@ -10,7 +10,7 @@
 
 mv.Precalc<-function(tree, nb.traits=1, scale.height=FALSE, param=list(pivot="MMD", method=c("sparse"), smean=TRUE, model="OUM")){
     
-    if(class(tree)!="phylo" & class(tree)!="multiPhylo"){ ## A MODIFIER???
+    if(inherits(tree,"phylo") & inherits(tree,"multiPhylo")){ ## A MODIFIER???
         stop("The tree is not a \"phylo\" object")
     }
 
