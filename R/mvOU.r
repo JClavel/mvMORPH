@@ -8,7 +8,7 @@
 ##                                                                            ##
 ################################################################################
 
-mvOU<-function(tree,data,error=NULL,model=c("OUM","OU1"),param=list(sigma=NULL,alpha=NULL, vcv="mvmorph", decomp=c("symmetricPositive","symmetric","nsymPositive","nsymmetric","diagonal")),method=c("rpf","sparse","inverse","pseudoinverse","univarpf"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL,diagnostic=TRUE, echo=TRUE){
+mvOU<-function(tree,data,error=NULL,model=c("OUM","OU1"),param=list(sigma=NULL,alpha=NULL, vcv="mvmorph", decomp=c("symmetricPositive","symmetric","nsymPositive","nsymmetric","diagonal","upper","lower")),method=c("rpf","sparse","inverse","pseudoinverse","univarpf"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL,diagnostic=TRUE, echo=TRUE){
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
@@ -171,7 +171,7 @@ if(!is.numeric(param$sigma[[1]])){
 
 # alpha matrix
 if(is.null(param[["alpha"]])){
-    if(decomp=="symmetric" | decomp=="symmetricPositive"){
+    if(decomp=="symmetric" | decomp=="symmetricPositive" | decomp=="upper" | decomp=="lower"){
         alpha<-param$alpha<-sym.unpar(diag(runif(p),p))
     }else if(decomp=="nsymmetric" | decomp=="nsymPositive"){
         alpha<-param$alpha<-runif(p*p)

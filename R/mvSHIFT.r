@@ -121,7 +121,7 @@ if(is.null(param[["decomp"]])){
 if(is.null(param[["sigma"]])){sigma=sym.unpar(diag(1,p))}else{sigma=param$sigma}
 # alpha matrix
 if(is.null(param[["alpha"]])){
-    if(decomp=="symmetric" | decomp=="symmetricPositive"){
+    if(decomp=="symmetric" | decomp=="symmetricPositive" | decomp=="upper" | decomp=="lower"){
         alpha<-param$alpha<-sym.unpar(diag(runif(p),p))
     }else if(decomp=="nsymmetric" | decomp=="nsymPositive"){
         alpha<-param$alpha<-runif(p*p)

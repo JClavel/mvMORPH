@@ -83,6 +83,22 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=t(eigval$vectors))
     },
+    "lower"={
+        dim1<-p*(p-1)/2
+        A<-matrix(0,p,p)
+        A[lower.tri(A,diag=FALSE)] <- x[1:dim1]
+        diag(A) <- exp(x[(dim1+1):(dim1+p)])
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "upper"={
+        dim1<-p*(p-1)/2
+        A<-matrix(0,p,p)
+        A[upper.tri(A,diag=FALSE)] <- x[1:dim1]
+        diag(A) <- exp(x[(dim1+1):(dim1+p)])
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
     "univariate"={
         Adecomp<-list(vectors=1, values=x, A=x, invectors=1)
     }
@@ -189,7 +205,7 @@ eval_polytom<-function(tree){
     nb.tip <- length(tree$tip.label)
     nb.node <- tree$Nnode
     if (nb.node != nb.tip - 1) {
-        cat("You can't use \"pic\" with polytomies, try instead \"rpf\",\"inverse\",\"pseudoinverse\" or \"sparse\"")
+        stop("You can't use \"pic\" with polytomies, try instead \"rpf\",\"inverse\",\"pseudoinverse\" or \"sparse\". Otherwise, first transform the tree using the \"multi2di\" function")
     }
 }
 

@@ -13,10 +13,10 @@ Species measurement errors or dispersions can also be included in the model.
 \usage{
 mvOU(tree, data, error = NULL, model = c("OUM", "OU1"), param = list(sigma = NULL,
     alpha = NULL, vcv = "mvmorph", decomp = c("symmetricPositive", "symmetric",
-    "nsymPositive", "nsymmetric", "diagonal")), method = c("rpf", "sparse", "inverse",
-    "pseudoinverse", "univarpf"), scale.height = FALSE, optimization = c("L-BFGS-B",
-    "Nelder-Mead", "subplex"), control = list(maxit = 20000), precalc = NULL,
-    diagnostic = TRUE, echo = TRUE)
+    "nsymPositive", "nsymmetric", "diagonal", "upper", "lower")), method = c("rpf", 
+    "sparse", "inverse", "pseudoinverse", "univarpf"), scale.height = FALSE, 
+    optimization = c("L-BFGS-B", "Nelder-Mead", "subplex"), control = 
+    list(maxit = 20000), precalc = NULL, diagnostic = TRUE, echo = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,7 +26,7 @@ Phylogenetic tree with mapped ancestral states in SIMMAP format.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns. NA values allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species in rows and continuous traits in columns. NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
@@ -82,7 +82,7 @@ Arguments in the "param" list are:
 
 "sigma" or "alpha" - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-"decomp" - You can further constraint the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix on its eigenvalues with different biological interpretations (e.g., Sy et al. 1997, Bartoszek et al. 2012). "symmetric" uses SVD parameterization of the matrix, "symmetricPositive" uses a Cholesky parameterization of the matrix, "nsymmetric" and "nsymPositive" use a Schur parameterization of the matrix for specifying the eigenvalues. It is also possible to specify "diagonal" which is similar to the use of the "constraint" argument for "alpha" argument. The sigma matrix is parameterized by the Cholesky method to ensure positive definiteness (Pinheiro and Bates, 1996).
+"decomp" - You can further constraint the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix on its eigenvalues with different biological interpretations (e.g., Sy et al. 1997, Bartoszek et al. 2012). "symmetric" uses SVD parameterization of the matrix, "symmetricPositive" uses a Cholesky parameterization of the matrix, "nsymmetric" and "nsymPositive" use a Schur parameterization of the matrix for specifying the eigenvalues. It is also possible to specify "diagonal" which is similar to the use of the "constraint" argument for "alpha" argument. Finally, one can specify that the alpha matrix is "upper" or "lower" triangular (i.e., one process affect the other unilateraly). The sigma matrix is parameterized by the Cholesky method to ensure positive definiteness (Pinheiro and Bates, 1996).
 
 "vcv" - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument. The vcv="ouch" option uses a modified version of the OUCH package code (Butler and King, 2004) to compute the variance-covariance matrix. This algorithm assumes that the process is stationary. It cannot be used with the "sparse" method to speed up the computations. The vcv="mvmorph" option follows Bartoszek et al. 2012 for computing the variance covariance matrix. This approach can be used with non-ultrametric trees, with the various matrix parameterization proposed and all the GLS methods of mvMORPH. Both approaches should converge on the same results when the traits have evolved according to an OU process.
 

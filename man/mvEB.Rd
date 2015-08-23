@@ -23,7 +23,7 @@ Phylogenetic tree (phylo object).
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns (preferentially with names and in the same order than in the tree). NA values allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species in rows and continuous traits in columns (preferentially with names and in the same order than in the tree). NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{

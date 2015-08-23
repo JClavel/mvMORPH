@@ -3,7 +3,7 @@ Type: Package
 Title: Multivariate Comparative Tools for Fitting Evolutionary Models
         to Morphometric Data
 Version: 1.0.6
-Date: 2015-06-04
+Date: 2015-08-23
 Author: Julien Clavel, with contributions from Aaron King, and Emmanuel Paradis
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees.

@@ -24,7 +24,7 @@ Phylogenetic tree in SIMMAP format by default. A "phylo" object can also be used
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns (preferentially with names and in the same order than in the tree). NA values allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species in rows and continuous traits in columns (preferentially with names and in the same order than in the tree). NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
@@ -81,7 +81,7 @@ Significance of nested model fit can be assessed using the "LRT" function. See e
 
 "smean" - Default set to TRUE. If FALSE, the ancestral state for each selective regime is estimated (e.g., Thomas et al., 2006).
 
-"sigma" - Starting values for the likelihood estimation. By default the theoretical expected values are used as starting values for the likelihood optimization (for measurement errors, multiple rates,...). The user can specify starting values with a list() object for the "BMM" model (e.g., two objects in the list for a two-regime analysis), or a simple vector of values for the "BM1" model. The parameterization is done using a Cholesky factorization (Pinheiro & Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below).
+"sigma" - Starting values for the likelihood estimation. By default the theoretical expected values are used as starting values for the likelihood optimization (for measurement errors, multiple rates,...). The user can specify starting values with a list() object for the "BMM" model (e.g., two objects in the list for a two-regime analysis), or a simple vector of values for the "BM1" model. The parameterization is done using a Cholesky factorization (Pinheiro & Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
 
 If no selective regimes are specified the function works only with the model "BM1".
 
@@ -192,6 +192,12 @@ mvBM(tree, data, model="BMM", method="sparse",
 # Multiple mean
 mvBM(tree, data, model="BMM", method="sparse", param=list(smean=FALSE))
 
+# Introduce some missing cases (NA values)
+data2<-data
+data2[8,2]<-NA
+data2[25,1]<-NA
+
+mvBM(tree, data2, model="BM1")
 
 ## FAST FOR THE UNIVARIATE CASE!!
 # set.seed(14)

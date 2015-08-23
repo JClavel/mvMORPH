@@ -58,9 +58,24 @@ mvLL<-function(tree,data,error=NULL,method=c("pic","rpf","sparse","inverse","pse
         }
     }
     
-
     # Data format
     if(is.vector(data)==FALSE){data<-as.vector(as.matrix(data))}
+    
+    # Check if there is missing cases
+    if(any(is.na(data))){
+        if(method!="pic" & method!="sparse"){
+            Indice_NA<-which(is.na(as.vector(data)))
+            V<-V[-Indice_NA,-Indice_NA]
+            D<-D[-Indice_NA,]
+            data<-data[-Indice_NA]
+            ntot<-length(data)
+        }else{
+            stop("NA values are allowed only with the \"rpf\",\"inverse\" or \"pseudoinverse\" methods")
+        }
+    }else{
+        n<-dim_data[1]
+        ntot<-n*ntrait
+    }
 
     # switch methods depending on the nature of the tree object
 
@@ -73,6 +88,7 @@ switch(method,
         # Preparing the phylo
         if(is.null(precalc)==TRUE){
             if(inherits(tree[[1]],"phylo")){
+                eval_polytom(tree[[1]])
                 n=length(tree[[1]]$tip.label)
                 k=dim(matrix(data,nrow=n))[2]
                 if(length(tree)!=k){ stop("The number of trees in the list object for the \"tree\" argument must be the same as the number of traits ")}
@@ -97,22 +113,29 @@ switch(method,
                         mod<-3
                         param$sigma<-1
                         param$mu<-1
+                        mu_null<-TRUE
                         
                     }else if(is.null(param[["mu"]])==TRUE & is.null(param[["sigma"]])==FALSE){
                         # estimate theta / user sigma
                         mod<-5
                         param$mu<-1
+                        mu_null<-TRUE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==TRUE){
                         # estimate sigma / user theta
                         mod<-9
                         param$sigma<-1
+                        mu_null<-FALSE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==FALSE){
                         # user sigma and theta
                         mod<-4
+                        mu_null<-FALSE
                     }
                 }
 
             }else{ # one tree
+                eval_polytom(tree)
                 # Generalized Brownian Motion?
                 if(param$estim==TRUE){
                     mod<-10 # meme topologie (sinon 3)
@@ -125,17 +148,25 @@ switch(method,
                         mod<-10
                         param$sigma<-1
                         param$mu<-1
+                        mu_null<-TRUE
+                        
                     }else if(is.null(param[["mu"]])==TRUE & is.null(param[["sigma"]])==FALSE){
                         # estimate theta/ user sigma
                         mod<-7
                         param$mu<-1
+                        mu_null<-TRUE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==TRUE){
                         # user theta / estimate sigma
                         mod<-8
                         param$sigma<-1
+                        mu_null<-FALSE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==FALSE){
                         # user sigma and theta
                         mod<-6
+                        mu_null<-FALSE
+                        
                     }
 
                 }
@@ -159,17 +190,24 @@ switch(method,
                         mod<-10
                         param$sigma<-1
                         param$mu<-1
+                        mu_null<-TRUE
+                        
                     }else if(is.null(param[["mu"]])==TRUE & is.null(param[["sigma"]])==FALSE){
                         # estimate theta/ user sigma
                         mod<-7
                         param$mu<-1
+                        mu_null<-TRUE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==TRUE){
                         # user theta / estimate sigma
                         mod<-8
                         param$sigma<-1
+                        mu_null<-FALSE
+                        
                     }else if(is.null(param[["mu"]])==FALSE & is.null(param[["sigma"]])==FALSE){
                         # user sigma and theta
                         mod<-6
+                        mu_null<-FALSE
                     }
 
                 }#
@@ -185,27 +223,33 @@ switch(method,
         logl<- -0.5 * ( n * k * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
         
         if(param$estim==TRUE){
-        results<-list(logl=logl,theta=res[[7]], sigma=res[[2]])
+        results<-list(logl=logl, theta=res[[7]], sigma=res[[2]])
+        }else if(param$estim==FALSE & mu_null==TRUE){
+        results<-list(logl=logl, theta=res[[7]])
         }else{
-        results<-list(logl=logl,theta=res[[7]])
+        results<-list(logl=logl, theta=param$mu)
         }
         },
     "rpf"={
+        if(is.null(param[["estim"]])){ param$estim<-TRUE }
         if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0}
         k<-ncol(D)
         if(is.null(k)){k=1}
-        n<-dim_data[1]
-        ntot<-n*ntrait
-        cholres<-.Call("Chol_RPF",V,D,data,as.integer(k),as.integer(ntot),mserr=error,ismserr=as.integer(ms))
-        beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
+    cholres<-.Call("Chol_RPF",V,D,data,as.integer(k),as.integer(ntot),mserr=error,ismserr=as.integer(ms))
+        
+        if(param$estim==TRUE){
+            beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
+        }else{
+            beta<-param$mu
+        }
         det<-cholres[[2]]
         residus=D%*%beta-data
-        quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(n))
-        logl<--.5*quad-.5*as.numeric(det)-.5*(n*k*log(2*pi))
+        quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(ntot))
+        logl<--.5*quad-.5*as.numeric(det)-.5*(ntot*log(2*pi))
         results<-list(logl=logl,theta=beta)
     },
     "sparse"={
-
+        if(is.null(param[["estim"]])){ param$estim<-TRUE }
         if(is.null(precalc)==TRUE){
             spambig=as.spam(V)
             if(is.null(error)==FALSE){
@@ -215,48 +259,56 @@ switch(method,
         }else{
             U<-update(precalc$ch,precalc$V)
         }
-        n<-dim_data[1]
-        if(is.null(n)){n=length(D)}
-        k=ncol(D)
-        if(is.null(k)){k=1}
-        vec<-forwardsolve(U,data)
-        xx<-forwardsolve(U,D)
-        beta<-pseudoinverse(matrix(xx,ncol=k))%*%vec
+
+        if(param$estim==TRUE){
+            k=ncol(D)
+            if(is.null(k)){k=1}
+            vec<-forwardsolve(U,data)
+            xx<-forwardsolve(U,D)
+            beta<-pseudoinverse(matrix(xx,ncol=k))%*%vec
+        }else{
+            beta<-param$mu
+        }
+        
         res<-D%*%beta-data
         vec1<-forwardsolve(U,res)
         a<-sum(vec1^2)
         DET<-determinant(U)
-        logl<--.5*(a)-.5*as.numeric(DET$modulus*2)-.5*(n*k*log(2*pi))
+        logl<--.5*(a)-.5*as.numeric(DET$modulus*2)-.5*(ntot*log(2*pi))
         results<-list(logl=logl,theta=beta)
     },
     "pseudoinverse"={
+        if(is.null(param[["estim"]])){ param$estim<-TRUE }
         if(is.null(error)==FALSE){
             diag(V)<-diag(V)+error
         }
 
-        n<-dim_data[1]
-        k<-ncol(D)
-        if(is.null(k)){k=1}
         inv<-pseudoinverse(V)
-        beta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+        if(param$estim==TRUE){
+            beta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+        }else{
+            beta<-param$mu
+        }
         DET<-determinant(V, logarithm=TRUE)
         res<-D%*%beta-data
-        logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(n*k*log(2*pi))
+        logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(ntot*log(2*pi))
         results<-list(logl=logl,theta=beta)
     },
     "inverse"={
+        if(is.null(param[["estim"]])){ param$estim<-TRUE }
         if(is.null(error)==FALSE){
             diag(V)<-diag(V)+error
         }
 
-        n<-dim_data[1]
-        k<-ncol(D)
-        if(is.null(k)){k=1}
         inv<-solve(V)
-        beta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+        if(param$estim==TRUE){
+            beta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+        }else{
+            beta<-param$mu
+        }
         DET<-determinant(V, logarithm=TRUE)
         res<-D%*%beta-data
-        logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(n*k*log(2*pi))
+        logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(ntot*log(2*pi))
         results<-list(logl=logl,theta=beta)
     })
         class(results)<-c("mvmorph","loglik")

@@ -21,7 +21,7 @@ Whether a phylogenetic tree of class "phylo" or a variance-covariance matrix (vc
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns.
+Matrix or data frame with species in rows and continuous traits in columns. NA values are allowed with the "rpf", "inverse" and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
@@ -137,6 +137,9 @@ mvLL(tree,data,method="pic",param=list(estim=TRUE))
 mvLL(tree,data,method="pic",param=list(estim=FALSE, mu=0, sigma=1))
 mvLL(tree,data,method="pic",param=list(estim=FALSE))
 mvLL(tree,data,method="pic",param=list(estim=FALSE, sigma=1)) # similar to mu=NULL
+
+# Arbitrary value for mu with other methods (similar to mu=0 and sigma=1 with "pic")
+mvLL(vcv.phylo(tree),data,method="rpf",param=list(D=D, estim=FALSE, mu=0)) 
 
 ## Multivariate cases
 # Simulate traits

@@ -8,14 +8,15 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 **mvMORPH 1.0.6**
 
-1. This is the developmental version 1.0.6:
+1. This is the version 1.0.6:
   + Allows missing values in multivariate datasets (NA)
   + Package vignette
+  + Error fixes
 
 2. _TODO_:
   + Incorporation of a tests-suite
 
-The current stable version of the mvMORPH package (1.0.5) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.0.6) is on the CRAN repository.
 [http://cran.r-project.org/web/packages/mvMORPH/index.html](http://cran.r-project.org/web/packages/mvMORPH/index.html)
 
 ##**Package Installation**

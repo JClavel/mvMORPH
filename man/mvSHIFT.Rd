@@ -24,7 +24,7 @@ mvSHIFT(tree, data, error = NULL, param = list(age = NULL, sigma = NULL,
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns. NA values allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species in rows and continuous traits in columns. NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
