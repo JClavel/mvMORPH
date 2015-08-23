@@ -92,7 +92,7 @@ if(scale.height==TRUE){
 }
 
 if(method=="pic"){
-    ind<-reorder(tree,"postorder", index.only=TRUE)
+    ind<-reorder.phylo(tree,"postorder", index.only=TRUE)
     tree$edge<-tree$edge[ind,]
     tree$edge.length<-tree$edge.length[ind]
     value<-list(tree$edge.length)

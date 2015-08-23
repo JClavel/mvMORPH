@@ -148,7 +148,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         # sigma
         if(is.null(param[["sigma"]])==TRUE){
             if(model=="BMM"){
-            sigma<-lapply(1:k,function(x){ runif(1)})
+            sigma<-lapply(1:k,function(x){ runif(n=1)})
   
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})
@@ -165,12 +165,12 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
             if(k==1){
                 sigma<-sig<-param$sigma
             }else if(length(param$sigma)!=k & model=="BMM"){
-                    sigma<-lapply(1:k,function(x){ runif(1)})
+                    sigma<-lapply(1:k,function(x){ runif(n=1)})
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})
                 }
             }else if(length(param$sigma)==k & class(param$sigma)!="list"){
-                    sigma<-lapply(1:k,function(x){ runif(1)})
+                    sigma<-lapply(1:k,function(x){ runif(n=1)})
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})
                 }

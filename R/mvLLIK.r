@@ -93,7 +93,7 @@ switch(method,
                 k=dim(matrix(data,nrow=n))[2]
                 if(length(tree)!=k){ stop("The number of trees in the list object for the \"tree\" argument must be the same as the number of traits ")}
                 if(param$check==TRUE){
-                    ind<-reorder(tree[[1]],"postorder", index.only=TRUE) # implique que c'est le meme arbre
+                    ind<-reorder.phylo(tree[[1]],"postorder", index.only=TRUE) # implique que c'est le meme arbre
                     value<-lapply(1:k,function(x){tree[[x]]$edge.length[ind]})
                     tree$edge<-tree[[1]]$edge[ind,]
                 }else{
@@ -174,7 +174,7 @@ switch(method,
                 n=length(tree$tip.label)
                 k=dim(matrix(data,nrow=n))[2]
                 if(param$check==TRUE){
-                 tree<-reorder(tree,"postorder")
+                 tree<-reorder.phylo(tree,"postorder")
                 }
                 value<-list(tree$edge.length)
             }
@@ -257,7 +257,7 @@ switch(method,
             }
             U<-chol(spambig)
         }else{
-            U<-update(precalc$ch,precalc$V)
+            U<-update.spam.chol.NgPeyton(precalc$ch,precalc$V)
         }
 
         if(param$estim==TRUE){

@@ -173,7 +173,7 @@ sig1<-param$sigma
 
 if(method=="pic"){
     warning<-eval_polytom(tree)
-    tree<-reorder(tree,"postorder")
+    tree<-reorder.phylo(tree,"postorder")
     # times from the root
     tt<-.Call("times_root", brlength=tree$edge.length, edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), ntip=as.integer(n), Nnode=as.integer(tree$Nnode))
     

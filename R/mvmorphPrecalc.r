@@ -26,7 +26,7 @@ mv.Precalc<-function(tree, nb.traits=1, scale.height=FALSE, param=list(pivot="MM
     #if(is.vector(data)){k<-1 }else{ k<-ncol(data)}
     p<-nb.traits
     #set tree order
-    ind<-reorder(tree,order="postorder", index.only=TRUE)
+    ind<-reorder.phylo(tree,order="postorder", index.only=TRUE)
     tree$edge<-tree$edge[ind,]
     tree$edge.length<-tree$edge.length[ind]
 
@@ -58,11 +58,12 @@ if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"
         multi.tre[[i]]$edge.length<-tree$mapped.edge[,i]
         multi.tre[[i]]$state<-colnames(tree$mapped.edge)[i]
         temp<-vcv.phylo(multi.tre[[i]])
-        if(any(tree$tip.label==rownames(data))) {
-            C2[[i]]<-temp[rownames(data),rownames(data)]
-        }else{
+        # Should we provide the data object?
+        # if(any(tree$tip.label==rownames(data))) {
+        #    C2[[i]]<-temp[rownames(data),rownames(data)]
+        # }else{
             C2[[i]]<-temp
-        }
+        #}
     }
     }else{
      C2<-NULL
@@ -195,6 +196,13 @@ if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"
         #require(spam)
         # Temporary multivariate VCV
         V<-kronecker((matrix(1,p,p)+diag(p)), C1)
+        
+        # Check for missing cases? need to provides the data
+        #if(any(is.na(data))){
+        #        Indice_NA<-which(is.na(as.vector(data)))
+        #        V<-V[-Indice_NA,-Indice_NA]
+        #        }
+
         # spam object
         V1<-as.spam(V);
         # precal the cholesky

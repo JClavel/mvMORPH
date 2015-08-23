@@ -221,7 +221,7 @@ varBM<-function(tree,data,n,k){
     tree <- multi2di(tree)
     }
     rate<-rep(0,k)
-    tree<-reorder(tree,"postorder")
+    tree<-reorder.phylo(tree,"postorder")
     value<-list(tree$edge.length)
     res<-.Call("PIC_gen", x=as.vector(as.matrix(data)), n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(10), mu=1, sigma=1)
     return(res[[2]])
@@ -341,9 +341,9 @@ switch(method,
         }
     }
     if(!is.null(precalc)){
-    U<-update(precalc$ch,precalc$V)
+    U<-update.spam.chol.NgPeyton(precalc$ch,precalc$V)
     }else{
-    U<-update(ch,precalcMat)
+    U<-update.spam.chol.NgPeyton(ch,precalcMat)
     }
     vec<-forwardsolve(U,data)
     xx<-forwardsolve(U,D)
