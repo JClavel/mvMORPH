@@ -133,21 +133,23 @@ simul2<-mvSIM(tree,nsim=nsim,param=model_fit)
 simul3<-simulate(model_fit,nsim=nsim,tree=tree)
 
 ## Just-for-fun :Comparing parameters
-# simul4<-simulate(model_fit,nsim=100,tree=tree)
-# results<-lapply(1:100,function(x){
-#    mvBM(tree,simul4[[x]],model="BM1",method="pic", echo=F,diagnostic=F)
-#    })
-#
-# sigma_simul<-sapply(1:100,function(x){results[[x]]$sigma})
-#
-# comparison between the simulated (black) and the observed (red) multivariate rates
-# layout(matrix(1:4, ncol=2))
-# for(i in 1:4){
-#  hist(sigma_simul[i,], main=paste("Estimated sigma on simulated traits"),
-#  xlab="estimated sigma for 100 replicates");abline(v=mean(sigma_simul[i,]),lwd=2);
-#  abline(v=model_fit$sigma[i],col="red",lwd=2)
-# }
+\dontrun{
+ simul4<-simulate(model_fit,nsim=100,tree=tree)
+ 
+ results<-lapply(simul4,function(x){
+    mvBM(tree,x,model="BM1",method="pic", echo=F,diagnostic=F)
+    })
 
+ sigma_simul<-sapply(results,function(x){x$sigma})
+
+# comparison between the simulated (black) and the observed (red) multivariate rates
+ layout(matrix(1:4, ncol=2))
+ for(i in 1:4){
+	  hist(sigma_simul[i,], main=paste("Estimated sigma on simulated traits"),
+  	xlab="estimated sigma for 100 replicates");abline(v=mean(sigma_simul[i,]),lwd=2);
+  	abline(v=model_fit$sigma[i],col="red",lwd=2)
+ }
+	}
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

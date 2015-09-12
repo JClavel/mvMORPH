@@ -163,40 +163,41 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
 mvSHIFT(tree, data, model="OUBM") # similar to mvSHIFT(tree, data, model="ER")
 
 # "Release and radiate model"
-# mvSHIFT(tree, data, model="RR", method="sparse")
+\dontrun{
+ mvSHIFT(tree, data, model="RR", method="sparse")
 # similar to mvSHIFT(tree, data, model="OUBMi")
 
 # More generally...
 
 # OU to/from BM
-# mvSHIFT(tree, data, model="OUBM", method="sparse")
-# mvSHIFT(tree, data, model="BMOU", method="sparse")
-# mvSHIFT(tree, data, model="OUBMi", method="sparse")
-# mvSHIFT(tree, data, model="BMOUi", method="sparse")
+ mvSHIFT(tree, data, model="OUBM", method="sparse")
+ mvSHIFT(tree, data, model="BMOU", method="sparse")
+ mvSHIFT(tree, data, model="OUBMi", method="sparse")
+ mvSHIFT(tree, data, model="BMOUi", method="sparse")
 
 # BM to/from EB
-# mvSHIFT(tree, data, model="BMEB", method="sparse")
-# mvSHIFT(tree, data, model="EBBM", method="sparse")
-# mvSHIFT(tree, data, model="BMEBi", method="sparse")
-# mvSHIFT(tree, data, model="EBBMi", method="sparse")
+ mvSHIFT(tree, data, model="BMEB", method="sparse")
+ mvSHIFT(tree, data, model="EBBM", method="sparse")
+ mvSHIFT(tree, data, model="BMEBi", method="sparse")
+ mvSHIFT(tree, data, model="EBBMi", method="sparse")
 
 # OU to/from EB
-# mvSHIFT(tree, data, model="OUEB", method="sparse")
-# mvSHIFT(tree, data, model="OUEBi", method="sparse")
-# mvSHIFT(tree, data, model="EBOU", method="sparse")
-# mvSHIFT(tree, data, model="EBOUi", method="sparse")
+ mvSHIFT(tree, data, model="OUEB", method="sparse")
+ mvSHIFT(tree, data, model="OUEBi", method="sparse")
+ mvSHIFT(tree, data, model="EBOU", method="sparse")
+ mvSHIFT(tree, data, model="EBOUi", method="sparse")
 
 
 ## Without providing mapped tree
 # The shift occured 3Ma ago (param$age=3)
-# set.seed(14)
-# tree<-rtree(50)
-# data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
-#            names_traits=c("head.size","mouth.size"), age=3), model="ER", nsim=1)
+ set.seed(14)
+ tree<-rtree(50)
+ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
+            names_traits=c("head.size","mouth.size"), age=3), model="ER", nsim=1)
 
 ## Fitting the models without mapped tree but by specifying the age in the param list.
-# mvSHIFT(tree, data, model="OUBM", param=list(age=3))
-
+ mvSHIFT(tree, data, model="OUBM", param=list(age=3))
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

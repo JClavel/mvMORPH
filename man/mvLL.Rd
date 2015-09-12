@@ -158,21 +158,24 @@ mvLL(tree,data2,method="pic")
 # NB: The trees in the list could be differently scaled for each traits...
 mvLL(list(tree,tree),data2,method="pic")
 
-## VERY FAST COMPUTATION FOR LARGE TREES (not run, but take few seconds)
-# Big tree (1,000,000 species)
-# tree2<-rtree(1000000)
-# Simulate trait with a Brownian motion process
-# trait<-rTraitCont(tree2)
-# system.time(mvLL(tree2,trait,method="pic",param=list(estim=FALSE, sigma=1)))
-#
-# precal<-mv.Precalc(tree2,nb.traits=1, param=list(method="pic"))
-# system.time(mvLL(tree2,trait,method="pic",param=list(estim=FALSE, sigma=1),
-#   precalc=precal))
-#
-# Check=FALSE !! Your tree should be in post-order !!
-# tr2<-reorder(tree2,"postorder")
-# system.time(mvLL(tr2,trait,method="pic",param=list(estim=FALSE, sigma=1, check=FALSE)))
+## VERY FAST COMPUTATION FOR LARGE TREES (take few seconds)
 
+
+\dontrun{
+# Big tree (1,000,000 species) - It's the time consuming part...
+ tree2<-rtree(1000000)
+# Simulate trait with a Brownian motion process
+ trait<-rTraitCont(tree2)
+ system.time(mvLL(tree2,trait,method="pic",param=list(estim=FALSE, sigma=1)))
+
+ precal<-mv.Precalc(tree2,nb.traits=1, param=list(method="pic"))
+ system.time(mvLL(tree2,trait,method="pic",param=list(estim=FALSE, sigma=1),
+   precalc=precal))
+
+# Check=FALSE !! Your tree should be in post-order !!
+ tr2<-reorder(tree2,"postorder")
+ system.time(mvLL(tr2,trait,method="pic",param=list(estim=FALSE, sigma=1, check=FALSE)))
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

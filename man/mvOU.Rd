@@ -180,56 +180,57 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
             names_traits=c("head.size","mouth.size")), model="OUM", nsim=1)
 
 ## Fitting the models
+\dontrun{
 # OUM - Analysis with multiple optima
-mvOU(tree, data)
+ mvOU(tree, data)
 
 # OU1 - Analysis with a unique optimum
-# mvOU(tree, data, model="OU1", method="sparse")
+ mvOU(tree, data, model="OU1", method="sparse")
 
 # various options
-# mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-#    param=list(decomp="nsymmetric", root="stationary"))
-# mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-#    param=list(decomp="nsymmetric", root=TRUE))
-# mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-#    param=list(decomp="symmetricPositive", root=TRUE))
+ mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="nsymmetric", root="stationary"))
+ mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="nsymmetric", root=TRUE))
+ mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="symmetricPositive", root=TRUE))
 # OUCH setting
-# mvOU(tree, data, model="OUM", method="rpf", scale.height=FALSE,
-#    param=list(decomp="symmetricPositive", root=FALSE, vcv="ouch"))
+ mvOU(tree, data, model="OUM", method="rpf", scale.height=FALSE,
+    param=list(decomp="symmetricPositive", root=FALSE, vcv="ouch"))
 
 ## Univariate case - FAST with RPF
-# set.seed(14)
-# tree<-pbtree(n=500)
+ set.seed(14)
+ tree<-pbtree(n=500)
 
 # Setting the regime states of tip species
-# sta<-as.vector(c(rep("Forest",200),rep("Savannah",300))); names(sta)<-tree$tip.label
+ sta<-as.vector(c(rep("Forest",200),rep("Savannah",300))); names(sta)<-tree$tip.label
 
 # Making the simmap tree with mapped states
-# tree<-make.simmap(tree,sta , model="ER", nsim=1)
-# col<-c("blue","orange"); names(col)<-c("Forest","Savannah")
+ tree<-make.simmap(tree,sta , model="ER", nsim=1)
+ col<-c("blue","orange"); names(col)<-c("Forest","Savannah")
 
 # Plot of the phylogeny for illustration
-# plotSimmap(tree,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
+ plotSimmap(tree,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
 
 # Parameters
-# alpha<-2.5
-# sigma<-0.1
-# theta<-c(0,2)
-# data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=1, mu=theta,
-#             names_traits=c("body_size")), model="OUM", nsim=1)
+ alpha<-2.5
+ sigma<-0.1
+ theta<-c(0,2)
+ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=1, mu=theta,
+             names_traits=c("body_size")), model="OUM", nsim=1)
 
 # Fit the model
-# system.time(mvOU(tree, data, model="OUM", method="univarpf",
-#                param=list(root="stationary")))
-# system.time(mvOU(tree, data, model="OU1", method="univarpf",
-#                param=list(root="stationary")))
+ system.time(mvOU(tree, data, model="OUM", method="univarpf",
+                param=list(root="stationary")))
+ system.time(mvOU(tree, data, model="OU1", method="univarpf",
+                param=list(root="stationary")))
 
 # Add measurement error
-# error=rnorm(500,sd=0.1)
-# mvOU(tree, data, error=error^2, model="OUM", method="univarpf",
-#    param=list(root="stationary"))
+ error=rnorm(500,sd=0.1)
+ mvOU(tree, data, error=error^2, model="OUM", method="univarpf",
+    param=list(root="stationary"))
 
-
+	}
 }% Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ Ornstein Uhlenbeck }

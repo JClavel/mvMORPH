@@ -181,7 +181,7 @@ fit2<-mvBM(tree, data, model="BM1", method="pic", param=list(constraint=TRUE))
 LRT(fit1,fit2)
 
 # Random starting values
-mvBM(tree, data, model="BMM", method="sparse", param=list( sigma=list(runif(3), runif(3)) ))
+mvBM(tree, data, model="BMM", method="sparse", param=list(sigma=list(runif(3), runif(3))))
 
 # Specified starting values (from the Cholesky factor)
 chol_factor<-chol(sigma)
@@ -200,23 +200,24 @@ data2[25,1]<-NA
 mvBM(tree, data2, model="BM1")
 
 ## FAST FOR THE UNIVARIATE CASE!!
-# set.seed(14)
-# tree2<-pbtree(n=5416) # Number of Mammal species
+\dontrun{
+ set.seed(14)
+ tree2<-pbtree(n=5416) # Number of Mammal species
 # Setting the regime states of tip species
-# sta<-as.vector(c(rep("group_1",2000),rep("group_2",3416))); names(sta)<-tree2$tip.label
-#
-# Making the simmap tree with mapped states
-# tree2<-make.simmap(tree2,sta , model="ER", nsim=1)
-# col<-c("blue","orange"); names(col)<-c("Group_1","Group_2")
-# plotSimmap(tree2,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
-#
-# Simulate a trait evolving by brownian motion on the tree
-# trait<-rTraitCont(tree2)
-#
-# Fitting the models
-# mvBM(tree2, trait, model="BMM", method="pic")
-# mvBM(tree2, trait, model="BM1", method="pic")
+ sta<-as.vector(c(rep("group_1",2000),rep("group_2",3416))); names(sta)<-tree2$tip.label
 
+# Making the simmap tree with mapped states
+ tree2<-make.simmap(tree2,sta , model="ER", nsim=1)
+ col<-c("blue","orange"); names(col)<-c("Group_1","Group_2")
+ plotSimmap(tree2,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
+
+# Simulate a trait evolving by brownian motion on the tree
+ trait<-rTraitCont(tree2)
+
+# Fitting the models
+ mvBM(tree2, trait, model="BMM", method="pic")
+ mvBM(tree2, trait, model="BM1", method="pic")
+}
 
 }% Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

@@ -98,25 +98,26 @@ mvOU(tree, simul[[1]], method="sparse", model="OU1", precalc=precal,
     param=list(decomp="symmetric"))
 
 ### Bootstrap
+\dontrun{
 # Fit the model to the "nsim" simulated datasets
-# results<-lapply(1:nsim,function(x){
-# mvOU(tree, simul[[x]], method="sparse", model="OU1", precalc=precal,
-#    param=list(decomp="symmetric"))
-# })
+ results<-lapply(1:nsim,function(x){
+ mvOU(tree, simul[[x]], method="sparse", model="OU1", precalc=precal,
+    param=list(decomp="symmetric"))
+ })
 
-### Use parallel package (not run)
-# library(parallel)
-# number_of_cores<-2L
-# results<-mclapply(1:nsim, function(x){
-#    mvOU(tree, simul[[x]], method="sparse", model="OU1", precalc=precal,
-#       param=list(decomp="symmetric"))
-# }, mc.cores = getOption("mc.cores", number_of_cores))
+### Use parallel package
+ library(parallel)
+ number_of_cores<-2L
+ results<-mclapply(simul, function(x){
+    mvOU(tree, x, method="sparse", model="OU1", precalc=precal,
+       param=list(decomp="symmetric"))
+ }, mc.cores = getOption("mc.cores", number_of_cores))
 
 
-# Summarize the likelihood
-# loglik<-sapply(1:nsim,function(x){logLik(results[[x]])})
-# hist(loglik)
-
+# Summarize (we use the generic S3 method "logLik" to extract the log-likelihood)
+loglik<-sapply(results,logLik)
+hist(loglik)
+	}
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the
