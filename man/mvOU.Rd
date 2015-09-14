@@ -180,7 +180,7 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
             names_traits=c("head.size","mouth.size")), model="OUM", nsim=1)
 
 ## Fitting the models
-\dontrun{
+\donttest{
 # OUM - Analysis with multiple optima
  mvOU(tree, data)
 

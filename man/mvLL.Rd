@@ -161,7 +161,7 @@ mvLL(list(tree,tree),data2,method="pic")
 ## VERY FAST COMPUTATION FOR LARGE TREES (take few seconds)
 
 
-\dontrun{
+\donttest{
 # Big tree (1,000,000 species) - It's the time consuming part...
  tree2<-rtree(1000000)
 # Simulate trait with a Brownian motion process

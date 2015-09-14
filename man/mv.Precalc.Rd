@@ -98,7 +98,7 @@ mvOU(tree, simul[[1]], method="sparse", model="OU1", precalc=precal,
     param=list(decomp="symmetric"))
 
 ### Bootstrap
-\dontrun{
+\donttest{
 # Fit the model to the "nsim" simulated datasets
  results<-lapply(1:nsim,function(x){
  mvOU(tree, simul[[x]], method="sparse", model="OU1", precalc=precal,

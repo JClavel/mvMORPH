@@ -163,7 +163,7 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
 mvSHIFT(tree, data, model="OUBM") # similar to mvSHIFT(tree, data, model="ER")
 
 # "Release and radiate model"
-\dontrun{
+\donttest{
  mvSHIFT(tree, data, model="RR", method="sparse")
 # similar to mvSHIFT(tree, data, model="OUBMi")
 

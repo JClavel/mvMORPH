@@ -133,7 +133,7 @@ simul2<-mvSIM(tree,nsim=nsim,param=model_fit)
 simul3<-simulate(model_fit,nsim=nsim,tree=tree)
 
 ## Just-for-fun :Comparing parameters
-\dontrun{
+\donttest{
  simul4<-simulate(model_fit,nsim=100,tree=tree)
  
  results<-lapply(simul4,function(x){

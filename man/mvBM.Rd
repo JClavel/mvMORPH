@@ -200,7 +200,7 @@ data2[25,1]<-NA
 mvBM(tree, data2, model="BM1")
 
 ## FAST FOR THE UNIVARIATE CASE!!
-\dontrun{
+\donttest{
  set.seed(14)
  tree2<-pbtree(n=5416) # Number of Mammal species
 # Setting the regime states of tip species
