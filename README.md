@@ -15,6 +15,7 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 2. _TODO_:
   + Incorporation of a tests-suite
+  + Formula option for independent variables
 
 The current stable version of the mvMORPH package (1.0.6) is on the CRAN repository.
 [http://cran.r-project.org/web/packages/mvMORPH/index.html](http://cran.r-project.org/web/packages/mvMORPH/index.html)
