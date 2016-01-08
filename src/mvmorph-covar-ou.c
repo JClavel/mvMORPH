@@ -7,7 +7,7 @@ static void mvmorph_covar_OU(int *nt,
 				   double *ans, 
 			       double *alpha,
 				   double *sigma) {
-  double sij, ti, tj, T, temp, var;
+  double sij, ti, tj, T, temp, var, value;
   int n = *nt;
   int i, j;
 
@@ -21,9 +21,10 @@ for(i=0; i<n; i++){
 	  tj = A[j+j*n]-sij;
 	  T=ti+tj;
 	temp=(1-exp(-2.0*alpha[0]*sij))*exp(-1.0*alpha[0]*T);
-	ans[i*n+j]=temp*var;
+    value=temp*var;
+        ans[i*n+j]=value;
 	if (j != i){
-	ans[j*n+i]=temp*var;
+        ans[j*n+i]=value;
 	}
   }
 }

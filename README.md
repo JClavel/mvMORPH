@@ -29,6 +29,6 @@ Any bugs encountered when using the package can be reported [here](https://githu
 
 ##**Package citation**
 
-**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, DOI: 10.1111/2041-210X.12420
+**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.    DOI: 10.1111/2041-210X.12420
 
-[Download version with corrected typos in the supplementary material.](http://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)
+[Download version with appended supplementary material.](http://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)
