@@ -107,11 +107,17 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
 }
 
 
-# Compute factor list / Creation d'une liste de facteurs
+# Compute factor list / Creation d'une liste de facteurs (to improve)
 newList<-function(factorVal,nv){
-    temp<-factorVal
-    factorVal<-lapply(1:(nv-1),function(i){val<-c(max(factorVal)+temp);val<-c(factorVal,val);val})
-    factorVal<-unlist(factorVal)
+    val <-list()
+    val[[1]] <-factorVal
+    
+    for(i in 1:(nv-1)){
+        ind <- max(val[[i]])
+        val[[i+1]] <- factorVal+ind
+    }
+    
+    factorVal<-unlist(val)
     return(factorVal)
 }
 
