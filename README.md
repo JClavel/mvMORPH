@@ -24,6 +24,12 @@ The current stable version of the mvMORPH package (1.0.6) is on the CRAN reposit
 
 You can download the current beta version (1.0.6) binaries for Windows and Mac OS X from the [release page](https://github.com/JClavel/mvMORPH/releases)
 
+You can also install it directly from gitHub through devtools:
+
+library(devtools)
+
+install_github("JClavel/mvMORPH")
+
 ##**Report an issue**
 Any bugs encountered when using the package can be reported [here](https://github.com/JClavel/mvMORPH/issues)
 
