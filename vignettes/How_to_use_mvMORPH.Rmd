@@ -40,13 +40,13 @@ I) Trees and Time series
 
 1. Phylogenetic trees
 -
- The imput trees of **mvMORPH** functions must be objects of class "phylo" as provided by the **ape** package. Such trees are directly used with the "EB", "BM1", and "OU1" models (and also with the SHIFT model if the shift age is given in the param list; see ?mvSHIFT).
- To fit models with multiple groups (or selective regimes) such as the "BMM" and "OUM" models (functions _mvBM_ and _mvOU_), the evolutionary history of the selective regimes (i.e. the ancestral state reconstruction - see the next vignette) must be "painted" on the tree. For this purpose **mvMORPH** use trees in SIMMAP format as provided by the **phytools** package. Several functions allows creating SIMMAP trees:
+ The trees used by the **mvMORPH** functions must be objects of class "phylo" as provided by the **ape** package. Such trees are directly used with the "EB", "BM1", and "OU1" models (and also with the SHIFT model if the shift age is given in the param list; see ?mvSHIFT).
+ To fit models with multiple groups (or selective regimes) such as the "BMM" and "OUM" models (functions _mvBM_ and _mvOU_), the evolutionary history of the selective regimes (i.e., the ancestral state reconstruction - see the next vignette) must be "painted" on the tree. For this purpose **mvMORPH** uses trees in SIMMAP format as provided by the **phytools** package. Several functions allows creating SIMMAP trees:
  
  + _make.simmap_ (Ancestral state reconstruction using stochastic mapping) 
- + _make.era.map_ (Creates temporal map by binning the tree)
- + _paintBranches_ (Assign to a particular branch a given discrete state)
- + _paintSubTree_ (Assign to a particular sub-tree a given discrete state)
+ + _make.era.map_ (Creates temporal map on the tree)
+ + _paintBranches_ (Assigns to a particular branch a given discrete state)
+ + _paintSubTree_ (Assigns to a particular sub-tree a given discrete state)
  
 For instance, users may be interested in directly using prior knowledge to specify different states on particular parts of the tree (or use results from other ancestral reconstructions methods). The user must refer to the **phytools** documentation for more details.
 ```{r, results="hide", message=FALSE}
@@ -85,11 +85,11 @@ plot(tree4)
 2. Time series
 -
 
-The _mvRWTS_ and _mvOUTS_ functions allows fitting multivariate models of continuous traits evolution with time-series data (such as record of fossil lineages). Such models can be used, for instance, to compare how traits evolves within an ancestor-descendent lineage or between lineages. Times-series must be provided as vectors of ordered ages relative to the starting point (i.e., the oldest, which should be "0").
+The _mvRWTS_ and _mvOUTS_ functions allow fitting multivariate models of continuous traits evolution with time-series data (such as ancestor-descendent fossil lineages). Such models can be used, for instance, to compare how traits evolve within an ancestor-descendent lineage or between lineages. The times-series must be provided as vectors of ordered ages relative to the starting point (i.e., the oldest, which should be "0").
 
 For instance:
 ```{r, comment=">"}
-# Make a tiny time-serie object from fossil ages between [55;32.5] Ma
+# Make a tiny time-serie object from fossil ages between [55; 32.5] Ma
 fossil_ages <- c(55,46,43,38,35,32.5)
 
 # The time serie becomes:
@@ -97,7 +97,7 @@ timeserie <- max(fossil_ages)-fossil_ages
 timeserie
 ```
  
- The _"scale.height=TRUE"_ option will scale the time serie between 0 and 1 to provide the relative ages. As for the analysis on phylogenetic trees, this change the scale of the parameter estimates (such as sigma or alpha) but not the log-likelihood.
+ The _"scale.height=TRUE"_ option will scale the time serie between 0 and 1 to provide the relative ages. Similarly to the analysis on phylogenetic trees, this change the scale of the parameter estimates (such as sigma or alpha) but not the log-likelihood.
  
  
  
@@ -106,20 +106,20 @@ timeserie
 Matrix or data frame with species in rows and continuous traits (variables) in columns, rownames must match tip names. Missing cases are currently allowed as **NA** values with the "rpf", "inverse", and "pseudoinverse" methods. The measurement error or sampling variance is a matrix of similar size (note that the sampling variance is given by the square of the standard-errors of species mean estimates). 
 Measurement error missing values (**NA** or "0") are allowed. 
 
-For some time-serie models; _mvOUTS_ with fixed root (see the "param" list section below) and _mvRWTS_; the sampling variance for the first obsevations in the time-serie must be provided otherwise an arbitrary value of 0.01 is automatically set to avoid singularity issues.
+For some time-serie models; _mvOUTS_ with fixed root vcv (see the "param" list section below) and _mvRWTS_; the sampling variance for the first obsevations in the time-serie must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
 
 
 
 # III) Optimization methods
 
-**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seem to be more efficient, but when the optimizer don't converge or if the fit seem unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or to change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seem particularly efficient for the user-defined models. When the optimization is turn to "fixed" only the log-likelihood function is returned without evaluating it (see VIII - log-likelihood function below).
+**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seem to be more efficient, but when the optimizer don't converge or if the fit seem unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seem particularly efficient for the user-defined models. When the optimization is turn to "fixed" only the log-likelihood function is returned without evaluation (see X - log-likelihood function below).
 
 
 
 # IV) Likelihood computation methods
 
-**mvMORPH** use various methods based on generalized least square (GLS) or the prunning algorithm (contrasts) to compute the log-likelihood. 
-While GLS based approaches are very flexibles and allows fitting almost all models, deal with missing cases and measurement error very easily, and are particularly safe for optimization (e.g., the "pseudoinverse" method), their naive implementations are computationally intensive (e.g., "inverse" and "pseudoinverse" methods). Two alternative and efficient algorithms also based on GLS are proposed ("rpf" and "sparse"). The "sparse" method is both efficient in terms of computational time and memmory use, but is limited by the sparsity structure of the variance-covariance (vcv) of the phylogenetic tree while the "rpf" is not. While these approaches are up to ten time faster than the "inverse" or the "pseudoinverse" methods, they may suffer of singularity issues during optimization in some cases. 
+**mvMORPH** uses various methods based on generalized least square (GLS) or the prunning algorithm (contrasts) to compute the log-likelihood. 
+While GLS based approaches are very flexible and allow fitting almost all models, to deal with missing cases and measurement error very easily, and are particularly safe for optimization (e.g., the "pseudoinverse" method), their naive implementations are computationally intensive (e.g., "inverse" and "pseudoinverse" methods). Two alternative and efficient algorithms also based on GLS are proposed ("rpf" and "sparse"). The "sparse" method is both efficient in terms of computational time and memory use, but is limited by the sparsity structure of the variance-covariance (vcv) of the phylogenetic tree while the "rpf" is not. While these approaches are up to ten time faster than the "inverse" or the "pseudoinverse" methods, they may suffer of singularity issues during optimization in some cases. 
 The "pic" method is the fastest one (thousand of time faster than the GLS based methods implemented here), but currently available for a couple of models only.
 
 The various methods available for each models currently (stay tuned on gitHub) on mvMORPH are presented in the table below (from the fastest to the slowest)
@@ -205,11 +205,11 @@ Evol_theta <- Reduce('+',mdavg)
 1. Ancestral state and primary optimum
 -
 
-The "root" argument in the "param" _list_ of the _mvOU_ function allows specifying if the root state and the optimum must be estimated (root=TRUE), or if we assume that the root state and the primary optimum are distributed according to the stationary distribution of the process (root=FALSE; Fig. 2). Indeed, the root state and the primary optimum are not identifiable separately on extant species. A slight variant of root=FALSE is root="stationary" where the root state is explicitely dropped and we assume the optimum are stationary (e.g., the implementation used in the OUwie package).
+The "root" argument in the "param" _list_ of the _mvOU_ function allows specifying if the root state and the optimum must be estimated (root=TRUE), or if we assume that the root state and the primary optimum are distributed according to the stationary distribution of the process (root=FALSE; Fig. 2). Indeed, the root state and the primary optimum are not identifiable separately on extant species. A slight variant of root=FALSE is root="stationary" where the root state is explicitely dropped and we assume the optimum is stationary (e.g., the implementation used in the OUwie package).
 
 ![alt text](root.png "Fig. 2")
 
-**Figure 2.** *Treatment of the root state options in the _mvOU_ and _mvBM_ functions. For the OU process, when root=FALSE the ancestral state at the root is directly derived from the oldest regime state (the ancestral state and the optimum are not estimated separately). With root=TRUE the ancestral state and the optimum are explicitely estimated. It should be noted that the root=TRUE option provide unreliable estimates on extant species only datasets. For the BM model, the smean=TRUE option estimate a single ancestral state (the phylogenetic mean) while smean=FALSE estimate separates phylogenetic mean*
+**Figure 2.** *Treatment of the root state options in the _mvOU_ and _mvBM_ functions. For the OU process, when root=FALSE the ancestral state at the root is directly derived from the oldest regime state (the ancestral state and the optimum are not estimated separately). With root=TRUE the ancestral state and the optimum are explicitely estimated. It should be noted that the root=TRUE option provides unreliable estimates without fossil data. For the BM model, the smean=TRUE option estimate a single ancestral state (the phylogenetic mean) while smean=FALSE estimate separates phylogenetic mean*
 
 ```{r,comment=">", message=FALSE, results='hide'}
 set.seed(100)
@@ -244,7 +244,7 @@ mvOUTS(ts, data, param=list(root=FALSE))
 2. Multiple phylogenetic mean
 -
 
-The "smean" argument in the "param" _list_ of the _mvBM_ function allows estimating either one ancestral state (smean=TRUE) for the whole tree (even if there are multiple regime states) or multiple ancestral states for each regimes (smean=FALSE). Note: contrary to the OU model, the reconstructed history of the discrete state don't affect the model fit.
+The "smean" argument in the "param" _list_ of the _mvBM_ function allows estimating either one ancestral state (smean=TRUE) for the whole tree (even if there are multiple regime states) or multiple ancestral states for each regimes (smean=FALSE). Note: contrary to the OU model, the reconstructed history of the discrete state don't affects the model fit.
 
 When differences between groups/regimes states are only related to the phylogenetic mean, a multiple rate model can be misleadingly preferred over a single rate model:
 
@@ -271,7 +271,7 @@ fit_3 <- mvBM(tree, data, model="BM1", param=list(smean=FALSE))
 fit_4 <- mvBM(tree, data, model="BMM", param=list(smean=FALSE))
 ```
 
-Unless we consider the multiple mean models, the multipe rate matrix is misleadingly preferred (AIC>4) over the single rate matrix (generating) model.
+Unless we consider the multiple mean models, the multipe rate matrix is misleadingly preferred (AIC>4) over the single rate matrix (the generating) model.
 ```{r,comment=">"}
 # Compare the fitted models.
 results <- list(fit_1,fit_2,fit_3,fit_4)
@@ -312,7 +312,7 @@ aicw(results)
 LRT(fit_2,fit_3) # No... as expected
 ```
 
-In the same way we can fit a directional random walk on time-serie data.
+In the same way we can fit a directional random walk on time-series data.
 
 ```{r,comment=">", results='hide', message=FALSE}
 # Simulate the time serie and data
@@ -324,14 +324,14 @@ data<-mvSIM(timeserie, error=error, model="RWTS",
 # plot the time serie
 matplot(data, type="o", pch=1, xlab="Time (relative)")
 
-# models fit
+# model fit
 fit1 <- mvRWTS(timeserie, data, error)
 fit2 <- mvRWTS(timeserie, data, error, param=list(trend=c(1,1)))
 ```{r,comment=">"}
 LRT(fit2,fit1)
 ```
 
-Note that the theta parameters cannot be estimated analytically for the "trend" model (option root.mle=TRUE, in the returned log-likelihood function)
+Note that the theta parameters cannot be estimated analytically for the "trend" model (i.e., option root.mle=TRUE, in the returned log-likelihood function)
 
 
 
@@ -340,7 +340,7 @@ Note that the theta parameters cannot be estimated analytically for the "trend" 
 1. Overview of the various constraints parameterizations in **mvMORPH**
 -
 
-Comparison of constrained models allow testing various evolutionary hypothesis such as independent evolution, comparing evolutionary rates between traits, common structure, phenotypic integration... etc. The constraint methods currently available on mvMORPH are the following (see also Fig. 1):
+Comparison of constrained models allows testing various evolutionary hypothesis such as independent evolution, comparing evolutionary rates between traits, common structure, phenotypic integration... etc. The constraints methods currently available on mvMORPH are the following (see also Fig. 1):
 
 
 ![alt text](constraints.png "Fig. 1")
@@ -352,16 +352,16 @@ Comparison of constrained models allow testing various evolutionary hypothesis s
  + **"diagonal"** : there is no evolutionary covariances between the traits, the rate matrix is diagonal.
  + **"equaldiagonal"** there is no evolutionary covariances and the traits share the same variance.
  + **"equal"** the traits covaries and share the same variance (or evolutionary rates).
- + **"proportional"** (only with "BMM") the rates matrix are proportional for different regimes/states mapped on the tree. 
- + **"correlation"** (only with "BMM") the rates matrix share the same correlations between traits for different regimes/states mapped on the tree.
- + **"variance"** (only with "BMM") the rates matrix share the same variances (rates) between regimes/states mapped on the tree.
- + **"shared"** (only with "BMM") the rates matrix share the same eigen-vectors (orientation) between regimes/states mapped on the tree.
+ + **"proportional"** (only with "BMM") the rates matrices are proportional for different regimes/states mapped on the tree. 
+ + **"correlation"** (only with "BMM") the rates matrices share the same correlations between traits for different regimes/states mapped on the tree.
+ + **"variance"** (only with "BMM") the rates matrices share the same variances (rates) between regimes/states mapped on the tree.
+ + **"shared"** (only with "BMM") the rates matrices share the same eigen-vectors (orientation) between regimes/states mapped on the tree.
  + **"user"** : the design of the rate matrix is directly defined by the user. Note that for 2 traits, all the combinations are readily available from the default methods. See example below.
  
 2. "User-defined" constraints
 -
 
-**User-defined** constraints are done by providing a symmetric square matrix with integer values taken as indices of the parameters. To constraint covariance values to zero the user must used **NA** values as indices. As covariance matrix must be symmetric positive definite, such a constraint is achieved by shrinking negative eigenvalues automatically to a specified tolerance value (1). This value can be changed through the "param" _list_ with the "tol" argument. This value must be changed with various guess (e.g. 1e-5, 10...) if convergence of the optimizer has not been achieved. Considering alternative optimization methods may help. __The "subplex" optimization method is recommended__.
+**User-defined** constraints are done by providing a symmetric square matrix with integer values taken as indices of the parameters. To constraint covariance values to zero the user must used **NA** values as indices.Because a covariance matrix must be symmetric positive definite, negative eigenvalues are automatically shrunk to a specified tolerance value (=1). This value can be changed through the "param" _list_ with the "tol" argument. This value must be changed with various estimates (e.g. 1e-5, 10...) if convergence of the optimizer has not been achieved. The alternative optimization methods may help. __The "subplex" optimization method is advised__.
 
 ```{r, results="hide", comment=">", message=FALSE}
 set.seed(14)
@@ -373,7 +373,7 @@ sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 theta<-c(0,0,0)
 data<-mvSIM(tree, model="BM1", nsim=1, param=list(sigma=sigma, theta=theta))
 
-# Fit user defined contrained models
+# Fit user defined contrained model
 user_const <- matrix(c(1,4,4,4,2,5,4,5,3),3)
 fit1 <- mvBM(tree, data, model="BM1", method="pic"
              , param=list(constraint=user_const), optimization="subplex")
@@ -399,18 +399,18 @@ Note: the user-defined option can also be used with the _decomp_ or _decompSigma
 
 # VIII) The "param" list 
 
-The "param" list argument allows specifying multiple options in **mvMORPH** functions (starting values guess for the optimization, constraints, matrix parameterization...)
+The "param" list argument allows specifying multiple options in **mvMORPH** functions (starting values estimate for the optimization, constraints, matrix parameterization...)
 
 ## 1. The "decomp" and "decompSigma" options
 
-These options allows specifying the matrix parameterization used for the alpha (A) and sigma ($\Sigma$) matrices of parameters for the Ornstein-Uhlenbeck process:
+These options allow specifying the matrix parameterization used for the alpha (A) and sigma ($\Sigma$) matrices of parameters for the Ornstein-Uhlenbeck process:
 $$dX(t)=A(\theta(t) - X(t))dt + \Sigma dW(t)$$
 and Brownian motion:
 $$ dX(t)=\Sigma dW(t) $$
 
-For symmetric matrices (e.g. the variance-covariance matrix of brownian rates $\Sigma$) **mvMORPH** use various parameterizations to ensure positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterize a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g. _decompSigma="cholesky"_. 
+For symmetric matrices (e.g. the variance-covariance matrix of brownian rates $\Sigma$) **mvMORPH** uses various parameterizations to ensure the positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterize a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g. _decompSigma="cholesky"_. 
 
-Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The first _p(p-1)/2_ parameters are used to compute the cholesky factors of spherical angles, or the orthogonal matrices; the next _p_ parameters are the eigenvalues (in "eigen") or the standard deviations (in "spherical"). The bivariate case is illustrated here:
+Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The firsts _p(p-1)/2_ parameters are used to compute the cholesky factors of spherical angles, or the orthogonal matrices; the next _p_ parameters are the eigenvalues (in "eigen") or the standard deviations (in "spherical"). The bivariate case is illustrated here:
 
 
 
@@ -449,7 +449,7 @@ $$
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\ \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}^T
 $$
 
-For the OU process, the alpha matrix can be more general. Matrix parameterization such as singular value decomposition (_decomp="svd"_), QR (_decomp="qr"_), or Schur decomposition (_decomp="schur"_) are nevertheless used to make the matrix decomposable and real. The _decomp="svd+"_, _decomp="qr+"_, and _decomp="schur+"_ force the eigenvalues to be positive by taking their logarithm, and ensure uniqueness for the QR factorization. These matrices are parameterized by $p^2$ parameters. The firsts _p(p-1)/2_ parameters are used to compute the first orthogonal matrix, the next _p_ parameters for the eigenvalues ("svd") or diagonal values of the upper triangular matrix ("qr" and "schur"). The last _p(p-1)/2_ parameters are used to compute the second othogonal matrix ("svd"), or to fill the upper triangular matrix in the "schur" and "qr" parameterizations.
+For the OU process, the alpha matrix can be more general. Matrix parameterization such as singular value decomposition (_decomp="svd"_), QR (_decomp="qr"_), or Schur decomposition (_decomp="schur"_) are nevertheless used to make decomposable and real matrices. The _decomp="svd+"_, _decomp="qr+"_, and _decomp="schur+"_ forces the eigenvalues to be positive by taking their logarithm, and ensure uniqueness for the QR factorization. These matrices are parameterized by $p^2$ parameters. The firsts _p(p-1)/2_ parameters are used to compute the first orthogonal matrix, the next _p_ parameters for the eigenvalues ("svd") or diagonal values of the upper triangular matrix ("qr" and "schur"). The last _p(p-1)/2_ parameters are used to compute the second othogonal matrix ("svd"), or to fill the upper triangular matrix in the "schur" and "qr" parameterizations.
 
 
 
@@ -477,7 +477,7 @@ A=
 $$
 
 
-Finally, the alpha matrix can be diagonal (independent effects) or triangular. Triangular parameterizations are for instance used on time-series forecasting to determine if a given variable is helpful in predicting a second one; the so-called granger causality (e.g., the lower process drive the upper one for a upper triangular matrix). As for symmetric matrices, upper and lower triangular matrices are parameterized by _p(p+1)/2_ parameters. The firsts _p(p-1)/2_ parameters are used for the upper or lower off-diagonal of the matrices, while the nexts _p_ parameters are in the diagonal.
+Finally, the alpha matrix can be diagonal (independent effects) or triangular. Triangular parameterizations are for instance used on time-series forecasting to determine if a given variable is helpful in predicting a second one; the so-called Granger causality (e.g., the lower process drives the upper one for a upper triangular matrix). Similarly to symmetric matrices, upper and lower triangular matrices are parameterized by _p(p+1)/2_ parameters. The firsts _p(p-1)/2_ parameters are used for the upper or lower off-diagonal of the matrices, while the next _p_ parameters are in the diagonal.
 
 
 
@@ -500,7 +500,7 @@ A=
 \begin{bmatrix} \log{(d_{11})} & 0 \\ l_{21} & \log{(d_{22})} \end{bmatrix}
 $$
 
-Note: the package can't handle matrices with similar eigenvalues currently (i.e., the diagonal values must be slightly differents in a trianbgular matrix).
+Note: the package can't handle matrices with similar eigenvalues currently (e.g., the diagonal values must be slightly differents in a trianbgular matrix).
 
 
 ## 2. the "vcv" argument
@@ -573,7 +573,7 @@ all.equal(fit$llik(par),logLik(fit)) # similar results
 fit$llik(par, theta=TRUE)
 ```
  
-On all the **mvMORPH** models, the ancestral states (optimum or theta), is the maximum likelihood estimate (mle) analytic solution. But the user can specify manually the values for the root state (e.g., for mcmc evaluation):
+On all the **mvMORPH** models, the ancestral states (optimum or theta), are the maximum likelihood estimate (mle) analytic solution. But the user can specify manually the values for the root state (e.g., for mcmc evaluation):
 
 ```{r, comment=">"}
 # Use the maximum likelihood parameters from the optimizer
@@ -723,7 +723,7 @@ print(result)
 2. Reuse the returned log-likelihood functions
 -
 
-We can also use the likelihood returned by the mvMORPH functions to fit custom models using joint optimizations. Here an example with time-serie data to fit a shift in rates and covariances model.
+We can also use the likelihood returned by the mvMORPH functions to fit custom models using joint optimizations. Here an example with time-series data to fit a shift in rates and covariances.
 
 ```{r,comment=">"}
 set.seed(123)
@@ -783,7 +783,7 @@ print(results)
 
 # XII) Bayesian mcmc
 
-**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using a separation strategy based on the spherical parameterization (angles in the interval [0,pi] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5,0.4]; see for instance Lu & Ades 2009).
+**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using a separation strategy based on the spherical parameterization (angles in the interval [0,pi] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5,0.4]; see for instance Lu & Ades 2009; and the matrix parameterization section above).
 
 ```{r, comment=">", results="hide", eval=FALSE}
 set.seed(1)
