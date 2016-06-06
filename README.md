@@ -6,7 +6,7 @@ It also provides functions to compute log-likelihood of users specified models w
 
 The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* with fossil species) and missing data in multivariate datasets (NA values), SIMMAP mapping of discrete traits, measurement error, etc...
 
-See the packages vignettes for details and examples.
+See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
 **mvMORPH 1.0.7**
 
@@ -37,7 +37,9 @@ You can also install it directly from gitHub through devtools:
 
 library(devtools)
 
-install_github("JClavel/mvMORPH")
+install_github("JClavel/mvMORPH", build_vignettes = TRUE)
+
+(The installation may crash if your dependencies are not up to date. Note that you may also need to install Rtools to compile the C codes included in the package. For [Windows] (https://cran.r-project.org/bin/windows/Rtools/) and for [Mac] (http://r.research.att.com) (and [Tools] (https://r.research.att.com/tools/) )
 
 ##**Report an issue**
 Any bugs encountered when using the package can be reported [here](https://github.com/JClavel/mvMORPH/issues)
