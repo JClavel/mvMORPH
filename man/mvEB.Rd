@@ -43,7 +43,7 @@ Whether the tree should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines. (See ?optim and ?subplex for details).
+Methods used by the optimization routines. (See ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
@@ -82,9 +82,9 @@ Starting values for "sigma" and "beta" could also be provided through the "param
 \item{beta }{Exponent rate (of decay or increase).}
 \item{sigma }{Evolutionary rates matrix for each selective regimes.}
 \item{convergence }{Convergence status of the optimizing function; "0" indicates convergence (See ?optim for details).}
-\item{hessian }{Hessian matrix of second order partial derivatives at the MLE. (See ?mvOU for details).}
 \item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. (See ?mvOU for details).}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
+\item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -93,6 +93,8 @@ Starting values for "sigma" and "beta" could also be provided through the "param
 }
 \references{
 Blomberg S.P., Garland T.J., Ives A.R. 2003. Testing for phylogenetic signal in comparative data: behavioral traits are more labile. Evolution. 57:717-745.
+
+Clavel J., Escarguel G., Merceron G. 2015. mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.
 
 Harmon L.J., Losos J.B., Davies J.T., Gillespie R.G., Gittleman J.L., Jennings B.W., Kozak K.H., McPeek M.A., Moreno-Roark F., Near T.J., Purvis A., Ricklefs R.E., Schluter D., Schulte II J.A., Seehausen O., Sidlauskas B.L., Torres-Carvajal O., Weir J.T., Mooers A.O. 2010. Early bursts of body size and shape evolution are rare in comparative data. Evolution. 64:2385-2396.
 
@@ -115,6 +117,8 @@ The derivative-free "Nelder-Mead" optimization method is used as default setting
 \code{\link{mvOU}}
 \code{\link{mvBM}}
 \code{\link{mvSHIFT}}
+\code{\link{mvOUTS}}
+\code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{optim}}
 
@@ -132,7 +136,7 @@ tree<-pbtree(n=50, scale=10)
 sigma<-matrix(c(0.1,0.05,0.05,0.1),2)
 theta<-c(0,0)
 beta<- -0.34 # 5 phylogenetic half-life ( log(2)/ (10/5) )
-data<-mvSIM(tree, param=list(sigma=sigma, beta=beta, ntraits=2, mu=theta,
+data<-mvSIM(tree, param=list(sigma=sigma, beta=beta, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size")), model="EB", nsim=1)
 
 ## Fitting the models
@@ -143,7 +147,7 @@ mvEB(tree, data, method="pic", param=list(low=log(10^-5)/10)) # avoid internal e
 # ACDC
 # Note that the AC model is not differentiable from an OU model on ultrametric trees.
 beta<- 0.34
-data<-mvSIM(tree, param=list(sigma=sigma, beta=beta, ntraits=2, mu=theta,
+data<-mvSIM(tree, param=list(sigma=sigma, beta=beta, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size")), model="EB", nsim=1)
 
 fit<-mvEB(tree, data, method="pic", param=list(up=2, low=-2))

@@ -115,4 +115,47 @@ SEXP   Chol_RPF(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SE
 	
     UNPROTECT (7);
     return (vec); 
+}
+
+
+// Factorisation de Cholesky RPF - avoid explicit computation of U'x=D and U'x=dat
+SEXP   Chol_RPF_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
+    int n, err, info;
+    char up = 'U', trans = 'T';
+    
+    n = INTEGER(ndimA)[0];
+    err = INTEGER(ismserr)[0];
+    PROTECT(A = coerceVector(A,REALSXP));
+    PROTECT(mserr = coerceVector(mserr,REALSXP));
+    SEXP ARF = PROTECT(allocVector(REALSXP,(n+1)*n/2));
+    SEXP det = PROTECT(allocVector(REALSXP,1));
+    
+    // add measurement error
+    if(err==1){
+        ms_error(REAL(A),REAL(mserr), &n);
     }
+    // preparation au format RPF
+    F77_CALL(dtrttf)(&trans,&up,&n,REAL(A),&n,REAL(ARF),&info);
+    if (info != 0){
+        error("the %d argument had an illegal value",info);
+    }
+    
+    // decomposition de Cholesky
+    F77_CALL(dpftrf)(&trans,&up,&n,REAL(ARF),&info);
+    if (info != 0) {
+        if (info > 0) error("the leading minor of order %d is not positive definite",info);
+        error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");
+    }
+    
+    // Calcul du determinant
+    determinant(REAL(det),REAL(ARF),&n);
+    
+    // Liste: cholesky, determinant
+    SEXP vec = PROTECT(allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(vec, 0, ARF);
+    SET_VECTOR_ELT(vec, 1, det);
+    
+    UNPROTECT (5);
+    return (vec);
+}
+

@@ -12,6 +12,18 @@ mvEB<-function(tree, data, error=NULL, param=list(up=0), method=c("rpf","sparse"
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
+
+# Check the order of the dataset and the phylogeny
+if(!is.null(rownames(data))) {
+    if(any(tree$tip.label==rownames(data))){
+        data<-data[tree$tip.label,]
+    }else if(echo==TRUE){
+        cat("row names of the data matrix must match tip names of your phylogeny!","\n")
+    }
+}else if(echo==TRUE){
+    cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
+}
+
 # select default model
 method<-method[1]
 # Check if there is missing cases
@@ -26,7 +38,10 @@ if(any(is.na(data))){
     Indice_NA<-which(is.na(as.vector(data)))
 }
 # bind error to a vector
-if(!is.null(error)){error<-as.vector(error)}
+if(!is.null(error)){
+    error<-as.vector(error)
+    error[is.na(error)] <- 0
+}
 
 # number of species (tip)
 n<-dim(data)[1]
@@ -35,6 +50,7 @@ k<-dim(data)[2]
 # method for the optimizer & algorithm
 optimization<-optimization[1]
 # scale height of the tree
+maxHeight<-1
 if(scale.height==TRUE){
 maxHeight<-max(nodeHeights(tree))
 tree$edge.length<-tree$edge.length/maxHeight
@@ -58,6 +74,16 @@ if(is.null(param[["up"]])==TRUE){
   if(echo==TRUE)  cat("No upper bound provided. Use of default setting \"0\"")
     up<-param$up<-0
 }else{up<-param$up}
+
+# Scatter (sigma) matrix decomposition
+if(is.null(param[["decomp"]])){
+    decomp<-param$decomp<-"cholesky"
+}else{
+    decomp<-param$decomp[1]
+}
+
+# function for sigma parameterization
+sigmafun <- function(par) {symPar(par, decomp=decomp, p=k)}
 
 if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
     
@@ -107,38 +133,41 @@ if(method=="sparse"){
 # switch method
 switch(method,
 "rpf"={
-    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
+    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
         V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "sparse"={
-    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
+    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
         V<-.Call("kroneckerSparEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n),  IA=as.integer(precalcMat@rowpointers-1), JA=as.integer(precalcMat@colindices-1), A=precalcMat@entries)
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=NULL) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=NULL,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "pseudoinverse"={
-    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
+    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
         V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
+        loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "inverse"={
-    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
+    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
     V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
-    loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA) ######### A modif pour sparse
+    loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
     return(loglik)
     }
 },
 "pic"={
-    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc){
-        res<-.Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=tt, rate=as.double(rep(beta,k)), Tmax=1, Model=as.integer(1), mu=1, sigma=sig)
+    eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
+
+        res<-.Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=tt, rate=as.double(rep(beta,k)), Tmax=1, Model=as.integer(1), mu=theta, sigma=sig)
         logl<- -0.5 * ( n * k * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
-       return(list(logl=logl,anc=res[[7]], sigma=res[[2]]))
+        # return the beta value provided instead of the MLE...
+        if(theta_mle==TRUE){ theta<-res[[7]] }
+       return(list(logl=logl,anc=theta, sigma=res[[2]]))
     }
 }
 )
@@ -147,20 +176,47 @@ switch(method,
 
 ##--------------Maximum Likelihood estimation of EB---------------------------##  
 
-likEB <- function(dat, error, C, D, beta, sig, k, n, method, precalc, precalcMat) {
+likEB <- function(dat, error, C, D, beta, sig, k, n, method, precalc, precalcMat, theta_mle=TRUE, theta=NULL) {
 
-    loglik<-eb_fun_matrix(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc) ######### A modif pour sparse
+    loglik<-eb_fun_matrix(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta) ######### A modif pour sparse
 
     list(loglik=-loglik$logl, ancstate=loglik$anc)
 }
 
+##-------------------Function log-likelihood----------------------------------##
+
+llfun <- function(par,...){
+    
+    args <- list(...)
+    if(is.null(args[["root.mle"]])) args$root.mle <- TRUE
+    if(is.null(args[["theta"]])) args$theta <- FALSE
+    
+    if(args$root.mle==TRUE){
+        
+        result <- -as.numeric(likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat, theta_mle=TRUE, theta=NULL)$loglik)
+        if(args$theta==TRUE){
+            theta <- as.numeric(likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat, theta_mle=TRUE, theta=NULL)$ancstate)
+            result<-list(logl=result, theta=theta)
+        }
+    }else{
+        
+        result <- -as.numeric(likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat, theta_mle=FALSE, theta=par[1+npar+seq_len(k)])$loglik)
+        
+    }
+    return(result)
+}
+# attributes to the loglik function
+attr(llfun, "model")<-"EB"
+attr(llfun, "beta")<-1
+attr(llfun, "sigma")<-npar
+attr(llfun, "theta")<-k
 
 ##---------------Optimizing function------------------------------------------##
 # initial value for exponent parameter
 if(is.null(param[["beta"]])==TRUE){
-ebval<-runif(1,param$low,param$up)*0.1
+    ebval<- -1/maxHeight
 }else{
-ebval<-param$beta
+    ebval<-param$beta
 }
 
 # initial values for the optimizer
@@ -171,6 +227,27 @@ sig1<-sym.unpar(sig1)
 sig1<-param$sigma
 }
 
+## Check first if we want to return the log-likelihood function only
+if(optimization=="fixed"){
+    message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+    param$sigmafun<-sigmafun
+    param$nbspecies<-n
+    param$ntraits<-k
+    param$nregimes<-1
+    param$method<-method
+    param$optimization<-optimization
+    param$traits<-colnames(data)
+    param$model<-if(ebval>0){"AC"}else if(ebval<0){"EB"}else{"ACDC"}
+    theta.mat<-rep(0,k)
+    class(llfun) = c("mvmorph.llik")
+
+    results<-list(llik=llfun, theta=theta.mat, sigma=sym.par(sig1), beta=ebval, param=param)
+    class(results)<-c("mvmorph")
+    invisible(results)
+    return(results)
+}
+
+
 if(method=="pic"){
     warning<-eval_polytom(tree)
     tree<-reorder.phylo(tree,"postorder")
@@ -178,28 +255,37 @@ if(method=="pic"){
     tt<-.Call("times_root", brlength=tree$edge.length, edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), ntip=as.integer(n), Nnode=as.integer(tree$Nnode))
     
     if(optimization=="subplex"){
-        estim <- subplex(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sym.par(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, hessian=TRUE, control=control)
+        estim <- subplex(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, hessian=TRUE, control=control)
     }else{
-        estim <- optim(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sym.par(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, gr=NULL, hessian=TRUE, method = optimization, control=control)
+        estim <- optim(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, gr=NULL, hessian=TRUE, method = optimization, control=control)
     }
 }else{
 
 
 if(optimization=="subplex"){
-    estim <- subplex(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sym.par(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, hessian=TRUE, control=control)
+    estim <- subplex(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, hessian=TRUE, control=control)
    }else{
-    estim <- optim(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sym.par(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, gr=NULL, hessian=TRUE, method = optimization, control=control)
+    estim <- optim(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, gr=NULL, hessian=TRUE, method = optimization, control=control)
    }
 }
 ##-----------------Summarizing results----------------------------------------##
+# names for the plot
+if(is.null(colnames(data))){
+    names_data_matrix<-rep("",k)
+    names_data<-list(names_data_matrix,names_data_matrix)
+}else{
+    names_data_matrix<-colnames(data)
+    names_data<-list(names_data_matrix,names_data_matrix)
+}
+
 # sigma matrix
-resultList<-sym.par(estim$par[1+seq_len(npar)])
-colnames(resultList)<-colnames(data)
-rownames(resultList)<-colnames(data)
+resultList<-sigmafun(estim$par[1+seq_len(npar)])
+dimnames(resultList)<-names_data
+
 #ancestral states estimates
-anc<-matrix(likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,estim$par[1]), sig=sym.par(estim$par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$ancstate,nrow=1)
+anc<-matrix(likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,estim$par[1]), sig=sigmafun(estim$par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$ancstate,nrow=1)
 rownames(anc)<-"theta"
-colnames(anc)<-colnames(data)
+colnames(anc)<-names_data_matrix
 
 # rate parameter
 r=ratevalue(up,low,estim$par[1])
@@ -261,10 +347,14 @@ param$method<-method
 param$optimization<-optimization
 param$traits<-colnames(data)
 param$model<-if(r>0){"AC"}else if(r<0){"EB"}else{"ACDC"}
+param$sigmafun<-sigmafun
+param$opt<-estim
+class(llfun) = c("mvmorph.llik")
 ##-------------------Store results--------------------------------------------##
  
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=anc, beta=r, sigma=resultList,  convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.value, param=param)
-class(results)<-c("mvmorph","acdc")
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=anc, beta=r, sigma=resultList,  convergence=estim$convergence, hess.values=hess.value, param=param, llik=llfun)
+
+class(results)<-c("mvmorph","mvmorph.acdc")
 invisible(results)
 
 }

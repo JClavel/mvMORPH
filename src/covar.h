@@ -8,6 +8,10 @@
 #include <R_ext/Lapack.h>
 #include <R_ext/Utils.h>
 #include <R_ext/BLAS.h>
+#include <complex.h>
+// transform complex R structure to C structure
+#define comp(x) ((x.r) + ((x.i)*I))
+
 
 /* from OUCH package */
 static SEXP makearray (int rank, int *dim) {

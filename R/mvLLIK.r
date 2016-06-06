@@ -138,14 +138,14 @@ switch(method,
                 eval_polytom(tree)
                 # Generalized Brownian Motion?
                 if(param$estim==TRUE){
-                    mod<-10 # meme topologie (sinon 3)
+                    mod<-13 # meme topologie (sinon 3)
                     param$sigma<-1
                     param$mu<-1
                 
                 }else{
                     if(is.null(param[["mu"]])==TRUE & is.null(param[["sigma"]])==TRUE){
                         warning("No values specified for sigma and mu in the \"param\" list, analytical MLE is computed")
-                        mod<-10
+                        mod<-13
                         param$sigma<-1
                         param$mu<-1
                         mu_null<-TRUE
@@ -183,11 +183,11 @@ switch(method,
                 tree<-precalc$tree
                 # Generalized Brownian Motion?
                 if(param$estim==TRUE){
-                    mod<-10 # meme topologie (sinon 3)
+                    mod<-13 # meme topologie (sinon 3)
                 }else{
                     if(is.null(param[["mu"]])==TRUE & is.null(param[["sigma"]])==TRUE){
                         warning("No values specified for sigma and mu in the \"param\" list, analytical MLE is computed")
-                        mod<-10
+                        mod<-13
                         param$sigma<-1
                         param$mu<-1
                         mu_null<-TRUE

@@ -68,7 +68,7 @@ set.seed(101)
 alpha<-matrix(c(1.1,-0.9,-0.9,1),2)
 sigma<-matrix(c(0.35,0.06,0.06,0.35),2)
 theta<-c(5.5,5.1,1.2,1.4)
-data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta, 
+data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, theta=theta, 
 names_traits=c("limb.length","limb.width")), model="OUM", nsim=1)
 
 ```
@@ -192,7 +192,7 @@ cov2cor(stationary(OUM))
 
 ## Example 2: Tests for evolutionary correlations between two species groups
 
-In this second simulated example we illustrate how **mvMORPH** can be used for assessing correlated evolution and evolutionary covariance structures in different selective regimes. Constrained models are used to compare different hypotheses of covariations between traits organized hierarchically from a common structure shared between species group, proportional evolutionary covariances, similar variances but different correlations (shared eigenvectors), similar correlations but different variances, and completely unrelated covariance structures.
+In this second simulated example we illustrate how **mvMORPH** can be used for assessing correlated evolution and evolutionary covariance structures in different selective regimes. Constrained models are used to compare different hypotheses of covariations between traits organized hierarchically from a common structure shared between species group, proportional evolutionary covariances, similar variances but different correlations, shared eigenvectors, similar correlations but different variances, and completely unrelated covariance structures.
 
 We first simulate a tree with two mapped regimes, and simulate traits with unrelated covariances in each group (Fig. 2). Unrelated covariance structures can result from different selective pressures within each group, while the other sub-models assume intermediate hypotheses of shared covariance structures such as, e.g., evolution along the same variance directions.
 
@@ -233,15 +233,18 @@ theta<-c(0,0)
 
 ###---------------------Simulate the traits------------------###
 
-data<-mvSIM(tree, param=list(sigma=list(sigma_1,sigma_2), ntraits=2, mu=theta, 
+data<-mvSIM(tree, param=list(sigma=list(sigma_1,sigma_2), theta=theta, 
                              names_traits=c("Trait 1","Trait 2")), model="BMM", nsim=1)
 
 ```
 
-  Now we fit five nested BM models. We first compare a multiple (unrelated) rate matrix ("BMM") model with an equal rate matrix ("BM1") model. Then we fit a multiple rate matrix for which:
+  Now we fit six nested BM models. We first compare a multiple (unrelated) rate matrix ("BMM") model with an equal rate matrix ("BM1") model. Then we fit a multiple rate matrix for which:
 
-*  we constrain the variances to be similar but not the covariances 
+*  we constrain the eigenvectors to be the sames (shared orientation) 
     using the "param" list (param=list(constraint="shared")),
+    
+*  we constrain the variances to be similar but not the covariances 
+    using the "param" list (param=list(constraint="variance")),
     
 *  a multiple rate matrix model for which the 
     correlations are identical between groups  
@@ -250,7 +253,7 @@ data<-mvSIM(tree, param=list(sigma=list(sigma_1,sigma_2), ntraits=2, mu=theta,
 *  and a multiple rate matrix model for which the matrices differs 
     by a proportional scalar (param=list(constraint="proportional")).
 
-AIC and Log-likelihood ratio tests are finally used to compare the four nested models.
+AIC and Log-likelihood ratio tests are finally used to compare the five nested models.
 
 
 ```{r, comment=">"}
@@ -271,8 +274,12 @@ model_3<-mvBM(tree, data, param=list(constraint="shared")
 model_4<-mvBM(tree, data, param=list(constraint="correlation")
               , diagnostic=FALSE, echo=FALSE)
 
-# BMM - (independent rate matrices)
-model_5<-mvBM(tree, data, model="BMM", diagnostic=FALSE, echo=FALSE)
+# BMM - (Similar variances between rate matrices)
+model_5<-mvBM(tree, data, param=list(constraint="variance")
+              , diagnostic=FALSE, echo=FALSE)
+
+# BMM - (Independent rate matrices)
+model_6<-mvBM(tree, data, model="BMM", diagnostic=FALSE, echo=FALSE)
 
 # Compare the models with AIC
 AIC(model_1)
@@ -285,33 +292,61 @@ AIC(model_4)
 
 AIC(model_5)
 
+AIC(model_6)
+
 # Test significance with LRT
+LRT(model_6,model_5)
 
-LRT(model_5,model_4)
+LRT(model_6,model_4)
 
-LRT(model_5,model_3)
+LRT(model_6,model_3)
 
-LRT(model_5,model_2)
+LRT(model_6,model_2)
 
-LRT(model_5,model_1)
+LRT(model_6,model_1)
 
 ```
 
 
-As expected, AIC criterion shows that the generating "unrelated matrix model" we simulated is preferred over all other fitted models. LRT tests further show that the difference with the second best-fit models is significant (at a 0.05 level). 
+As expected, AIC criterion shows that the generating "unrelated matrix model" we simulated is preferred over all other fitted models. LRT tests further show that the difference with the second best-fit models ("shared eigenvectors") is non-significant (at a 0.05 level). This indicate that the main differences in the rate matrices are in their covariances. 
 From the rates matrices (evolutionary covariances), we can compute the evolutionary correlation in both groups using the *cov2cor* function in the R package **stats**.
 
 ```{r, comment=">"}
 # Forest species
-cov2cor(model_5$sigma[,,1])
+cov2cor(model_6$sigma[,,1])
 
 # Savannah species
-cov2cor(model_5$sigma[,,2])
+cov2cor(model_6$sigma[,,2])
 ```
 
 
 Note that the alternate generating models proposed in **mvMORPH** (e.g., *mvOU, mvEB*) can also be used to assess whether a Brownian motion process is a good approximation for describing the simulated evolutionary pattern.      
 
+```{r, comment=">"}
+
+require(car)
+
+plot(data,asp=1,ylim=c(-1,1),xlim=c(-1,1), cex=0.8, main="proportional")
+ellipse(c(0,0), model_2$sigma[,,1], sqrt(qchisq(.95,2)))
+ellipse(c(0,0), model_2$sigma[,,2], sqrt(qchisq(.95,2)), col=3, lty=2)
+
+plot(data,asp=1,ylim=c(-1,1),xlim=c(-1,1),  cex=0.8, main="shared eigenvectors")
+ellipse(c(0,0), model_3$sigma[,,1], sqrt(qchisq(.95,2)))
+ellipse(c(0,0), model_3$sigma[,,2], sqrt(qchisq(.95,2)), col=3, lty=2)
+
+plot(data,asp=1,ylim=c(-1,1),xlim=c(-1,1), cex=0.8, main="correlations")
+ellipse(c(0,0), model_4$sigma[,,1], sqrt(qchisq(.95,2)))
+ellipse(c(0,0), model_4$sigma[,,2], sqrt(qchisq(.95,2)), col=3, lty=2)
+
+plot(data,asp=1,ylim=c(-1,1),xlim=c(-1,1), cex=0.8, main="variance")
+ellipse(c(0,0), model_5$sigma[,,1], sqrt(qchisq(.95,2)))
+ellipse(c(0,0), model_5$sigma[,,2], sqrt(qchisq(.95,2)), col=3, lty=2)
+
+results <- list(model_1,model_2,model_3,model_4,model_5,model_6)
+
+aicw(results)
+
+```
 
 
 ## References:  

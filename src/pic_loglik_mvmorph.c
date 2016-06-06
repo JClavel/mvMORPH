@@ -21,6 +21,18 @@ int i=0, round=down(veclength,4);
    	
 }
 
+// Copy phenotype
+static void copypheno(int *ntip, int *ntraits, int *ntotal, const double *pheno, double *phenocopy){
+    int i, j, nsp=*ntip, ntr=*ntraits, ntot=*ntotal ;
+    
+    // Préparation du jeu de données
+    for(i=0; i<ntr; i++){
+        for(j=0; j<nsp; j++){
+            phenocopy[j+i*ntot]=pheno[j+i*nsp];
+        }
+    }
+}
+
 // Early Burst tree transformation
 static void ebTree(double *times, double *tempblength, double *rate, int *edge1, int *edge2, int *ntip){
     int i, nt=*ntip, ind, a1, d1;
@@ -36,10 +48,11 @@ static void ebTree(double *times, double *tempblength, double *rate, int *edge1,
 
 // Ornstein-Uhlenbeck tree transformation
 static void ouTree(double *times, double *tempblength, double *blength, double *Tmax, double *rate, int *edge1, int *ntip){
-    double bl, age, t1, t2;
+    double bl, age, t1, t2, var;
     int inded1, ind, nt=*ntip, i;
     
     ind=nt*2-2;
+    var=1./(2.*rate[0]);
     
     for(i=0; i<ind; i++){
         bl=blength[i];
@@ -47,7 +60,7 @@ static void ouTree(double *times, double *tempblength, double *blength, double *
         age=times[inded1-(nt+1)];
         t1=Tmax[0]-age;
         t2=t1+bl;
-        tempblength[i]=(1./(2.*rate[0]))*exp(-2.*rate[0] * (Tmax[0]-t2)) * (1. - exp(-2. * rate[0] * t2))-(1./(2.*rate[0]))*exp(-2.*rate[0] * (Tmax[0]-t1)) * (1. - exp(-2. * rate[0] * t1));
+        tempblength[i]=var*exp(-2.*rate[0] * (Tmax[0]-t2)) * (1. - exp(-2. * rate[0] * t2))-var*exp(-2.*rate[0] * (Tmax[0]-t1)) * (1. - exp(-2. * rate[0] * t1));
     }
 }
 
@@ -121,6 +134,56 @@ static void phylo_pic(int *ind, int *ntotal, int *numbnode, int *nsp, int *edge1
     
          V[f]= root_v[0]*root_v[1]/(root_v[0]+root_v[1]);
 }
+
+static void phylo_pic_single(int *ind, int *ntotal, int *numbnode, int *nsp, int *edge1, int *edge2, double *tempblength, double *pheno, double *var_contr, double *ancstates, double *root_v, double *V, double *contr){
+    int i, j, k, l, ic, anc, d1, d2, ntot, numbnod, ntip, f, ntraits;
+    double sumbl;
+    ntot=*ntotal;
+    numbnod=*numbnode;
+    ntip=*nsp;
+    ntraits=*ind;
+    
+    for (i = 0; i < ntip * 2 - 3; i += 2) {
+        j = i + 1;
+        anc = edge1[i];
+        d1 = edge2[i] - 1;
+        d2 = edge2[j] - 1;
+        sumbl = tempblength[i] + tempblength[j];
+        ic = anc - ntip - 1;
+        
+        for(f=0; f<ntraits; f++){
+            contr[ic+f*numbnod] = (pheno[d1+f*ntot] - pheno[d2+f*ntot])/sqrt(sumbl);
+            var_contr[ic+f*numbnod] = sumbl;
+            pheno[(anc - 1)+f*ntot] = (pheno[d1+f*ntot]*tempblength[j] + pheno[d2+f*ntot]*tempblength[i])/sumbl;
+        }
+        /* find the edge where `anc' is a descendant (except if at the root):
+         it is obviously below the j'th edge */
+        if (j != ntip * 2 - 3) {
+            k = j + 1;
+            while (edge2[k] != anc) k++;
+            tempblength[k] += tempblength[i]*tempblength[j]/sumbl;
+        }
+    }
+    
+    // Calcul de la Variance
+    k=0;
+    l=0;
+    while(k !=2){
+        if(edge1[l] == ntip+1){
+            root_v[k]=tempblength[l];
+            k++;
+        }
+        l++;
+    }
+    
+    for(f=0 ; f<ntraits; f++){
+        V[f]= root_v[0]*root_v[1]/(root_v[0]+root_v[1]);
+    
+        // Calcul de l'etat ancestral
+        ancstates[f]=pheno[ntip+f*ntot];
+    }
+}
+
 // Models for Phylogenetic Independent Contrasts likelihood
 // 1-Early Burst/ACDC model
 // 2-Ornstein-Uhlenbeck process
@@ -131,11 +194,12 @@ static void phylo_pic(int *ind, int *ntotal, int *numbnode, int *nsp, int *edge1
 // 7-Generalized Brownian Motion on a single topology- ancestral state estimation
 // 8-Generalized Brownian Motion on a single topology- sigma estimation
 // 9-Generalized Brownian Motion - sigma estimation
-// 10-default - Brownian Motion on a single topology
+// 10-OU process with user mean
+// 11-default - Brownian Motion on a single topology
 
 
 SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP edgelength, SEXP times, SEXP rate, SEXP Tmax, SEXP Model, SEXP mu, SEXP sigma){
-  int nodnbtr, numbnod, ntip, i, j, ntot, ntraits, dimrtrait, f, model, info = 0, neg = 0;
+  int nodnbtr, numbnod, ntip, i, ntot, ntraits, dimrtrait, f, model, info = 0, neg = 0;
   char transa = 'T', transb = 'N';
   double one = 1.0, zero = 0.0;
   numbnod = INTEGER(Nnode)[0];
@@ -164,70 +228,83 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
 
  
   // Préparation du jeu de données
-  for(i=0; i<ntraits;i++){
-	for(j=0; j<ntip; j++){
-	REAL(pheno)[j+i*ntot]=REAL(x)[j+i*ntip];
-	}
-  }
-  
-
-     
- for(f = 0; f < ntraits; f++){
-   //temporary allocation of vector for blength
-   if(REAL(rate)[f]==0.0 & model==1 || REAL(rate)[f]==0.0 & model==2 ){
-       model=10; //change to 3 for a general model
-     }
+  copypheno(&ntip, &ntraits, &ntot, REAL(x), REAL(pheno));
      
    // arbre transformé par traits
    //switch depending on branch transformation
      switch (model) {
          case 1:
+             for(f=0; f < ntraits; f++){
+                 if(REAL(rate)[f]==0.0) model=11;
              ebTree(REAL(times),REAL(tempblength),REAL(rate),INTEGER(edge1), INTEGER(edge2), &ntip);
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+             }
              break;
              
          case 2:
+             for(f=0; f < ntraits; f++){
+                 if(REAL(rate)[f]==0.0) model=11;
              ouTree(REAL(times),REAL(tempblength),REAL(VECTOR_ELT(edgelength,0)),REAL(Tmax),REAL(rate),INTEGER(edge1), &ntip);
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+             }
              break;
              
          case 3:
+            for(f=0; f < ntraits; f++){
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,f)), REAL(tempblength)); // estimate sigma & theta
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+            }
              break;
              
          case 4:
+            for(f=0; f < ntraits; f++){
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,f)), REAL(tempblength)); // user sigma & theta
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+            }
              break;
              
          case 5:
+            for(f=0; f < ntraits; f++){
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,f)), REAL(tempblength)); // user sigma estimated theta
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+            }
              break;
              
          case 6:
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,0)), REAL(tempblength)); // 1 topo. user sigma & theta
+             phylo_pic_single(&ntraits, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
              break;
              
          case 7:
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,0)), REAL(tempblength)); // 1 topo. user sigma, estimated theta
+             phylo_pic_single(&ntraits, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
              break;
              
          case 8:
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,0)), REAL(tempblength)); // 1 topo. estimated sigma, user theta
+             phylo_pic_single(&ntraits, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
              break;
              
          case 9:
+            for(f=0; f < ntraits; f++){
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,f)), REAL(tempblength)); // estimated sigma, user theta
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+            }
              break;
-
+             
+         case 10:
+            for(f=0; f < ntraits; f++){
+                 if(REAL(rate)[f]==0.0) model=11;
+             ouTree(REAL(times),REAL(tempblength),REAL(VECTOR_ELT(edgelength,0)),REAL(Tmax),REAL(rate),INTEGER(edge1), &ntip);
+             phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
+            }
+             break;
 
              
          default:
              copybrlength(&ntip, REAL(VECTOR_ELT(edgelength,0)), REAL(tempblength));
+             phylo_pic_single(&ntraits, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
      }
-    
-     
-     phylo_pic(&f, &ntot, &numbnod, &ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(pheno), REAL(var_contr), REAL(ancstates), REAL(root_v), REAL(V), REAL(contr));
-     
-     
-	}//end calcul pour chacun des traits
  
     
  
@@ -238,7 +315,7 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
     SEXP Z = PROTECT(allocMatrix(REALSXP,ntraits,ntraits));
     
     // Sigma matrix is provided
-    if(model==1 || model==4 || model==5 || model==6 || model==7){
+    if(model==1 || model==2 || model==4 || model==5 || model==6 || model==7 || model==10){
         for(i=0; i<dimrtrait; i++) REAL(Z)[i]=REAL(sigma)[i];
     }else{
     // crossproduct of contrast matrix
@@ -276,7 +353,7 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
     
     
     /* Compute the root variance for the Generalized Brownian Motion */
-    if(model==4 || model==6 || model==8 || model==9){
+    if(model==4 || model==6 || model==8 || model==9 || model==10){
         
         for(i=0; i<ntraits; i++){
             REAL(muRoot)[i]=(REAL(ancstates)[i]-REAL(mu)[i])/sqrt(REAL(V)[i]);

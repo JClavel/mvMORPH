@@ -11,7 +11,7 @@ This function allows simulating multivariate (as well as univariate) continuous 
 }
 \usage{
 mvSIM(tree, nsim = 1, error = NULL, model = c("BM1", "BMM", "OU1", "OUM", "EB"),
-                        param = list(mu = 0, sigma = 0.1, alpha = 1, beta = 0))
+                        param = list(theta = 0, sigma = 0.1, alpha = 1, beta = 0))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -52,6 +52,8 @@ If parameters values are not provided, the default values are fixed to 1 (sigma,
 For the "BMM" model were different parts of the tree have their own rate, a list with one rate (or matrix of rates) per selective regimes must be provided.
 
 For the "OU1" and "OUM" models, the user can define if the ancestral state (theta0) should be computed (param$root=TRUE), assumed to be at the oldest regime state (param$root=FALSE), or that there is no root and each regimes is at the stationary point (param$root="stationary"). (See also ?mvOU).
+
+For the "BM1", "BMM", and "RWTS" models, a trend can be simulated by providing the "trend" argument and values in the "param" list.
 
 Traits names can be provided with the "names_traits" argument in the "param" list.
 For all the shift models, if the tree is not mapped the age of the shift should be directly provided (in unit of times of the tree) by the "age" argument in the "param" list.
@@ -121,7 +123,7 @@ sigma<-list(Forest=matrix(c(2,0.5,0.5,1),2), Savannah=matrix(c(5,3,3,4),2))
 theta<-c(0,0)
 
 # Simulate
-simul<-mvSIM(tree,nsim=nsim, model="BMM",param=list(ntraits=ntraits,sigma=sigma, mu=theta))
+simul<-mvSIM(tree,nsim=nsim, model="BMM",param=list(ntraits=ntraits,sigma=sigma,theta=theta))
 
 # Try to fit a "BM1" model to the first simulated dataset
 model_fit<-mvBM(tree,simul[[1]],model="BM1")

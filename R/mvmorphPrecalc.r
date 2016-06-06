@@ -44,11 +44,16 @@ mv.Precalc<-function(tree, nb.traits=1, scale.height=FALSE, param=list(pivot="MM
     
     if(param$method!="pic"){
     #compute the variance-covariance matrix
-    C1<-vcv.phylo(tree)
+    
+    #if(model=="OUTS" | model=="RWTS"){
+    #    C1<-vcv.ts(tree)
+    #}else{
+        C1<-vcv.phylo(tree)
+    #}
     
 
 
-if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"]]!="OU1"){
+    if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"]]!="OU1"){
     #Build a list of VCV from SIMMAP trees
     multi.tre<-list()
     class(multi.tre)<-"multiPhylo"
@@ -79,7 +84,7 @@ if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"
         
         # Pull (alpha) matrix decomposition
         if(is.null(param[["decomp"]])){
-            decomp<-param$decomp<-"symmetricPositive"
+            decomp<-param$decomp<-"cholesky"
         }else{
             decomp<-param$decomp[1]
         }
@@ -89,9 +94,9 @@ if(!is.null(tree[["mapped.edge"]])){# & param[["model"]]!="OUM" & param[["model"
                 vcvtype<-"sparse"
             }else{
                 if(is.ultrametric(tree)==TRUE){
-                    vcvtype<-"ouch"
+                    vcvtype<-"randomRoot"
                         }else{
-                    vcvtype<-"mvmorph"
+                    vcvtype<-"fixedRoot"
              
                 }
             }

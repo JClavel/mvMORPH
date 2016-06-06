@@ -127,6 +127,43 @@ SEXP   Chol_RPF_univ(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mser
     return (vec); 
 }
 
+
+// Factorisation de Cholesky RPF
+SEXP   Chol_RPF_univ_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
+    int n, info = 0, err;
+    char up = 'U', norm = 'N';
+    
+    n = INTEGER(ndimA)[0];
+    err = INTEGER(ismserr)[0];
+    PROTECT(A = coerceVector(A,REALSXP));
+    PROTECT(mserr = coerceVector(mserr,REALSXP));
+    SEXP det = PROTECT(allocVector(REALSXP,1));
+    
+    // add measurement error
+    if(err==1){
+        ms_error(REAL(A),REAL(mserr), &n);
+    }
+    
+    // decomposition de Cholesky
+    F77_CALL(dpftrf)(&norm,&up,&n, REAL(A),&info);
+    if (info != 0) {
+        if (info > 0) error("the leading minor of order %d is not positive definite",info);
+        error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");
+    }
+    
+    // Calcul du determinant
+    determinant(REAL(det),REAL(A),&n);
+    
+    // Liste: determinant, cholesky, X
+    SEXP vec = PROTECT(allocVector(VECSXP, 2));
+    SET_VECTOR_ELT(vec, 0, A);
+    SET_VECTOR_ELT(vec, 1, det);
+    
+    UNPROTECT (4);
+    return (vec);
+}
+
+
 // function to compute the quadratic product
 SEXP   Chol_RPF_quadprod_column(SEXP U, SEXP resid, SEXP nterm){
     int n, info = 0, one = 1;

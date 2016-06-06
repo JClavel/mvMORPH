@@ -14,5 +14,3 @@
 extern void F77_CALL(dtrttf)(char *TRANSR, char *UPLO, int *N, double *A,int *LDA, double *ARF, int *INFO);
 extern void F77_CALL(dpftrf)(char *TRANSR, char *UPLO, int *N, double *A,int *INFO);
 extern void F77_CALL(dtfsm)(char *TRANSR, char *SIDE, char *UPLO, char *TRANS, char *DIAG, int *M, int *N, double *ALPHA, double *A, double *B, int *LDB);
-
-

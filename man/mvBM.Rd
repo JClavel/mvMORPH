@@ -10,12 +10,11 @@ This function allows the fitting of multivariate multiple rates of evolution und
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-mvBM(tree, data, error = NULL, model = c("BMM", "BM1"), param =
-    list(constraint = FALSE, smean = TRUE), method = c("rpf", "pic",
-    "sparse", "inverse", "pseudoinverse"), scale.height = FALSE,
-    optimization = c("L-BFGS-B", "Nelder-Mead", "subplex"),
-    control = list(maxit = 20000), precalc = NULL, diagnostic = TRUE,
-    echo = TRUE)
+mvBM(tree, data, error = NULL, model = c("BMM", "BM1"), 
+    param = list(constraint = FALSE, smean = TRUE, trend=FALSE), 
+    method = c("rpf", "pic", "sparse", "inverse", "pseudoinverse"),
+    scale.height = FALSE, optimization = c("L-BFGS-B", "Nelder-Mead", "subplex"),
+    control = list(maxit = 20000), precalc = NULL, diagnostic = TRUE, echo = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -48,7 +47,7 @@ Whether the tree should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines (see ?optim and ?subplex for details).
+Methods used by the optimization routines (see ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
@@ -71,19 +70,29 @@ Whether the results must be returned or not.
 \details{
 The mvBM function fits a multivariate Brownian Motion (BM) process, with unique or multiple BM rates (see O'Meara et al., 2006; Revell and Collar, 2009). Note that the function uses the non-censored approach of O'Meara et al. (2006) by default (i.e., a common ancestral state is assumed for the different regimes), but it is possible to specify multiple ancestral states (i.e., one for each regimes) through the "smean" parameter (smean=FALSE) in the "param" list.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf" and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The "inverse" approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but very time consuming. The "pic" method uses a very fast algorithm based on independent contrasts. It should be used with strictly dichotomic trees (i.e., no polytomies) and is currently not available for the multivariate "BMM" model. See ?mvLL for more details on these computational methods.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"} and \emph{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The \emph{"inverse"} approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but very time consuming. The \emph{"pic"} method uses a very fast algorithm based on independent contrasts. It should be used with strictly dichotomic trees (i.e., no polytomies) and is currently not available for the multivariate "BMM" model. See ?mvLL for more details on these computational methods.
 
-The "param" list arguments:
 
-"constraint" - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (constraint="diagonal"). If "constraint=TRUE", the model forces the sigma values for each studied trait to be the same using the constrained Cholesky decomposition proposed by Adams (2013), which allows considering the covariations between traits.
-This approach is extended here to the multi-rate case, by specifying that the rates must be the same in different parts of the tree (common selective regime). It's also possible to constraint the rates matrices in the "BMM" model to share the same eigen vectors; i.e. same variance but different covariances (constraint="shared"); same correlation but different variances (constraint="correlation"); or to fit a model with different but proportional rates matrices (constraint="proportional").
+The \bold{"param"} \emph{list} arguments:
+
+\bold{"constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\emph{constraint="diagonal"}, or \emph{constraint="equaldiagonal"}). If \emph{constraint="equal"}, the model forces the sigma values for each studied trait to be the same using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015), which allow considering the covariations between traits.
+
+This approach is extended here to the multi-rate case, by specifying that the rates must be the same in different parts of the tree (common selective regime). It's also possible to constraint the rates matrices in the "BMM" model to share the same eigen vectors (\emph{constraint="shared"}); the same variance but different covariances (\emph{ constraint="variance"}); same correlation but different variances (\emph{ constraint="correlation"}); or to fit a model with different but proportional rates matrices (\emph{constraint="proportional"}).
+
+Finally user-defined constrained models can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
+
 Significance of nested model fit can be assessed using the "LRT" function. See example below and ?LRT.
 
-"smean" - Default set to TRUE. If FALSE, the ancestral state for each selective regime is estimated (e.g., Thomas et al., 2006).
+\bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods are the: "cholesky", "eigen+", and "spherical" parameterization.
 
-"sigma" - Starting values for the likelihood estimation. By default the theoretical expected values are used as starting values for the likelihood optimization (for measurement errors, multiple rates,...). The user can specify starting values with a list() object for the "BMM" model (e.g., two objects in the list for a two-regime analysis), or a simple vector of values for the "BM1" model. The parameterization is done using a Cholesky factorization (Pinheiro & Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
+\bold{"smean"} - Default set to TRUE. If FALSE, the ancestral state for each selective regime is estimated (e.g., Thomas et al., 2006).
+
+\bold{"trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift linearly with time. This model is identifiable only with non-ultrametric trees. Note that it is possible to provide a vector of integer indices to constraint the the estimated trends (see the vignette).
+
+\bold{"sigma"} - Starting values for the likelihood estimation. By default the theoretical expected values are used as starting values for the likelihood optimization (for measurement errors, multiple rates,...). The user can specify starting values with a list() object for the "BMM" model (e.g., two objects in the list for a two-regime analysis), or a simple vector of values for the "BM1" model. The parameterization is done using various factorizations for symmetric matrices (e.g., for the "decomp" argument; Pinheiro & Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
 
 If no selective regimes are specified the function works only with the model "BM1".
+
 
 N.B.: Mapping of ancestral states can be done using the "make.simmap", "make.era.map" or "paintSubTree" functions from the "phytools" package.
 %%  ~~ If necessary, more details than the description above ~~
@@ -95,9 +104,9 @@ N.B.: Mapping of ancestral states can be done using the "make.simmap", "make.era
 \item{theta }{Estimated ancestral states.}
 \item{sigma }{Evolutionary rates matrix for each selective regime.}
 \item{convergence }{Convergence status of the optimizing function; "0" indicates convergence (See ?optim for details).}
-\item{hessian }{Hessian matrix of second order partial derivatives at the MLE (See ?mvOU for details).}
 \item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. (See ?mvOU).}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
+\item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -106,6 +115,8 @@ N.B.: Mapping of ancestral states can be done using the "make.simmap", "make.era
 }
 \references{
 Adams D.C. 2013. Comparing evolutionary rates for different phenotypic traits on a phylogeny using likelihood. Syst. Biol. 62:181-192.
+
+Clavel J., Escarguel G., Merceron G. 2015. mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods Ecol. Evol. 6(11):1311-1319.
 
 O'Meara B.C., Ane C., Sanderson M.J., Wainwright P.C. 2006. Testing for different rates of continuous trait evolution. Evolution. 60:922-933.
 
@@ -122,7 +133,7 @@ Julien Clavel
 %%  ~~who you are~~
 }
 \note{
-The "pic" method is not currently implemented for the multivariate "BMM" model.
+The "pic" method is not yet implemented for the multivariate "BMM" model.
 %%  ~~further notes~~
 }
 
@@ -133,6 +144,8 @@ The "pic" method is not currently implemented for the multivariate "BMM" model.
 \code{\link{mvOU}}
 \code{\link{mvEB}}
 \code{\link{mvSHIFT}}
+\code{\link{mvOUTS}}
+\code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{LRT}}
 \code{\link{optim}}
@@ -164,7 +177,7 @@ plotSimmap(tree,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
 # Simulate the traits
 sigma<-matrix(c(0.1,0.05,0.05,0.1),2)
 theta<-c(0,0)
-data<-mvSIM(tree, param=list(sigma=sigma, ntraits=2, mu=theta,
+data<-mvSIM(tree, param=list(sigma=sigma, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size")), model="BM1", nsim=1)
 
 ## Fitting the models

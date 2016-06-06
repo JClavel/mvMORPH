@@ -2,11 +2,64 @@
 /*-mvMORPH 1.0.3 - 2014 - Julien Clavel - julien.clavel@hotmail.fr--------------------*/
 /*-scale the weight matrix so that the rows sum to 1----------------------------------*/
 /*-generalization to non-ultrametric trees and non-symmetric A matrix-----------------*/
-/*-Modified with permission from A. King OUCH ----------------------------------------*/
+/*-Parts of codes modified with permission from A. King OUCH -------------------------*/
 
 #include "covar.h"
+#include "functions_complex.h"
 
 
+// Complex case
+static void weight_matrix_complex (int *nchar, int *neps, double *epochs, Rcomplex *lambda, Rcomplex *S, Rcomplex *S1, double complex *y) {
+    double complex *elt, *tmp;
+    double t;
+    int n = *nchar, np = *neps;
+    int i, j, k, r, ind, ind1, ind2, ind3, zero=0;
+    elt = Calloc(n*np,double complex);
+    tmp = Calloc(1,double complex);
+    
+    // Prepare the exponentials for lambda
+    for (i = 0; i < np; i++) {
+        t = epochs[0]-epochs[i];
+        for (j = 0; j < n; j++){
+            // complex exponential
+            ind1=i+np*j;
+            cexpti(lambda, elt, t, &ind1, &k);
+            // elt[i+np*j] = cexp(-comp(lambda[j])*t);
+        }
+    }
+    
+    // substract the exponentials
+    for (i = 0; i < np-1; i++) {
+        for (j = 0; j < n; j++) {
+            elt[i+np*j] -= elt[i+1+np*j];
+        }
+    }
+    
+    // compute the matrix exponential PDPt and save it in y
+    for (i = 0; i < np; i++) {
+        for (j = 0; j < n; j++) {
+            for (k = 0; k < n; k++) {
+                ind=j+n*(k+n*i);
+                y[ind] = 0.0 + 0.0*I;
+                
+                for (r = 0; r < n; r++){
+                    // 1) mult (S*elt)*S1
+                    ind1=j+n*r; ind2=i+np*r; ind3=r+n*k;
+                    cMulti(S, elt, S1, tmp, tmp, &ind1, &ind2, &ind3, &zero);
+                    // 2) sum to y
+                    y[ind] += tmp[0];
+                }
+            }
+        }
+    }
+    
+    Free(elt);
+    Free(tmp);
+}
+
+
+
+// Real case
 
 static void multi_weight_matrix (int *nchar, int *neps, double *epochs, double *lambda, double *S, double *S1, double *y) {
   double *elt;
@@ -60,7 +113,7 @@ static void row_stand(double *W, int *nt, int *ndim, int *ncol){
 SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEXP beta, SEXP root) {
   int nprotect = 0;
   SEXP W;
-  double *wp, *y, *bp;
+  double *wp, *bp;
   int nchar, nt, *nreg, totreg, np, xdim[2], ptr, thetaO;
   int i, j, k, n, q;
   nchar = GET_LENGTH(lambda);  
@@ -76,6 +129,11 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
     
         xdim[0] = nt*nchar; xdim[1] = totreg;
         PROTECT(W = makearray(2,xdim)); nprotect++;
+    
+    if(!isComplex(lambda)){
+        
+        double *y;
+        
         for (i = 0; i < nt; i++) {
             np = GET_LENGTH(VECTOR_ELT(epochs,i));
             y = Calloc(nchar*nchar*np,double);
@@ -97,6 +155,31 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
             
             Free(y);
         }
+    }else{
+        double complex *y;
+        
+        for (i = 0; i < nt; i++) {
+            np = GET_LENGTH(VECTOR_ELT(epochs,i));
+            // alloc a dynamic complex vector...
+            y = Calloc(nchar*nchar*np,double complex);
+            weight_matrix_complex(&nchar,&np,REAL(VECTOR_ELT(epochs,i)),COMPLEX(lambda), COMPLEX(S), COMPLEX(S1), y);
+            for (n = 0, ptr = 0; n < nchar; ptr += nt*nchar*nreg[n++]) {
+                wp = &(REAL(W))[ptr];
+                bp = REAL(VECTOR_ELT(VECTOR_ELT(beta,i),n));
+                for (j = 0; j < nchar; j++) {
+                    for (k = 0; k < nreg[n]; k++) {
+                        wp[i+nt*(j+nchar*k)] = 0;
+                        for (q = 0; q < np; q++) {
+                            // extract only the real part of the matrix exponential
+                            wp[i+nt*(j+nchar*k)] += creal(y[n+nchar*(j+nchar*q)])*bp[q+np*k];
+                        }
+                    }
+                }
+            }
+            Free(y);
+        }
+
+    }
         Free(nreg);
     
     // Row standardize the matrix if the root is not estimated

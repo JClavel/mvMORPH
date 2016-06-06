@@ -78,6 +78,8 @@ You can choose to provide differently scaled trees for multivariate data with th
 Andersen B. S., Wasniewski J., Gustavson F. G. 2001. A recursive formulation of Cholesky
 factorization of a matrix in packed storage. ACM Trans. Math. Soft. 27:214-244.
 
+Clavel J., Escarguel G., Merceron G. 2015. mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods Ecol. Evol. 6(11):1311-1319.
+
 Freckleton R.P. 2012. Fast likelihood calculations for comparative analyses. Methods Ecol. Evol. 3:940-947.
 
 Golub G.H., Van Loan C.F. 2013. Matrix computations. Baltimore: The John Hopkins University Press.
@@ -143,7 +145,7 @@ mvLL(vcv.phylo(tree),data,method="rpf",param=list(D=D, estim=FALSE, mu=0))
 
 ## Multivariate cases
 # Simulate traits
-data2<-mvSIM(tree,nsim=1,model="BM1",param=list(sigma=diag(2),mu=c(0,0),ntraits=2))
+data2<-mvSIM(tree,nsim=1,model="BM1",param=list(sigma=diag(2),theta=c(0,0),ntraits=2))
 # Design matrix
 D<-cbind(rep(c(1,0),each=50),rep(c(0,1),each=50))
 

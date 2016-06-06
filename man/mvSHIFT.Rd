@@ -48,7 +48,7 @@ Whether the tree should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines. (See ?optim and ?subplex for details).
+Methods used by the optimization routines. (See ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
@@ -93,9 +93,9 @@ The "method" argument allows the user to try different algorithms for computing 
 \item{sigma }{Evolutionary rates matrix (drift) for the BM process before the shift.}
 \item{sig   }{Evolutionary rates matrix (drift) for the BM process after the shift (only for "i" models).}
 \item{convergence }{Convergence status of the optimizing function; "0" indicates convergence. (See ?optim for details).}
-\item{hessian }{Hessian matrix of second order partial derivatives at the MLE. (See ?mvOU for details).}
 \item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. (See ?mvOU for details).}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
+\item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 
 %%  ~Describe the value returned
 %%  If it is a LIST, use
@@ -104,6 +104,8 @@ The "method" argument allows the user to try different algorithms for computing 
 %% ...
 }
 \references{
+Clavel J., Escarguel G., Merceron G. 2015. mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.
+
 O'Meara B.C. 2012. Evolutionary inferences from phylogenies: a review of methods. Annu. Rev. Ecol. Evol. Syst. 43:267-285.
 
 O'Meara B.C., Ane C., Sanderson M.J., Wainwright P.C. 2006. Testing for different rates of continuous trait evolution. Evolution. 60:922-933.
@@ -127,6 +129,8 @@ Changes in rate of evolution and optima can also be fitted using the mvBM and mv
 \code{\link{mvOU}}
 \code{\link{mvBM}}
 \code{\link{mvEB}}
+\code{\link{mvOUTS}}
+\code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{optim}}
 \code{\link{subplex}}
@@ -154,7 +158,7 @@ plotSimmap(tree,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
 alpha<-matrix(c(2,0.5,0.5,1),2)
 sigma<-matrix(c(0.1,0.05,0.05,0.1),2)
 theta<-c(2,3)
-data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
+data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size")), model="ER", nsim=1)
 
 
@@ -192,7 +196,7 @@ mvSHIFT(tree, data, model="OUBM") # similar to mvSHIFT(tree, data, model="ER")
 # The shift occured 3Ma ago (param$age=3)
  set.seed(14)
  tree<-rtree(50)
- data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
+ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size"), age=3), model="ER", nsim=1)
 
 ## Fitting the models without mapped tree but by specifying the age in the param list.

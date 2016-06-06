@@ -1,15 +1,14 @@
 Package: mvMORPH
 Type: Package
-Title: Multivariate Comparative Tools for Fitting Evolutionary Models
-        to Morphometric Data
-Version: 1.0.6
-Date: 2015-08-23
+Title: Multivariate Comparative Tools for Fitting Evolutionary Models to Morphometric Data
+Version: 1.0.7
+Date: 2016-05-25
 Author: Julien Clavel, with contributions from Aaron King, and Emmanuel Paradis
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees.
-Depends: R(>= 2.9.1), phytools, ape, corpcor, subplex, spam
-Imports: stats
-Suggests: knitr
+Depends: R(>= 2.9.1), phytools, ape, corpcor, subplex
+Imports: stats, spam
+Suggests: knitr, car
 License: GPL (>= 2.0)
 URL: https://github.com/JClavel/mvMORPH
 VignetteBuilder: knitr

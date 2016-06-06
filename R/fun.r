@@ -12,6 +12,16 @@
 
 ##------------------------Fonctions necessaires-------------------------------##
 
+## vcv build for time-series
+vcv.ts <- function(times){
+   vcv_mat <- outer(times,times, FUN=pmin)
+   # avoid problems with integers
+   V <- matrix(as.numeric(vcv_mat),length(times))
+   return(V)
+}
+
+## Matrices parameterizations
+
 # Calcul d'une matrice positive semi-definie (Choleski transform) modified from OUCH by A. King
 sym.par<-function (x) {
   nchar <- floor(sqrt(2*length(x)))
@@ -34,28 +44,305 @@ sym.unpar_off <- function (x) {
     y[lower.tri(y,diag=FALSE)]
 }
 
+# sigma matrix parameterization
+symPar <-function(par, decomp="cholesky", p=NULL, index.user=NULL, tol=0.1){
+
+    switch(decomp,
+        "cholesky"={
+            sigma<-sym.par(par)
+        },
+        "spherical"={
+            dim1<-p*(p-1)/2
+            sigma <- .Call("spherical", param=par[1:dim1], variance=par[(dim1+1):(dim1+p)], dim=as.integer(p))
+        },
+        "eigen"={
+            dim1<-p*(p-1)/2
+            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p))
+            T<-par[(dim1+1):(dim1+p)]
+            invQ<-t(Q)
+            sigma<-Q%*%diag(T)%*%invQ
+        },
+        "eigen+"={
+            dim1<-p*(p-1)/2
+            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p))
+            T<-exp(par[(dim1+1):(dim1+p)])
+            invQ<-t(Q)
+            sigma<-Q%*%diag(T)%*%invQ
+        },
+        "diagonal"={
+            d_par<-diag(par)
+            sigma<-d_par%*%t(d_par)
+        },
+        "equaldiagonal"={
+            d_par<-diag(par)
+            sigma<-d_par%*%t(d_par)
+        },
+        "equal"={
+            sigma<-tcrossprod(build.chol(par,p))
+            # avoid issues when the matrix is not spd?
+            # with the Adams parameterization I always obtain problems with more than 2 traits (even with the original code)
+            if(p>2){
+                 dim1<-p*(p-1)/2
+                 sigma <- .Call("spherical", param=par[1:dim1], variance=rep(par[(dim1+1)],p), dim=as.integer(p))
+            }
+            
+        },
+        "user"={
+            # user defined sigma matrix
+            sigma <- matrix(0,p,p)
+            sigma[] <- c(par)[index.user]
+            sigma[is.na(sigma)] <- 0
+            dval <- diag(sigma)
+            diag(sigma) <- diag(dval%*%t(dval))
+            #eig <- min(eigen(sigma)$values)
+            eig <- min(eigen(sigma)$values)
+            if(eig<0){
+                # arbitrary tolerance value to shift the smallest eigenvalue
+                sigma <- sigma+(abs(eig)+tol)*diag(p)
+            }
+        },
+        # set the default error message
+        stop("Sorry, the \"decomp\" or \"decompSigma\" option in the \"param\" list is wrong...","\n")
+        )
+        
+        return(sigma)
+}
 
 
-# alpha matrix parameterization
-matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
+# default matrix parameterization for Sigma
+startParamSigma <- function(p, matrix, tree, data, guess=NULL, index.user=NULL){
+    
+    if(inherits(tree,"phylo")){
+        if(!is.null(guess)){
+            n <- length(tree$tip.label)
+            sigma <- guess
+        }else{
+            n <- length(tree$tip.label)
+            sigma <- varBM(tree,data,n,p)
+        }
+    }else{
+        if(!is.null(guess)){
+            sigma <- guess
+        }else{
+            sigma <- cov(as.matrix(data),use="complete.obs")/max(tree)
+        }
+    }
+    
+    # off-diagonal dimension
+    dim1<-p*(p-1)/2
     
     switch(matrix,
-    "symmetricPositive"={ # Cholesky decomposition
+    "diagonal"={ # Diagonal parameterization
+        value<-sqrt(diag(sigma))
+    },
+    "equaldiagonal"={ # Diagonal parameterization
+        value<-sqrt(mean(diag(sigma)))
+    },
+    "equal"={ # Cholesky constraint / spherical parameterization
+        if(p>2){
+        value<-vector("numeric",dim1+1)
+        value[1:dim1]<-rep(pi/2,dim1)
+        value[dim1+1]<-sqrt(mean(diag(sigma)))
+        }else{
+        value<-vector("numeric",dim1+1)
+        value[1]<-mean(diag(sigma))
+        }
+    },
+    "eigen"={
+        value <- vector("numeric",dim1+p)
+        eigval <- eigen(sigma)$value
+        value[(dim1+1):(dim1+p)]<-eigval
+    },
+    "eigen+"={
+        value <- vector("numeric",dim1+p)
+        eigval <- eigen(sigma)$value
+        value[(dim1+1):(dim1+p)]<-log(eigval)
+    },
+    "spherical"={
+        dval <- diag(sigma)
+        value <- rep(pi/2,dim1+p)
+        value[(dim1+1):(dim1+p)]<-sqrt(dval)
+    },
+    "cholesky"={
+        value <- sym.unpar(sigma)
+    },
+    "user"={
+        value <- user_guess(index.user, sigma)
+    },
+    stop("Sorry, the sigma \"decomp\" option in the \"param\" list is wrong...","\n")
+    )
+   
+    return(value)
+}
+
+
+# default matrix parameterization for A
+startParam <- function(p, matrix, tree, index.user=NULL){
+    
+    if(inherits(tree,"phylo")){
+        if(is.ultrametric(tree)){
+            times <- branching.times(tree)
+        }else{
+            times <- nodeHeights(tree)
+        }
+    }else{
+            times <- max(tree)
+    }
+    # set default hlife to 1/3
+    hlife <- log(2)/(max(times)/(2+seq_len(p)))
+    # off-diagonal dimension
+    dim1<-p*(p-1)/2
+    
+    switch(matrix,
+    "svd"={ # SVD decomposition
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-hlife
+    },
+    "svd+"={ # SVD decomposition
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "eigen"={ # eigen decomposition
+        alpha <- vector("numeric",dim1+p)
+        alpha[(dim1+1):(dim1+p)]<-hlife
+    },
+    "qr"={ # QR decomposition with diagonal values forced to be positive for uniqueness
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-hlife
+    },
+    "eigen+"={ # eigen decomposition
+        alpha <- vector("numeric",dim1+p)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "qr+"={ # QR decomposition with diagonal values forced to be positive for uniqueness
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "spherical"={ # Spherical parameterization for correlation matrix + scaling
+        alpha <- rep(pi/2,dim1+p)
+        alpha[(dim1+1):(dim1+p)]<-sqrt(hlife)
+    },
+    "cholesky"={ # Cholesky decomposition
+        alpha <- diag(p)
+        diag(alpha)<-sqrt(hlife)
+        alpha<-alpha[lower.tri(alpha,diag=TRUE)]
+    },
+    "schur"={ # Schur decomposition
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-hlife
+    },
+    "schur+"={ # Schur decomposition
+        alpha <- vector("numeric",p*p)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "equal"={
+        alpha<-vector("numeric",dim1+1)
+        alpha[1]<-mean(hlife)
+    },
+    "equaldiagonal"={
+        alpha<-mean(hlife)
+    },
+    "diagonal"={
+        alpha <- vector("numeric",p)
+        alpha<-hlife
+    },
+    "diagonalPositive"={
+        alpha <- vector("numeric",p)
+        alpha<-log(hlife)
+    },
+    "lower"={
+        alpha <- vector("numeric",p+dim1)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "upper"={
+        alpha <- vector("numeric",p+dim1)
+        alpha[(dim1+1):(dim1+p)]<-log(hlife)
+    },
+    "univariate"={
+        alpha <- hlife
+    },
+    "user"={
+        dim_user <- length(unique(c(index.user[!is.na(index.user)])))
+        alpha <- vector("numeric",dim_user)
+        alpha[1:p] <- log(hlife)
+    },
+    # set the default error message
+    stop("Sorry, the \"decomp\" option in the \"param\" list is wrong...","\n")
+    )
+
+return(alpha)
+}
+
+# alpha matrix parameterization
+matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
+    
+    switch(matrix,
+    "svd"={ # svd decomposition
+        dim1<-p*(p-1)/2
+        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p))
+        T<-x[(dim1+1):(dim1+p)]+tol
+        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p))
+        A<-U%*%diag(T)%*%t(V)
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "svd+"={ # svd decomposition
+        dim1<-p*(p-1)/2
+        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p))
+        T<-exp(x[(dim1+1):(dim1+p)])
+        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p))
+        A<-U%*%diag(T)%*%t(V)
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "eigen"={ # eigen decomposition with positive eigenvalues
+        dim1<-p*(p-1)/2
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        T<-x[(dim1+1):(dim1+p)]
+        invQ<-t(Q)
+        A<-Q%*%diag(T)%*%invQ
+        Adecomp<-list(vectors=Q, values=T, A=A, invectors=invQ)
+    },
+    "eigen+"={ # eigen decomposition with positive eigenvalues
+        dim1<-p*(p-1)/2
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        T<-exp(x[(dim1+1):(dim1+p)])
+        invQ<-t(Q)
+        A<-Q%*%diag(T)%*%invQ
+        Adecomp<-list(vectors=Q, values=T, A=A, invectors=invQ)
+    },
+    "qr"={ # QR decomposition (R diagonal values are forced to be positive)
+        dim1<-p*(p-1)/2
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        R<-diag(x[(dim1+1):(dim1+p)],p)
+        R[upper.tri(R)]<-x[(dim1+p+1):(p*p)]
+        A<-Q%*%R
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "qr+"={ # QR decomposition (R diagonal values are forced to be positive)
+        dim1<-p*(p-1)/2
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        R<-diag(exp(x[(dim1+1):(dim1+p)]),p)
+        R[upper.tri(R)]<-x[(dim1+p+1):(p*p)]
+        A<-Q%*%R
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "spherical"={ # Spherical parameterization
+        dim1<-p*(p-1)/2
+        A <- .Call("spherical", param=x[1:dim1], variance=x[(dim1+1):(dim1+p)], dim=as.integer(p))
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "cholesky"={ # Cholesky decomposition
         y <- matrix(0,p,p)
         y[lower.tri(y,diag=TRUE)] <- x
         A<-tcrossprod(y)
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=t(eigval$vectors))
     },
-    "symmetric"={ # SVD decomposition
-        dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
-        T<-x[(dim1+1):(dim1+p)]+tol
-        invQ<-t(Q)
-        A<-Q%*%diag(T)%*%invQ
-        Adecomp<-list(vectors=Q, values=T, A=A, invectors=invQ)
-    },
-    "nsymmetric"={ # Schur decomposition
+    "schur"={ # Schur decomposition
         dim1<-p*(p-1)/2
         Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
         T<-diag(x[(dim1+1):(dim1+p)],p)
@@ -64,7 +351,7 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
     },
-    "nsymPositive"={ # Schur decomposition
+    "schur+"={ # Schur decomposition with positive eigenvalues
         dim1<-p*(p-1)/2
         Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
         T<-diag(exp(x[(dim1+1):(dim1+p)]),p) # exp to force positive eigenvalues
@@ -72,6 +359,11 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
         A<-Q%*%T%*%t(Q)
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    "equaldiagonal"={
+        A<-diag(x,p)
+        eigval<-eigen(A)
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=t(eigval$vectors))
     },
     "diagonal"={
         A<-diag(x,p)
@@ -82,6 +374,15 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
         A<-diag(exp(x)+tol,p)
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=t(eigval$vectors))
+    },
+    "equal"={
+        sigma<-tcrossprod(build.chol(x,p))
+        # avoid issues when the matrix is not spd?
+        # with the Adams parameterization I always obtain problems with more than 2 traits (even with the original code)
+        if(p>2){
+            dim1<-p*(p-1)/2
+            sigma <- .Call("spherical", param=x[1:dim1], variance=rep(x[(dim1+1)],p), dim=as.integer(p))
+        }
     },
     "lower"={
         dim1<-p*(p-1)/2
@@ -101,7 +402,25 @@ matrixParam<-function(x,p,matrix="symmetric",tol=0.000001){
     },
     "univariate"={
         Adecomp<-list(vectors=1, values=x, A=x, invectors=1)
-    }
+    },
+    "user"={
+        # user defined sigma matrix
+        A <- matrix(0,p,p)
+        A[] <- c(x)[index.user]
+        A[is.na(A)] <- 0
+        dval <- diag(A)
+        diag(A) <- diag(dval%*%t(dval))
+        eigval <- eigen(A)
+        eig <- min(eigval$values)
+        if(eig<0){
+            # arbitrary tolerance value to shift the smallest eigenvalue
+            A <- A+(abs(eig)+tol)*diag(p)
+            eigval<-eigen(A)
+        }
+        Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
+    },
+    # set the default error message
+     stop("Sorry, the \"decomp\" option in the \"param\" list is wrong...","\n","Note: the \"symmetric\", \"symmetricPositive\", \"nsymmetric\", and \"nsymPositive\" options are deprecated")
     )
     return(Adecomp)
 }
@@ -125,12 +444,8 @@ newList<-function(factorVal,nv){
 
 multD<-function(tree,k,nbtip,smean=TRUE){
     if(smean==TRUE){
-        y<-matrix(0, nbtip * k, k)
-        for (i in 1:(nbtip * k)){
-            for (j in 1:k){
-                if ((j - 1) * nbtip < i && i <= j * nbtip){y[i, j] = 1 }
-            }
-        }
+        # design matrix
+        y<-kronecker(diag(k),rep(1,nbtip))
     }else{
         if(is.null(tree[["mapped.edge"]])){
           stop("The specified tree must be in SIMMAP format with different regimes")
@@ -157,15 +472,15 @@ return(y)
 
 
 # Compute matrix time to common ancestor
-mTime<-function(phy,scale.height){
-  if(is.ultrametric(phy)){
+mTime<-function(phy, scale.height){
+    vcv<-vcv.phylo(phy)
+if(is.ultrametric(phy)){
    if(scale.height==TRUE){
-   mdist<-vcv.phylo(phy)/max(vcv.phylo(phy))
+   mdist<-vcv/max(vcv)
    }else{
-    mdist<-vcv.phylo(phy)}
+    mdist<-vcv}
     mSpdist<-rep(max(mdist),length(phy$tip.label))
   }else{
-   vcv<-vcv.phylo(phy)
    if(scale.height==TRUE){
    vstand<-vcv/max(vcv)
    }else{vstand<-vcv}
@@ -229,17 +544,45 @@ varBM<-function(tree,data,n,k){
     rate<-rep(0,k)
     tree<-reorder.phylo(tree,"postorder")
     value<-list(tree$edge.length)
-    res<-.Call("PIC_gen", x=as.vector(as.matrix(data)), n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(10), mu=1, sigma=1)
+    res<-.Call("PIC_gen", x=as.vector(as.matrix(data)), n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(13), mu=1, sigma=1)
     return(res[[2]])
 }
 
+# Starting values guess for user-defined constraint matrix
+user_guess <- function(user_const, sigma){
+    diag(sigma) <- sqrt(diag(sigma))
+    indvalue <- sort(unique(c(user_const[!is.na(user_const)])))
+    rcind <- sapply(indvalue,function(x) which(user_const==x, arr.ind=TRUE))
+    guess <- sapply(rcind, function(x) {
+        dim_val <- nrow(x)
+        mean(sapply(1:dim_val, function(i) sigma[x[i,1],x[i,2]]))})
+    return(guess)
+}
+
 # Generate random multivariate distributions
-rmvnorm<-function(n=1, mean, var){
+rmvnorm_simul<-function(n=1, mean, var){
+    
     p<-length(mean)
     if (!all(dim(var)==c(p,p)))
     stop("length of ",sQuote("mean")," must equal the dimension of the square matrix ",sQuote("var"))
-    cf <- t(chol(var))
-    matrix(mean,p,n)+cf%*%matrix(rnorm(p*n),p,n)
+    
+    # try with fast cholesky
+     chol_factor <- try(t(chol(var)), silent = TRUE)
+    # else use svd
+      if(inherits(chol_factor ,'try-error')){
+        warning("An error occured with the Cholesky decomposition, the \"svd\" method is used instead")
+        s. <- svd(var)
+        if (!all(s.$d >= -sqrt(.Machine$double.eps) * abs(s.$d[1]))){
+            warning("The covariance matrix is numerically not positive definite")
+        }
+        R <- t(s.$v %*% (t(s.$u) * sqrt(s.$d)))
+        X <- matrix(mean,p,n) + t(matrix(rnorm(n * p), nrow=n )%*%  R)
+
+     } else {
+        X <- matrix(mean,p,n) + chol_factor%*%matrix(rnorm(p*n),p,n)
+    }
+    
+    return(X)
 }
 
 # Generate a multi-phylo list for SIMMAP trees
@@ -266,6 +609,11 @@ ratevalue<-function(up,low,x){
     return(x)
 }
 
+# Return the expected scatter matrix given the "alpha" matrix and the empirical covariance.
+Stationary_to_scatter <- function(alpha,stationary){
+    return(alpha%*%stationary + stationary%*%t(alpha))
+}
+
 # Compute the stationary multivariate normal distribution for the multivariate Ornstein-Uhlenbeck (Bartoszek et al. 2012 - B.8)
 StationaryVariance <- function(alpha,sigma){
     sigma <- sigma
@@ -284,10 +632,7 @@ StationaryVariance <- function(alpha,sigma){
     return(StVar)
 }
 
-##-----------------Function used in mvBM--------------------------------------##
-
-
-# Constrainded Choleski decomposition (Adams, 2013: Systematic Biology)                   
+# Constrainded Choleski decomposition (Adams, 2013: Systematic Biology)
 build.chol<-function(b,p){
  c.mat<-matrix(0,nrow=p,ncol=p)
  c.mat[lower.tri(c.mat)] <- b[-1]
@@ -303,7 +648,7 @@ build.chol<-function(b,p){
 
 ##----------------------mvfit_likelihood--------------------------------------##
 
-loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL,NA_val=NULL,Indice_NA=NULL){
+loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL,NA_val=NULL,Indice_NA=NULL,theta_mle=TRUE,theta=NULL,istrend=FALSE,trend=0){
 
 data<-as.numeric(as.matrix(data))
 size<-k*n
@@ -311,31 +656,60 @@ if(NA_val==TRUE){
     V<-V[-Indice_NA,-Indice_NA]
     D<-D[-Indice_NA,]
     data<-data[-Indice_NA]
+    error<-error[-Indice_NA]
     size<-length(data)
 }
 
 switch(method,
 
 "rpf"={
-    if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0} # length of the error vector should be the same as the data vector
-    cholres<-.Call("Chol_RPF",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
-    beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
-    det<-cholres[[2]]
-    residus=D%*%beta-data
+    if(is.null(error)!=TRUE){
+        ms<-1
+    }else{ ms<-0} # length of the error vector should be the same as the data vector
+   
+    
+    if(theta_mle==TRUE){
+       cholres<-.Call("Chol_RPF",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
+       theta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
+    }else{
+        # We avoid the transformation of D and data by the Cholesky factor
+       cholres<-.Call("Chol_RPF_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms))
+    }
+        det<-cholres[[2]]
+        
+    if(istrend==FALSE){
+        residus=D%*%theta-data
+    }else{
+        residus=(D%*%theta+trend)-data
+    }
     quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(size))
     logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
-    results<-list(logl=logl,anc=beta)
+    results<-list(logl=logl,anc=theta)
 },
 "univarpf"={
-    if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0}
-    size<-k*n
-    cholres<-.Call("Chol_RPF_univ",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
-    beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
+    if(is.null(error)!=TRUE){
+        ms<-1
+    }else{ ms<-0}
+    
+
+   if(theta_mle==TRUE){
+       cholres<-.Call("Chol_RPF_univ",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
+       theta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
+   }else{
+       cholres<-.Call("Chol_RPF_univ_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms))
+   }
+ 
     det<-cholres[[2]]
-    residus=D%*%beta-data
+    
+    if(istrend==FALSE){
+        residus=D%*%theta-data
+    }else{
+        residus=(D%*%theta+trend)-data
+    }
+    
     quad<-.Call("Chol_RPF_quadprod_column", cholres[[1]], residus, as.integer(size))
     logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
-    results<-list(logl=logl,anc=beta)
+    results<-list(logl=logl,anc=theta)
 },
 "sparse"={
     ## On considere que les valeurs dans @entries de V de precalc ont ete modifiees / assume that the values in @entries were updated
@@ -351,15 +725,23 @@ switch(method,
     }else{
     U<-update.spam.chol.NgPeyton(ch,precalcMat)
     }
-    vec<-forwardsolve(U,data)
-    xx<-forwardsolve(U,D)
-    beta<-pseudoinverse(matrix(xx,ncol=sizeD))%*%vec
-    res<-D%*%beta-data
+    if(theta_mle==TRUE){
+        vec<-forwardsolve(U,data)
+        xx<-forwardsolve(U,D)
+        theta<-pseudoinverse(matrix(xx,ncol=sizeD))%*%vec
+    }
+    
+    if(istrend==FALSE){
+        res<-D%*%theta-data
+    }else{
+        res<-(D%*%theta+trend)-data
+    }
+    
     vec1<-forwardsolve(U,res)
     a<-sum(vec1^2)
     DET<-determinant(U)
     logl<--.5*a-.5*as.numeric(DET$modulus*2)-.5*(n*k*log(2*pi))
-    results<-list(logl=logl,anc=beta)
+    results<-list(logl=logl,anc=theta)
 },
 "pseudoinverse"={
     if(is.null(error)==FALSE){
@@ -367,11 +749,20 @@ switch(method,
     }
     
     inv<-pseudoinverse(V)
-    beta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+    if(theta_mle==TRUE){
+         theta<-pseudoinverse(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+    }
+    
     DET<-determinant(V, logarithm=TRUE)
-    res<-D%*%beta-data
+    
+    if(istrend==FALSE){
+        res<-D%*%theta-data
+    }else{
+        res<-(D%*%theta+trend)-data
+    }
+   
     logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(size*log(2*pi))
-    results<-list(logl=logl,anc=beta)
+    results<-list(logl=logl,anc=theta)
 },
 "inverse"={
     if(is.null(error)==FALSE){
@@ -379,11 +770,17 @@ switch(method,
     }
 
     inv<-solve(V)
-    beta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+    if(theta_mle==TRUE){
+    theta<-solve(t(D)%*%inv%*%D)%*%t(D)%*%inv%*%data
+    }
     DET<-determinant(V, logarithm=TRUE)
-    res<-D%*%beta-data
+    if(istrend==FALSE){
+        res<-D%*%theta-data
+    }else{
+        res<-(D%*%theta+trend)-data
+    }
     logl<--.5*(t(res)%*%inv%*%(res))-.5*as.numeric(DET$modulus)-.5*(size*log(2*pi))
-    results<-list(logl=logl,anc=beta)
+    results<-list(logl=logl,anc=theta)
 })
 
 
@@ -395,17 +792,21 @@ return(results)
 
 ##----------------------Print_functions---------------------------------------##
 
-print.bm<-function(x,...){
+print.mvmorph.bm<-function(x,...){
     
     cat("\n")
     if(x$param$constraint==TRUE){
         cat("-- Summary results for multiple constrained rates",x$param$model,"model --","\n")
+    }else if(x$param$constraint=="default" & x$param$decomp=="user"){
+        cat("-- Summary results for user-defined",x$param$model,"constrained model --","\n")
     }else if(x$param$constraint=="correlation"){
         cat("-- Summary results for common correlation ",x$param$model,"model --","\n")
     }else if(x$param$constraint=="shared"){
         cat("-- Summary results for shared eigenvectors ",x$param$model,"model --","\n")
     }else if(x$param$constraint=="proportional"){
         cat("-- Summary results for proportional rates matrices ",x$param$model,"model --","\n")
+    }else if(x$param$constraint=="variance"){
+        cat("-- Summary results for common variance ",x$param$model,"model --","\n")
     }else{
         cat("-- Summary results for multiple rates",x$param$model,"model --","\n")
     }
@@ -422,10 +823,18 @@ print.bm<-function(x,...){
     cat("______________________","\n")
     print(x$theta)
     cat("\n")
+    
+    if(!is.null(x[["trend"]])){
+        cat("Estimated trend values","\n")
+        cat("______________________","\n")
+        print(x$trend)
+        cat("\n")
+    }
+
 
 }
 
-print.acdc<-function(x,...){
+print.mvmorph.acdc<-function(x,...){
     cat("\n")
     cat("-- Summary results for Early Burst or ACDC model --","\n")
     cat("LogLikelihood:","\t",x$LogLik,"\n")
@@ -446,7 +855,7 @@ print.acdc<-function(x,...){
     cat("\n")
 }
 
-print.ou<-function(x,...){
+print.mvmorph.ou<-function(x,...){
     cat("\n")
     cat("-- Summary results --","\n")
     cat("LogLikelihood:","\t",x$LogLik,"\n")
@@ -467,7 +876,7 @@ print.ou<-function(x,...){
     print(x$sigma)
 }
 
-print.shift<-function(x,...){
+print.mvmorph.shift<-function(x,...){
     cat("\n")
     cat("-- Summary results for the",x$param$model[2]," --","\n")
     cat("LogLikelihood:","\t",x$LogLik,"\n")
@@ -532,6 +941,82 @@ print.mvmorph.precalc<-function(x,...){
     cat("number of traits:",x$param$nbtraits,"\n")
 }
 
+print.mvmorph.llik<-function(x,...){
+    cat("Log-likelihood function :","\n")
+    cat("llik(par, root.mle=TRUE)","\n")
+    cat("\"par\" argument vector order:","\n")
+    model<-attr(x,"model")
+    switch(model,
+    "OU"={
+        cat("1) alpha (",attr(x,"alpha")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "RWTS"={
+        if(is.null(attr(x,"trend"))){
+            cat("1) sigma (",attr(x,"sigma")," parameters)","\n")
+            cat("2) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+        }else{
+            cat("1) sigma (",attr(x,"sigma")," parameters)","\n")
+            cat("2) trend (",attr(x,"trend")," parameters)","\n")
+            cat("3) theta (",attr(x,"theta")," parameters) Note: \"root.mle=TRUE\" is not allowed with the \"trend\" model)","\n")
+        }
+    },
+    "BM"={
+        if(is.null(attr(x,"trend"))){
+        cat("1) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("2) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+        }else{
+        cat("1) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("2) trend (",attr(x,"trend")," parameters)","\n")
+        cat("3) theta (",attr(x,"theta")," parameters) Note: \"root.mle=TRUE\" is not allowed with the \"trend\" model)","\n")
+        }
+    },
+    "EB"={
+        cat("1) beta (",attr(x,"beta")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "ER"={
+        cat("1) alpha (",attr(x,"alpha")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "RR"={
+        cat("1) alpha (",attr(x,"alpha")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) sig (",attr(x,"sig")," parameters)","\n")
+        cat("4) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "CV"={
+        cat("1) beta (",attr(x,"beta")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "CVG"={
+        cat("1) beta (",attr(x,"beta")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) sig (",attr(x,"sig")," parameters)","\n")
+        cat("4) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "OV"={
+        cat("1) alpha (",attr(x,"alpha")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) beta (",attr(x,"beta")," parameters)","\n")
+        cat("4) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    },
+    "OVG"={
+        cat("1) alpha (",attr(x,"alpha")," parameters)","\n")
+        cat("2) sigma (",attr(x,"sigma")," parameters)","\n")
+        cat("3) sig (",attr(x,"sig")," parameters)","\n")
+        cat("4) beta (",attr(x,"beta")," parameters)","\n")
+        cat("5) theta (",attr(x,"theta")," parameters if \"root.mle=FALSE\")","\n")
+    })
+    cat("-----------------","\n")
+    fun<-x; attributes(fun)=NULL
+    print(fun)
+}
+
 summary.mvmorph<-function(object,...){
     cat("mvMORPH model :",object$param$model," summary","\n")
     cat("AIC :",object$AIC,"\n")
@@ -539,6 +1024,20 @@ summary.mvmorph<-function(object,...){
     cat("Log-Likelihood:",object$LogLik,"\n")
     if(object$convergence==0){cat("Succesful convergence","\n")}else{cat("Convergence has not been reached","\n")}
     if(object$hess.value==0){cat("Reliable solution","\n")}else{cat("Unreliable solution (Likelihood at a saddle point)","\n")}
+}
+
+print.mvmorph.aicw<-function(x,...){
+    cat("-- Akaike weights --","\n")
+    aics <- data.frame(Rank=1:length(x$models), AIC=x$AIC, diff=x$diff, wi=x$wi, AICw=x$aicweights)
+    row.names(aics) <- as.character(x$models)
+    aics <- aics[order(aics$wi, decreasing=TRUE),]
+    aics$Rank <- 1:length(x$models)
+    aics[,c(4,5)][aics[,c(4,5)]<1e-8]<-0
+    print(aics, zero.print = ".", digits=3)
+}
+
+print.mvmorph.estim<-function(x,...){
+    cat("Dataset with",length(x$NA_index)," imputed missing values.","\n")
 }
 
 ## Return the model AIC
@@ -565,7 +1064,7 @@ simulate.mvmorph<-function(object,nsim=1,seed=NULL,...){
 ## Return the stationary variance for the multivariate Ornstein-Uhlenbeck
 
 stationary.mvmorph<-function(object){
-    if(any(class(object)=="shift") | any(class(object)=="ou") ){
+    if(any(class(object)=="mvmorph.shift") | any(class(object)=="mvmorph.ou") ){
             if(is.null(object[["alpha"]])==TRUE){
                 stop("The stationary distribution can be computed only for models including Ornstein-Uhlenbeck processes.")
             }
@@ -581,9 +1080,9 @@ stationary.mvmorph<-function(object){
 ## Compute the phylogenetic half-life
 
 halflife.mvmorph<-function(object){
-    if(class(object)[2]=="ou"){
+    if(class(object)[2]=="mvmorph.ou"){
     lambda<-eigen(object$alpha)$values
-    phyhalflife<-log(2)/lambda
+    phyhalflife<-log(2)/Re(lambda)
         return(phyhalflife)
     }else{
         warning("The phylogenetic half-life is computed only for Ornstein-Uhlenbeck models.","\n")  

@@ -24,16 +24,49 @@ L1<-model1$LogLik
 L2<-model2$LogLik
 }
 # Set names
-if(class(model1)[2]=="bm" | class(model2)[2]=="bm"){
-    model1$param$model<-if(model1$param$constraint==TRUE){paste(model1$param$model," constrained")}else if(model1$param$constraint=="shared"){paste(model1$param$model," shared variances")}else if(model1$param$constraint=="proportional"){paste(model1$param$model," proportional")}else if(model1$param$constraint=="correlation"){paste(model1$param$model," equal correlation")}else if(model1$param$constraint=="diagonal"){paste(model1$param$model," diagonal")}else{model1$param$model}
+if(class(model1)[2]=="mvmorph.bm" | class(model2)[2]=="mvmorph.bm"){
+    model1$param$model<-if(model1$param$constraint=="equal"){paste(model1$param$model," equal variance/rates")}else if(model1$param$constraint=="shared"){paste(model1$param$model," shared eigenvectors")}else if(model1$param$constraint=="proportional"){paste(model1$param$model," proportional")}else if(model1$param$constraint=="correlation"){paste(model1$param$model," shared correlation")}else if(model1$param$constraint=="diagonal"){paste(model1$param$model," diagonal")}else if(model1$param$constraint=="variance"){paste(model1$param$model," shared variance")}else if(model1$param$constraint=="equaldiagonal"){paste(model1$param$model," equal diagonal")}else{model1$param$model}
 
-    model2$param$model<-if(model2$param$constraint==TRUE){paste(model2$param$model," constrained")}else if(model2$param$constraint=="shared"){paste(model2$param$model," shared variances")}else if(model2$param$constraint=="proportional"){paste(model2$param$model," proportional")}else if(model2$param$constraint=="correlation"){paste(model2$param$model," equal correlation")}else if(model1$param$constraint=="diagonal"){paste(model1$param$model," diagonal")}else{model2$param$model}
+    model2$param$model<-if(model2$param$constraint=="equal"){paste(model2$param$model," equal variance/rates")}else if(model2$param$constraint=="shared"){paste(model2$param$model," shared eigenvectors")}else if(model2$param$constraint=="proportional"){paste(model2$param$model," proportional")}else if(model2$param$constraint=="correlation"){paste(model2$param$model," shared correlation")}else if(model2$param$constraint=="diagonal"){paste(model2$param$model," diagonal")}else if(model2$param$constraint=="variance"){paste(model2$param$model," shared variance")}else if(model2$param$constraint=="equaldiagonal"){paste(model2$param$model," equal diagonal")}else{model2$param$model}
 }
 
-if(class(model1)[2]=="ou" | class(model2)[2]=="ou"){
-    model1$param$model<-if(model1$param$decomp=="diagonal"){paste(model1$param$model," diagonal")}else if(model1$param$decomp=="symmetricPositive"){paste(model1$param$model," symmetric positive")}else if(model1$param$decomp=="symmetric"){paste(model1$param$model," symmetric")}else if(model1$param$decomp=="nsymmetric"){paste(model1$param$model," non-symmetric")}else if(model1$param$decomp=="nsymPositive"){paste(model1$param$model," non-symmetric positive")}else{model1$param$model}
-        
-    model2$param$model<-if(model2$param$decomp=="diagonal"){paste(model2$param$model," diagonal")}else if(model2$param$decomp=="symmetricPositive"){paste(model2$param$model," symmetric positive")}else if(model2$param$decomp=="symmetric"){paste(model2$param$model," symmetric")}else if(model2$param$decomp=="nsymmetric"){paste(model2$param$model," non-symmetric")}else if(model2$param$decomp=="nsymPositive"){paste(model2$param$model," non-symmetric positive")}else{model2$param$model}
+if(class(model1)[2]=="mvmorph.ou" | class(model2)[2]=="mvmorph.ou"){
+    model1$param$model<-if(model1$param$decomp=="diagonal"){
+        paste(model1$param$model," diagonal")
+    }else if(model1$param$decomp=="equal"){
+        paste(model1$param$model," equal")
+    }else if(model1$param$decomp=="eigen"){
+        paste(model1$param$model," symmetric")
+    }else if(model1$param$decomp=="eigen+" | model1$param$decomp=="cholesky" | model1$param$decomp=="spherical"){
+        paste(model1$param$model," symmetric positive")
+    }else if(model1$param$decomp=="lower"){
+        paste(model1$param$model," lower triangular")
+    }else if(model1$param$decomp=="upper"){
+        paste(model1$param$model," upper triangular")
+    }else if(model1$param$decomp=="qr" | model1$param$decomp=="svd" | model1$param$decomp=="schur"){
+        paste(model1$param$model," non-symmetric")
+    }else if(model1$param$decomp=="qr+" | model1$param$decomp=="svd+" | model1$param$decomp=="schur+"){
+        paste(model1$param$model," non-symmetric positive")
+    }else{model1$param$model}
+    
+    model2$param$model<-if(model2$param$decomp=="diagonal"){
+        paste(model2$param$model," diagonal")
+    }else if(model2$param$decomp=="equal"){
+        paste(model2$param$model," equal")
+    }else if(model1$param$decomp=="eigen"){
+        paste(model1$param$model," symmetric")
+    }else if(model2$param$decomp=="eigen+" | model2$param$decomp=="cholesky" | model2$param$decomp=="spherical"){
+        paste(model2$param$model," symmetric positive")
+    }else if(model2$param$decomp=="lower"){
+        paste(model2$param$model," lower triangular")
+    }else if(model2$param$decomp=="upper"){
+        paste(model2$param$model," upper triangular")
+    }else if(model2$param$decomp=="qr" | model2$param$decomp=="svd" | model2$param$decomp=="schur"){
+        paste(model2$param$model," non-symmetric")
+    }else if(model2$param$decomp=="qr+" | model2$param$decomp=="svd+" | model2$param$decomp=="schur+"){
+        paste(model2$param$model," non-symmetric positive")
+    }else{model2$param$model}
+    
 }
 
 #

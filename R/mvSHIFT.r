@@ -12,6 +12,18 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
    
     #set data as a matrix if a vector is provided instead
     if(!is.matrix(data)){data<-as.matrix(data)}
+    
+    # Check the order of the dataset and the phylogeny
+    if(!is.null(rownames(data))) {
+        if(any(tree$tip.label==rownames(data))){
+            data<-data[tree$tip.label,]
+        }else if(echo==TRUE){
+            cat("row names of the data matrix must match tip names of your phylogeny!","\n")
+        }
+    }else if(echo==TRUE){
+        cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
+    }
+    
     # choose method for the likelihood computation
     method=method[1]
     if(method!="rpf" & method!="inverse" & method!="pseudoinverse" & method!="sparse"){
@@ -34,6 +46,8 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
     p<-dim(data)[2]
     # choose model
     model=model[1]
+    # root (current default value)
+    root=FALSE
     # choose a method for the optimizer
     optimization=optimization[1]
     if(is.null(param[["up"]])){up<-param$up<-2}else{up<-param$up}
@@ -81,18 +95,8 @@ if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
     # compute the variance-covariances matrices for each map
     multi.tre<-list()
     class(multi.tre)<-"multiPhylo"
-	vcvList<-list()
-	for(i in 1:ncol(tree$mapped.edge)){
-		multi.tre[[i]]<-tree
-		multi.tre[[i]]$edge.length<-tree$mapped.edge[,i]
-		multi.tre[[i]]$state<-colnames(tree$mapped.edge)[i]
-		temp<-vcv.phylo(multi.tre[[i]])
-		if(any(tree$tip.label==rownames(data))) { 
-		vcvList[[i]]<-temp[rownames(data),rownames(data)]
-		}else{
-		vcvList[[i]]<-temp
-		}
-	}
+	vcvList<-vcvSplit(tree)
+    
     if(method=="sparse"){
         ## sparse precalcs
         #require(spam)
@@ -113,22 +117,23 @@ if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
 ##---------------------------Define initial values--------------------------##
 # Pull (alpha) matrix decomposition
 if(is.null(param[["decomp"]])){
-    decomp<-param$decomp<-"symmetricPositive"
+    decomp<-param$decomp<-"cholesky"
 }else{
     decomp<-param$decomp[1]
 }
-# initial sigma matrix if not provided
-if(is.null(param[["sigma"]])){sigma=sym.unpar(diag(1,p))}else{sigma=param$sigma}
-# alpha matrix
-if(is.null(param[["alpha"]])){
-    if(decomp=="symmetric" | decomp=="symmetricPositive" | decomp=="upper" | decomp=="lower"){
-        alpha<-param$alpha<-sym.unpar(diag(runif(p),p))
-    }else if(decomp=="nsymmetric" | decomp=="nsymPositive"){
-        alpha<-param$alpha<-runif(p*p)
-    }else if(decomp=="diagonal" | decomp=="diagonalPositive" | decomp=="univariate"){
-        alpha<-param$alpha<-runif(p)
-    }
+
+# scatter (sigma) matrix decomposition
+if(is.null(param[["decompSigma"]])){
+    decompSigma<-param$decompSigma<-"cholesky"
+}else{
+    decompSigma<-param$decompSigma[1]
 }
+
+# initial sigma matrix if not provided
+if(is.null(param[["sigma"]])){sigma<-param$sigma<-startParamSigma(p, decompSigma, tree, data)}else{sigma<-param$sigma}
+# alpha matrix
+if(is.null(param[["alpha"]])){alpha<-param$alpha<-startParam(p,decomp,tree)}
+
 if(!is.numeric(param$alpha[[1]])){
     if(length(param$alpha)==2){
         if(is.numeric(param$alpha[[2]])){
@@ -138,7 +143,7 @@ if(!is.numeric(param$alpha[[1]])){
     alpha<-param$alpha
 }
 # second sigma matrix
-if(is.null(param[["sig"]])){sig=sym.unpar(diag(1,p))}else{sig=param$sig}
+if(is.null(param[["sig"]])){sig<-param$sig<-startParamSigma(p, decompSigma, tree, data)}else{sig<-param$sig}
 # beta matrix
 if(is.null(param[["beta"]])){beta=0.01}else{beta=param$beta} # 1 beta cf. mvEB
 
@@ -235,9 +240,17 @@ nsigma<-length(sigma)
 
   # function for alpha parameterization
   buildA<-function(x,p){matrixParam(x,p,decomp)}
+  # Matrix parameterization used for the A matrix
+  decompfun <- function(par){buildA(par,p)}
+  
+  # function for sigma parameterization
+  sigmafun <- function(par) {symPar(par, decomp=decompSigma, p=p)}
 
   # bind error to a vector
-  if(!is.null(error)){error<-as.vector(error)}
+  if(!is.null(error)){
+      error<-as.vector(error)
+      error[is.na(error)] <- 0
+  }
   
   # bind data to a vector
   if(is.matrix(data)){ dat<-as.vector(data) }else{ dat<-as.vector(as.matrix(data))}
@@ -246,49 +259,49 @@ nsigma<-length(sigma)
   sizeD<-ncol(W)
 ##------------------------Likelihood function---------------------------------##
 # ou-bm
-lik.shift_oubm<-function(alpha,sigma,sig,dat,error,vcvList,p){
+lik.shift_oubm<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
   if(p==1){
-  Vou<-.Call("mvmorph_covar_ou",A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
+  Vou<-.Call("mvmorph_covar_ou_fixed",A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
   }else{
   Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
   }
   V<-.Call("kronecker_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou)
   
-  loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+  loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
 
      list(loglik=-loglik$logl, theta=loglik$anc)
 }
 
 # eb-ou
-lik.shift_ebou<-function(alpha,sigma,sig,beta,dat,error,vcvList,p){
+lik.shift_ebou<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou",A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
+        Vou<-.Call("mvmorph_covar_ou_fixed",A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
     }else{
         Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     }
     V<-.Call("kronecker_shiftEB_OU", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou)
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
 
 # eb-bm
-lik.shift_ebbm<-function(beta,sigma,sig,dat,error,vcvList,p){
+lik.shift_ebbm<-function(beta,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     # C2 is the EB matrix
     V<-.Call("kronecker_shiftEB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
     list(loglik=-loglik$logl, theta=loglik$anc)
 }
 
 # sparse matrix ou-bm
-lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p){
+lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     V<-.Call("kroneckerSpar_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse",ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse",ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -305,20 +318,20 @@ lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p){
 #}
 
 # sparse matrix eb-ou
-lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p){
+lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     V<-.Call("kroneckerSpar_shift_OU_EB", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
 
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse", ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse", ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
 
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
 
 # sparse matrix eb-bm
-lik.shift_ebbm_sparse<-function(beta,sigma,sig,dat,error,vcvList,p){
+lik.shift_ebbm_sparse<-function(beta,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     V<-.Call("kroneckerSpar_shift_EB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
-    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc, method="sparse",ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA)
+    loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc, method="sparse",ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
        list(loglik=-loglik$logl, theta=loglik$anc)
 }
@@ -386,35 +399,206 @@ switch(model,
     starting<-c(alpha,sigma,sig,beta)
 })
 
+
+
 # optimizer
 if(model=="OVG" || model =="OV"){
+    ##-------------------Function log-likelihood----------------------------------##
+    
+    llfun <- function(par,...){
+        
+        args <- list(...)
+        if(is.null(args[["root.mle"]])) args$root.mle <- TRUE
+        if(is.null(args[["theta"]])) args$theta <- FALSE
+        
+        if(args$root.mle==TRUE){
+            
+            result <- -as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik)
+            if(args$theta==TRUE){
+                theta <- as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$theta)
+                result<-list(logl=result, theta=theta)
+            }
+        }else{
+            
+            result <- -as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p,theta_mle=FALSE,theta=par[nsig+nsigma+seq_len(p)])$loglik)
+            
+        }
+        return(result)
+    }
+    # attributes to the loglik function
+    attr(llfun, "model")<-model
+    attr(llfun, "alpha")<-nalpha
+    attr(llfun, "sigma")<-nsigma
+    attr(llfun, "sig")<-nsig
+    attr(llfun, "beta")<-1
+    attr(llfun, "theta")<-p
+    class(llfun) = c("mvmorph.llik")
+    
+    ## Check first if we want to return the log-likelihood function only
+    if(optimization=="fixed"){
+        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        param$sigmafun<-sigmafun
+        param$alphafun<-decompfun
+        param$nbspecies<-n
+        param$ntraits<-p
+        param$nregimes<-2
+        param$method<-method
+        param$optimization<-optimization
+        param$traits<-colnames(data)
+        param$names_regimes<-colnames(tree$mapped.edge)
+        param$model<-model
+        param$root<-root
+        param$decomp<-decomp
+        param$decompSigma<-decompSigma
+        param$before<-before
+        param$after<-after
+        theta.mat<-rep(0,p)
+        results<-list(llik=llfun, theta=theta.mat, alpha=buildA(alpha,p), sigma=sigmafun(sigma), sig=sigmafun(sig), beta=beta, param=param)
+        class(results)<-c("mvmorph")
+        invisible(results)
+        return(results)
+    }
+    
      if(optimization!="subplex"){
-        estim <- optim(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik },gr=NULL,hessian=TRUE,method=optimization,control=control)
+        estim <- optim(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik },gr=NULL,hessian=TRUE,method=optimization,control=control)
     }else{
-        estim <- subplex(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), beta=par[nbeta+1], error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
+        estim <- subplex(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), beta=par[nbeta+1], error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
     }
   
 }else if(model=="CV" || model=="CVG"){
+    ##-------------------Function log-likelihood----------------------------------##
+    
+    llfun <- function(par,...){
+        
+        args <- list(...)
+        if(is.null(args[["root.mle"]])) args$root.mle <- TRUE
+        if(is.null(args[["theta"]])) args$theta <- FALSE
+        
+        if(args$root.mle==TRUE){
+            
+            result <- -as.numeric(lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sigmafun(par[nbeta+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik)
+            if(args$theta==TRUE){
+                theta <- as.numeric(lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sigmafun(par[nbeta+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta)
+                result<-list(logl=result, theta=theta)
+            }
+        }else{
+            
+            result <- -as.numeric(lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sigmafun(par[nbeta+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p,theta_mle=FALSE,theta=par[nsig+nsigma+seq_len(p)])$loglik)
+            
+        }
+        return(result)
+    }
+    # attributes to the loglik function
+    attr(llfun, "model")<-model
+    attr(llfun, "beta")<-nbeta
+    attr(llfun, "sigma")<-nsigma
+    attr(llfun, "sig")<-nsig
+    attr(llfun, "theta")<-p
+    class(llfun) = c("mvmorph.llik")
+    
+    
+    ## Check first if we want to return the log-likelihood function only
+    if(optimization=="fixed"){
+        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        param$sigmafun<-sigmafun
+        param$alphafun<-decompfun
+        param$nbspecies<-n
+        param$ntraits<-p
+        param$nregimes<-2
+        param$method<-method
+        param$optimization<-optimization
+        param$traits<-colnames(data)
+        param$names_regimes<-colnames(tree$mapped.edge)
+        param$model<-model
+        param$root<-root
+        param$decomp<-decomp
+        param$decompSigma<-decompSigma
+        param$before<-before
+        param$after<-after
+        theta.mat<-rep(0,p)
+        results<-list(llik=llfun, theta=theta.mat, sigma=sigmafun(sigma), sig=sigmafun(sig), beta=beta, param=param)
+        class(results)<-c("mvmorph")
+        invisible(results)
+        return(results)
+    }
+    
     if(optimization!="subplex"){
-        estim <- optim(par=starting,fn = function (par) {lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sym.par(par[nbeta+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},gr=NULL,hessian=TRUE,method=optimization,control=control)
+        estim <- optim(par=starting,fn = function (par) {lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sigmafun(par[nbeta+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},gr=NULL,hessian=TRUE,method=optimization,control=control)
     }else{
-        estim <- subplex(par=starting,fn = function (par) {lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sym.par(par[nbeta+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
+        estim <- subplex(par=starting,fn = function (par) {lik.shift(beta=ratevalue(up,low,par[nbeta]),sigma=sigmafun(par[nbeta+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
     }
 }else{
+    ##-------------------Function log-likelihood----------------------------------##
+    
+    llfun <- function(par,...){
+        
+        args <- list(...)
+        if(is.null(args[["root.mle"]])) args$root.mle <- TRUE
+        if(is.null(args[["theta"]])) args$theta <- FALSE
+        
+        if(args$root.mle==TRUE){
+            
+            result <- -as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik)
+            if(args$theta==TRUE){
+                theta <- as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta)
+                result<-list(logl=result, theta=theta)
+            }
+        }else{
+            
+            result <- -as.numeric(lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p,theta_mle=FALSE,theta=par[nsig+nsigma+seq_len(p)])$loglik)
+            
+        }
+        return(result)
+    }
+    
+    # attributes to the loglik function
+    attr(llfun, "model")<-model
+    attr(llfun, "alpha")<-nalpha
+    attr(llfun, "sigma")<-nsigma
+    attr(llfun, "sig")<-nsig
+    attr(llfun, "theta")<-p
+    class(llfun) = c("mvmorph.llik")
+    
+    
+    ## Check first if we want to return the log-likelihood function only
+    if(optimization=="fixed"){
+        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        param$sigmafun<-sigmafun
+        param$alphafun<-decompfun
+        param$nbspecies<-n
+        param$ntraits<-p
+        param$nregimes<-2
+        param$method<-method
+        param$optimization<-optimization
+        param$traits<-colnames(data)
+        param$names_regimes<-colnames(tree$mapped.edge)
+        param$model<-model
+        param$root<-root
+        param$decomp<-decomp
+        param$decompSigma<-decompSigma
+        param$before<-before
+        param$after<-after
+        theta.mat<-rep(0,p)
+        results<-list(llik=llfun,theta=theta.mat, alpha=buildA(alpha,p), sigma=sigmafun(sigma), sig=sigmafun(sig), param=param)
+        class(results)<-c("mvmorph")
+        invisible(results)
+        return(results)
+    }
+    
      if(optimization!="subplex"){
-        estim <- optim(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},gr=NULL,hessian=TRUE,method=optimization,control=control)
+        estim <- optim(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},gr=NULL,hessian=TRUE,method=optimization,control=control)
     }else{
-        estim <- subplex(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sym.par(par[nalpha+seq_len(nsigma)]), sig=sym.par(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
+        estim <- subplex(par=starting,fn = function (par) {lik.shift(alpha=buildA(par[seq_len(nalpha)],p),sigma=sigmafun(par[nalpha+seq_len(nsigma)]), sig=sigmafun(par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$loglik},hessian=TRUE,control=control)
     }
 }
 ##---------------------theta estimation---------------------------------------##
 
 if(model=="OVG" || model=="OV"){
-res.theta<-lik.shift(alpha=buildA(estim$par[seq_len(nalpha)],p),sigma=sym.par(estim$par[nalpha+seq_len(nsigma)]), sig=sym.par(estim$par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,estim$par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
+res.theta<-lik.shift(alpha=buildA(estim$par[seq_len(nalpha)],p),sigma=sigmafun(estim$par[nalpha+seq_len(nsigma)]), sig=sigmafun(estim$par[nsig+seq_len(nsigma)]), beta=ratevalue(up,low,estim$par[nbeta+1]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
 }else if(model=="CV" || model=="CVG"){
-res.theta<-lik.shift(beta=ratevalue(up,low,estim$par[nbeta]),sigma=sym.par(estim$par[nbeta+seq_len(nsigma)]), sig=sym.par(estim$par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
+res.theta<-lik.shift(beta=ratevalue(up,low,estim$par[nbeta]),sigma=sigmafun(estim$par[nbeta+seq_len(nsigma)]), sig=sigmafun(estim$par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
 }else{
-res.theta<-lik.shift(alpha=buildA(estim$par[seq_len(nalpha)],p),sigma=sym.par(estim$par[nalpha+seq_len(nsigma)]), sig=sym.par(estim$par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
+res.theta<-lik.shift(alpha=buildA(estim$par[seq_len(nalpha)],p),sigma=sigmafun(estim$par[nalpha+seq_len(nsigma)]), sig=sigmafun(estim$par[nsig+seq_len(nsigma)]), error=error, dat=dat, vcvList=vcvList,p=p)$theta
 }
 ##---------------------Diagnostics--------------------------------------------##
 hess<-eigen(estim$hessian)$values
@@ -451,20 +635,27 @@ if(model=="RR" || model=="CVG" || model=="OVG"){
 estim.sig<-estim$par[nsig+seq_len(nsigma)]
 }
 
+# names for the plot
+if(is.null(colnames(data))){
+    names_data_matrix<-rep("",p)
+    names_data<-list(names_data_matrix,names_data_matrix)
+}else{
+    names_data_matrix<-colnames(data)
+    names_data<-list(names_data_matrix,names_data_matrix)
+}
+
 
 # alpha matrix
 alpha.mat<-buildA(estim.alpha,p)$A
-rownames(alpha.mat)<-colnames(data)
-colnames(alpha.mat)<-colnames(data)
+dimnames(alpha.mat)<-names_data
 # sigma matrix
-sigma.mat<-sym.par(estim.sigma)
-rownames(sigma.mat)<-colnames(data)
-colnames(sigma.mat)<-colnames(data)
+sigma.mat<-sigmafun(estim.sigma)
+dimnames(sigma.mat)<-names_data
+
 # sig matrix
 if(model=="RR" || model=="CVG" || model=="OVG"){
-sig.mat<-sym.par(estim.sig)
-rownames(sig.mat)<-colnames(data)
-colnames(sig.mat)<-colnames(data)
+sig.mat<-sigmafun(estim.sig)
+dimnames(sig.mat)<-names_data
 }
 # beta matrix
 if(model=="OVG" || model=="OV"){
@@ -484,7 +675,7 @@ AICc<-AIC+((2*nparam*(nparam+1))/(n-nparam-1)) #Hurvich et Tsai, 1989
 theta.mat<-matrix(res.theta,1)
 
 rownames(theta.mat)<-"theta"
-colnames(theta.mat)<-colnames(data)
+colnames(theta.mat)<-names_data_matrix
 
 ##-------------------Print results--------------------------------------------##
 if(echo==TRUE){
@@ -544,21 +735,24 @@ param$names_regimes<-colnames(tree$mapped.edge)
 param$model<-c(model,nmod)
 param$before<-before
 param$after<-after
+param$sigmafun<-sigmafun
+param$alphafun<-decompfun
+param$opt<-estim
 ##------------------List results----------------------------------------------##
 if(model=="ER"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }else if(model=="RR"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }else if(model=="CV"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }else if(model=="CVG"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }else if(model=="OV"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, beta=beta.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }else if(model=="OVG"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, beta=beta.mat, convergence=estim$convergence, hessian=estim$hessian, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
 }
-class(results)<-c("mvmorph","shift")
+class(results)<-c("mvmorph","mvmorph.shift")
 invisible(results)
 
     }

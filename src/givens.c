@@ -7,14 +7,20 @@
 // Avoid trigonometric functions following Golub & Van Loan 2013 and Stewart 1976
 #include "mvmorph.h"
 
-
 // Get sine and cosine of the Givens angle without trigonometrics functions
 // Stewart (1976) - 3 / Golub & Van Loan (2013) - 5.1.10
+// macro to get the sign
+// #define sign(a) ( ( (a) > 0 )  ?  1 : (( (a) < 0 ) ? -1 : 0) )
+
 /*static void getZ(double *p, double *s, double *c){
     // Avoid undefined values while using the non-trigonometric function
-    if(p[0]>0.5 & p[0]<2 & p[0]!=1){
-        p[0]=p[0]/4;
+    // if(p[0]>0.5 & p[0]<2 & p[0]!=1){p[0]=p[0]/4}
+    if (abs(p[0])<1.5){
+        p[0]<-p[0]/3;
+    }else{
+        p[0]<-p[0]*1.5;
     }
+ 
     if(p[0]==1.0){
         c[0]=0;
         s[0]=1;

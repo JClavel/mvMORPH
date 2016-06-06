@@ -10,7 +10,7 @@
 
 
 
-mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), param=list(mu=0,sigma=0.1,alpha=1,beta=0)){
+mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), param=list(theta=0,sigma=0.1,alpha=1,beta=0)){
     
     if(any(class(param)=="mvmorph")){
     ## Parameters
@@ -18,23 +18,34 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
     p<-param$param$ntraits
     n<-param$param$nbspecies
     k<-param$param$nregimes
-    param$smean<-TRUE
     mu<-param$theta
     sigma<-param$sigma
     names_traits<-param$param$traits
+    
+    if(model=="BM1" | model=="BMM"){
+        param$smean<-param$param$smean
+    }else{
+        param$smean<-TRUE
+    }
+    
     if(is.null(param$param[["root"]])){
         root<-FALSE
     }else{
         root<-param$param$root
     }
     
-    if(any(class(param)=="shift")){
-    before<-param$param$before
-    after<-param$param$after
+    if(is.null(param$param[["trend"]])){
+        istrend<-FALSE
+    }else if(param$param$trend==FALSE){
+        istrend<-FALSE
+    }else{
+        istrend<-TRUE
+        trend<-param$trend
     }
     
-    if(length(tree$tip.label)!=n){
-        stop("The number of tips in the tree do not match the number of tips in the fitted object!! Take care of using the same tree","\n")
+    if(any(class(param)=="mvmorph.shift")){
+        before<-param$param$before
+        after<-param$param$after
     }
     
     if(model=="ER"){
@@ -54,7 +65,6 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         sig<-param$sig
         beta<-matrix(param$beta,p,p)
     }
-
     
     if(model=="CV"){
         beta<-matrix(param$beta,p,p)
@@ -64,47 +74,82 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         sig<-param$sig
     }
     
-    if(model=="OUM" | model=="OU1"){
+    if(model=="OUM" | model=="OU1" | model=="OUTS"){
         alpha<-param$alpha
+        param$vcv<-param$param$vcv
     }
     
     if(model=="BMM"){
         sigma<-lapply(1:k,function(x){sigma[,,x]})
     }
     
-    if(any(class(param)=="acdc")){
+    if(any(class(param)=="mvmorph.acdc")){
         beta<-matrix(param$beta,p,p)
         model<-"EB"
     }
     
     }else{
         ## Default values for simulating data
+        # Choose the model
         model<-model[1]
         if(model=="ACDC" | model=="AC"){model<-"EB"}
+        
+        # traits names
         if(is.null(param[["names_traits"]])){
-        names_traits<-NULL
+            names_traits<-NULL
         }else{
-        names_traits<-param$names_traits
+            names_traits<-param$names_traits
         }
+        
+        # number of regimes
         if(model=="BM1" | model=="OU1" | model=="EB"){
             k<-1
         }else{
-            k<-length(colnames(tree$mapped.edge))
+             if(inherits(tree,"phylo")){
+                 if(!is.null(tree[["mapped.edge"]])){
+                    k<-length(colnames(tree$mapped.edge))
+                 }
+             }else{
+                 k<-1
+             }
+             
         }
+        
         ## Root state for the weight matrix
-        if(is.null(param[["root"]])){ root<-param$root<-FALSE }else{ root<-param$root}
-        ## Nombre d'especes / number of species
-        n<-length(tree$tip.label)
+        if(is.null(param[["root"]])){
+            root<-param$root<-FALSE
+            if(model=="OUTS") root<-param$root<-TRUE
+        }else{ root<-param$root}
+
         ## Nombre de traits / number of traits
         if(is.null(param[["ntraits"]])){
-            p<-1
+            
+            if(!is.null(param[["alpha"]])){
+                p<-dim(as.matrix(alpha))[1]
+            }else if(!is.null(param[["sigma"]])){
+                if(model=="BMM"){
+                p<-dim(as.matrix(param$sigma[[1]]))[1]
+                }else{
+                p<-dim(as.matrix(param$sigma))[1]
+                }
+            }else{
+                p<-1
             cat("default simulations for 1 trait. Use \"ntraits\" argument in the \"param\" list  ","\n")
+            }
+            
         }else{
             p<-param$ntraits
         }
-         if(root==TRUE){k<-k+1}
-        # mu set default values
-        if(is.null(param[["mu"]])==TRUE){
+        
+        if(root==TRUE){k<-k+1}
+        
+        # mu set default values (theta)
+        if(!is.null(param[["mu"]])){
+            param$theta<-param$mu
+        }
+        
+        # theta value
+        if(is.null(param[["theta"]])==TRUE){
             if(model=="OUM"){
                 mu<-rep(0,k)
                 if(p!=1){
@@ -121,25 +166,25 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         }else{
             if(p==1){
                 if(k==1){
-                        mu<-param$mu
-                }else if(length(param$mu)!=k & model=="OUM"){
+                        mu<-param$theta
+                }else if(length(param$theta)!=k & model=="OUM"){
                         mu<-rep(0,k)
                     cat("Problems with theta values provided, default value fixed to:",mu,"\n")
 
                 }else{
-                    mu<-param$mu
+                    mu<-param$theta
                 }
             }else{
                 if(k==1){
-                    mu<-param$mu
-                }else if(length(param$mu)!=k*p & model=="OUM"){
+                    mu<-param$theta
+                }else if(length(param$theta)!=k*p & model=="OUM"){
                     
                         mu<-rep(0,k*p)
                  
                     cat("Problems with theta values provided, default value fixed to:",mu,"\n")
                     
                 }else{
-                    mu<-param$mu
+                    mu<-param$theta
                 }
 
             }
@@ -148,7 +193,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         # sigma
         if(is.null(param[["sigma"]])==TRUE){
             if(model=="BMM"){
-            sigma<-lapply(1:k,function(x){ runif(n=1)})
+                    sigma<-lapply(1:k,function(x){ runif(n=1)})
   
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})
@@ -177,7 +222,6 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
             }else if(model!="OUBMi" & model!="BMOUi" & model!="OUEBi" & model!="EBOUi" & model!="BMEBi" & model!="EBBMi" & model!="RR" & model!="RC"){
                 sigma<-sig<-param$sigma
             }else{
-                
                 sigma<-param$sigma[[1]]
                 sig<-param$sigma[[2]]
                 
@@ -247,7 +291,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         }
         
         # alpha
-        if(model=="OU1" | model=="OUM" | model=="RR" | model=="ER" | model=="OVG" | model=="OV"){
+        if(model=="OU1" | model=="OUM" | model=="RR" | model=="ER" | model=="OVG" | model=="OV" | model=="OUTS"){
             if(is.null(param[["alpha"]])==TRUE){
                 alpha<-1
                 if(p!=1){
@@ -275,6 +319,19 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
             }
         }
         
+        # trend options
+        if(is.null(param[["trend"]])){
+            istrend<-FALSE
+        }else{
+            istrend<-TRUE
+            trend<-param$trend
+            
+            if(length(trend)<p){
+                stop("The number of specified values for the slopes of the trend do not match the number of traits!","\n")
+            }
+        }
+        
+        
         # verif nombre de traits
         if(model=="BMM"){
             sigmadim<-length(sigma[[1]])
@@ -287,19 +344,8 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         }
         
     }
-# vcv mtrix for Ornstein-Uhlenbeck model
-if(model=="OUM" | model=="OU1"){
-    if(is.null(param[["vcv"]])){
-    
-        param$vcv<-"mvmorph"
-    }
-    if(param$vcv=="ouch" & isSymmetric(as.matrix(alpha))!=TRUE){
-    
-        param$vcv<-"mvmorph"
-        cat("\"ouch\" vcv matrix could be used only with \"symmetricPositive\" alpha matrix","\n")
-    }
-}
-   
+
+
 # Root
 if(root=="stationary"){
    mod_stand<-1
@@ -309,16 +355,90 @@ if(root=="stationary"){
 
 ##Species covariance matrix
 # switch methods depending on the nature of the tree object
-      if(k!=1){
-            C<-vcvSplit(tree)
-
-        }else{
+if(inherits(tree,"phylo")){
+    ## Nombre d'especes / number of species
+    n<-length(tree$tip.label)
+      if(model=="OU1" | model=="BM1" | model=="EB"){
             C<-vcv.phylo(tree)
-             }
+        }else{
+            C<-vcvSplit(tree)
+        }
+         names_rows <- tree$tip.label
+    }else{
+        # to change?
+            tree <- tree-min(tree)
+            C<-vcv.ts(tree)
+            ## Nombre d'especes / number of species
+            n<-length(tree)
+            if(is.matrix(tree)){
+                names_rows <- rownames(tree)
+            }else{
+                names_rows <- names(tree)
+            }
+            
+}
+
+# vcv mtrix for Ornstein-Uhlenbeck model
+if(model=="OUM" | model=="OU1" | model=="OUTS"){
+    if(is.null(param[["vcv"]])){
+        vcv<-param$vcv<-"randomRoot"
+    }else{
+        vcv<-param$vcv
+    }
+    
+    if(model=="OUTS"){
+        if(is.null(error) & vcv=="fixedRoot" |  any(error[1,]==0) & vcv=="fixedRoot"){
+            warning("No sampling error provided for the initial observation(s) while using the \"fixedRoot\" parameterization.","\n","An arbitrary sampling error value is set to 0.01 for the initial observation(s) to avoid singularity issues. ")
+            if(any(error[1,]==0)==TRUE){
+                if(p==1){error[1] <- 0.01}else{error[1,] <- 0.01}
+            }else{
+                error <- matrix(0,ncol=p, nrow=n)
+                error[1,] <- 0.01
+            }
+        }
+    }
+    
+}
+
+# sampling error default for the RWTS model
+if(model=="RWTS"){
+    if(is.null(error) |  any(error[1,]==0)){
+        warning("No sampling error provided for the initial observation(s).","\n","An arbitrary sampling error value is set to 0.01 for the initial observation(s) to avoid singularity issues. ")
+        if(any(error[1,]==0)==TRUE){
+            if(p==1){error[1] <- 0.01}else{error[1,] <- 0.01}
+        }else{
+            error <- matrix(0,ncol=p, nrow=n)
+            error[1,] <- 0.01
+        }
+    }
+}
+
+# sampling error values:
+if(!is.null(error)){
+    error<-as.vector(as.matrix(error))
+    error[is.na(error)] <- 0
+}
 
 # Compute the VCV and Design matrix for each models
 
 switch(model,
+"RWTS"={
+    # Compute the design matrix
+    param$smean<-TRUE
+    W<-multD(tree,p,n,smean=param$smean)
+    V<-.Call("kronecker_mvmorph", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
+    # Add measurment error?
+    if(is.null(error)==FALSE){
+        diag(V)<-diag(V)+error
+    }
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
+    if(istrend==TRUE){
+        Vdiag<-rep(diag(C),p)
+        W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
+        mu<-as.numeric(1)
+    }
+},
 "BM1"={
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
@@ -328,11 +448,50 @@ switch(model,
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(istrend==TRUE){
+        Vdiag<-rep(diag(C),p)
+        W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
+        mu<-as.numeric(1)
+    }
 },
 "BMM"={
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
     V<-.Call("kroneckerSum", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k)) # Add measurment error?
+    if(is.null(error)==FALSE){
+        diag(V)<-diag(V)+error
+    }
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
+    if(istrend==TRUE){
+        Vdiag<-rep(diag(C),p)
+        W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
+        mu<-as.numeric(1)
+    }
+},
+"OUTS"={
+    eig<-eigen(alpha)
+    svec<-try(solve(eig$vectors), silent = TRUE)
+    if(inherits(svec ,'try-error')){
+        warning("An error occured with the inverse of the orthogonal matrix, the \"pseudoinverse\" has been used instead")
+        svec<- pseudoinverse(eig$vectors)
+    }
+    matdiag<-diag(p)
+    
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
+    }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
+        V<-.Call("simmap_covar", as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
+    }
+    if(root==TRUE){
+    W<-.Call("Weight_matrix", S1=svec, S=eig$vectors, lambda=eig$values, time=as.numeric(tree), matdiag=as.numeric(matdiag))
+    }else{
+    W<-multD(NULL,p,n,smean=TRUE)
+    }
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
+    # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
@@ -343,13 +502,21 @@ switch(model,
     listReg<-param_ou$listReg
     bt<-param_ou$C1
     eig<-eigen(alpha)
-    svec<-solve(eig$vectors)
-    if(param$vcv=="mvmorph"){
-    V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
-    }else{
-    V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma)
+    svec<-try(solve(eig$vectors), silent = TRUE)
+    if(inherits(svec ,'try-error')){
+        warning("An error occured with the inverse of the orthogonal matrix, the \"pseudoinverse\" has been used instead")
+        svec<- pseudoinverse(eig$vectors)
     }
+    
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
+    }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
+        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
+    }
+    
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -361,13 +528,21 @@ switch(model,
     listReg<-param_ou$listReg
     bt<-param_ou$C1
     eig<-eigen(alpha)
-    svec<-solve(eig$vectors)
-    if(param$vcv=="mvmorph"){
-    V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
-    }else{
-    V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma)
+    svec<-try(solve(eig$vectors), silent = TRUE)
+    if(inherits(svec ,'try-error')){
+        warning("An error occured with the inverse of the orthogonal matrix, the \"pseudoinverse\" has been used instead")
+        svec<- pseudoinverse(eig$vectors)
     }
+    
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
+    }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
+        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
+    }
+    
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -378,6 +553,8 @@ switch(model,
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
     V<-.Call("kroneckerEB",R=sigma,C=C, beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -387,7 +564,7 @@ switch(model,
 "RR"={
     # Brownian and OU models with different rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou",A=C[[before]],alpha=alpha, sigma=sigma)
+        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
         Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors))
@@ -396,6 +573,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -404,7 +583,7 @@ switch(model,
 "ER"={
     # Brownian and OU models with the same rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou",A=C[[before]],alpha=alpha, sigma=sigma)
+        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
         Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors))
@@ -413,6 +592,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -424,6 +605,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -435,6 +618,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -443,7 +628,7 @@ switch(model,
 "OV"={
     # OU & ACDC models with the same rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou",A=C[[before]],alpha=alpha, sigma=sigma)
+        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
         Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors))
@@ -452,6 +637,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -460,7 +647,7 @@ switch(model,
 "OVG"={
     # OU & ACDC models with independent rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou",A=C[[before]],alpha=alpha, sigma=sigma)
+        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
         Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors))
@@ -469,6 +656,8 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
+    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -477,18 +666,16 @@ switch(model,
 
 ## Simulate the traits from a multivariate normal distribution
 
-
-
     if(nsim==1){
-    traits<-matrix(rmvnorm(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p)
-    rownames(traits)<-tree$tip.label
-    colnames(traits)<-names_traits
+        traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p)
+        rownames(traits)<-names_rows
+        colnames(traits)<-names_traits
     }else if(nsim>1 & p!=1){
-    traits<-lapply(1:nsim,function(x){traits<-matrix(rmvnorm(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p);rownames(traits)<-tree$tip.label; colnames(traits)<-names_traits;traits})
+        traits<-lapply(1:nsim,function(x){traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p);rownames(traits)<-names_rows; colnames(traits)<-names_traits;traits})
     }else{
-    traits<-matrix(rmvnorm(n=nsim,as.numeric(W%*%as.numeric(mu)),V ),ncol=nsim)
-    rownames(traits)<-tree$tip.label
-    colnames(traits)<-names_traits
+        traits<-matrix(rmvnorm_simul(n=nsim,as.numeric(W%*%as.numeric(mu)),V ),ncol=nsim)
+        rownames(traits)<-names_rows
+        colnames(traits)<-names_traits
     }
     return(traits)
 }

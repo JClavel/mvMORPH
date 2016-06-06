@@ -68,6 +68,8 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
+
+
 ## Simulated dataset
 set.seed(14)
 # Generating a random tree

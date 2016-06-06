@@ -12,11 +12,11 @@ Species measurement errors or dispersions can also be included in the model.
 }
 \usage{
 mvOU(tree, data, error = NULL, model = c("OUM", "OU1"), param = list(sigma = NULL,
-    alpha = NULL, vcv = "mvmorph", decomp = c("symmetricPositive", "symmetric",
-    "nsymPositive", "nsymmetric", "diagonal", "upper", "lower")), method = c("rpf", 
-    "sparse", "inverse", "pseudoinverse", "univarpf"), scale.height = FALSE, 
-    optimization = c("L-BFGS-B", "Nelder-Mead", "subplex"), control = 
-    list(maxit = 20000), precalc = NULL, diagnostic = TRUE, echo = TRUE)
+    alpha = NULL, vcv = "fixedRoot", decomp = c("cholesky","spherical","eigen","qr",
+    "diagonal","upper","lower")), method = c("rpf", "sparse", "inverse",
+    "pseudoinverse", "univarpf"), scale.height = FALSE, optimization = c("L-BFGS-B",
+    "Nelder-Mead", "subplex"), control = list(maxit = 20000), precalc = NULL, 
+    diagnostic = TRUE, echo = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -51,7 +51,7 @@ Whether the tree should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines. (See ?optim and ?subplex for details).
+Methods used by the optimization routines. (See ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
@@ -72,29 +72,33 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvOU function fit a multivariate model of evolution according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states. SIMMAP mapping allows one to assign parts of branchs to different selective regimes, and allows testing for change in trait variance that is not synchronous with the species divergence events.
+The mvOU function fit a multivariate model of evolution according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states. SIMMAP mapping allows one to assign parts of branchs to different selective regimes, and allows testing for change in trait variance that is not synchronous with the species divergence events. See the package vignette: browseVignettes("mvMORPH").
 
 Mapping of ancestral states can be done using the "make.simmap", "make.era.map" or "paintSubTree" functions from the "phytools" package.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf", "univarpf" (for univariate analysis) and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The "inverse" approach use the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"}, \emph{"univarpf"} (for univariate analysis) and \emph{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \emph{"inverse"} approach use the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
 
-Arguments in the "param" list are:
+Arguments in the \bold{"param"} \emph{list} are:
 
-"sigma" or "alpha" - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
+\bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-"decomp" - You can further constraint the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix on its eigenvalues with different biological interpretations (e.g., Sy et al. 1997, Bartoszek et al. 2012). "symmetric" uses SVD parameterization of the matrix, "symmetricPositive" uses a Cholesky parameterization of the matrix, "nsymmetric" and "nsymPositive" use a Schur parameterization of the matrix for specifying the eigenvalues. It is also possible to specify "diagonal" which is similar to the use of the "constraint" argument for "alpha" argument. Finally, one can specify that the alpha matrix is "upper" or "lower" triangular (i.e., one process affect the other unilateraly). The sigma matrix is parameterized by the Cholesky method to ensure positive definiteness (Pinheiro and Bates, 1996).
+\bold{"decomp"} - You can further constraint the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options force the eigenvalues to be positives by taking they're logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the \emph{"constraint"} argument for "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
 
-"vcv" - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument. The vcv="ouch" option uses a modified version of the OUCH package code (Butler and King, 2004) to compute the variance-covariance matrix. This algorithm assumes that the process is stationary. It cannot be used with the "sparse" method to speed up the computations. The vcv="mvmorph" option follows Bartoszek et al. 2012 for computing the variance covariance matrix. This approach can be used with non-ultrametric trees, with the various matrix parameterization proposed and all the GLS methods of mvMORPH. Both approaches should converge on the same results when the traits have evolved according to an OU process.
+\bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the: \emph{"cholesky"}, \emph{"eigen+"}, and \emph{"spherical"} parameterization. The sigma matrix can also forced to be diagonal using \emph{"diagonal"} or \emph{"equaldiagonal"} and forced to have the same variances: \emph{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
 
-"root" - This argument allows the user to specify if the ancestral state at the root (theta 0) should be estimated (root=TRUE), assumed to be at the oldest regime state (root=FALSE), or that there is no root and each regimes is at the stationary point (root="stationary"). The first option should be used with non-ultrametric trees (i.e., with fossil species - e.g., Hansen 1997) where information on the ancestral state is directly available from the data. Indeed, estimating shifts in the ancestral state from extant species could be problematic and it seems preferable to either assume each regime to be stationary or that the root state is the state of the older regime (as currently assumed in the "ouch" package).
+\bold{"vcv"} - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument depending on how the root is treated. 
+The \emph{vcv="randomRoot"} option assumes that the value at the root is a random variable with the stationary distribution of the process. It cannot be used with the "sparse" method to speed up the computations. The \emph{vcv="fixedRoot"} option assumes that the root is a fixed parameter. On ultrametric trees both approaches should converge on the same results when the OU process is stationary.
+
+\bold{"root"} - This argument allows the user to specify if the ancestral state at the root (theta 0) should be estimated (\emph{root=TRUE}), or assumed to be at the oldest regime state stationary distribution (\emph{root=FALSE}). An alternative is to follow Beaulieu et al. (2012) and explicitly drop the root state influence (\emph{root="stationary"}). The first option should be used with non-ultrametric trees (i.e., with fossil species - e.g., Hansen 1997) where information on the ancestral state is directly available from the data. Indeed, estimating shifts in the ancestral state from extant species could be problematic and it seems preferable to assume each regime optimums to be at the stationary distribution.
+
+For the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided.
 
 
-Note on the returned Hessian matrix in the result list:
+Note on the returned Hessian matrix in the result list (param$opt$hessian):
 
 The hessian is the matrix of second order partial derivatives of the likelihood function with respect to the maximum likelihood parameter values. This matrix provides a measure of the steepness of the likelihood surface in the region of the optimum. The eigen-decomposition of the hessian matrix returned by the optimizing function allows assessing the reliability of the fit of the model (even if the optimizer have converged).
-When the optimization function does not converge on a stable result, the user may consider increasing the "maxit" argument in the "control" option, or try a simpler model with fewer parameters to estimate. Changing the starting values ("alpha" and "sigma" options in the param list) as well as the optimizing function ("optimization" options) may help sometimes (e.g., alpha=runif(3) for two traits analysis with random starting values (i.e., the lower triangular alpha matrix)). Note that the number of starting values to provide depends on the matrix decomposition chosen for the alpha parameter (p*(p+1)/2 values for symmetric alpha matrix but p*p values for non-symmetric ones - with p the number of traits).
+When the optimization function does not converge on a stable result, the user may consider increasing the "maxit" argument in the "control" option, or try a simpler model with fewer parameters to estimate. Changing the starting values ("alpha" and "sigma" options in the param list) as well as the optimizing method ("optimization" options) may help sometimes (e.g., alpha=runif(3) for two traits analysis with random starting values (i.e., the lower triangular alpha matrix)). Note that the number of starting values to provide depends on the matrix decomposition chosen for the alpha parameter (p*(p+1)/2 values for symmetric alpha matrix but p*p values for non-symmetric ones - with p the number of traits).
 
-Note that Bartoszek et al. (2012) proposed the mvSLOUCH package dedicated to multivariate Ornstein-Uhlenbeck processes, which allows fitting models with a randomly evolving predictor variables. They also provide a detailed mathematical description of the multivariate OU model which the reader should consult.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -105,9 +109,9 @@ Note that Bartoszek et al. (2012) proposed the mvSLOUCH package dedicated to mul
 \item{alpha }{Matrix of estimated alpha values (strength of selection).}
 \item{sigma }{Evolutionary rates matrix (drift).}
 \item{convergence }{Convergence status of the optimizing function; "0" indicates convergence. (See ?optim for details).}
-\item{hessian }{Hessian matrix of second order partial derivatives at the MLE. (See details).}
 \item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. See details.}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
+\item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -120,6 +124,8 @@ Bartoszek K., Pienaar J., Mostad P., Andersson S., Hansen T.F. 2012. A phylogene
 Beaulieu J.M., Jhwueng D.-C., Boettiger C., O'Meara B.C. 2012. Modeling stabilizing selection: Expanding the Ornstein-Uhlenbeck model of adaptive evolution. Evolution. 66:2369-2389.
 
 Butler M.A., King A.A. 2004. Phylogenetic comparative analysis: a modeling approach for adaptive evolution. Am. Nat. 164:683-695.
+
+Clavel J., Escarguel G., Merceron G. 2015. mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods Ecol. Evol. 6(11):1311-1319.
 
 Hansen T.F. 1997. Stabilizing selection and the comparative analysis of adaptation. Evolution. 51:1341-1351.
 
@@ -134,6 +140,9 @@ Julien Clavel
 }
 \note{
 This function partly uses a modified version of the C code from the "OUCH" package built by Aaron King, as well as a C code which is part of the "ape" package by Emmanuel Paradis.  I kindly thank those authors for sharing their sources.
+Note that Bartoszek et al. (2012) proposed the mvSLOUCH package also dedicated to multivariate Ornstein-Uhlenbeck processes, which allows fitting regression models with a randomly evolving predictor variables.
+
+The "symmetric", "nsymmetric", "symmetricPositive", and "nsymPositive" options for the "decomp" argument are deprecated.
 %%  ~~further notes~~
 }
 
@@ -146,6 +155,8 @@ This function partly uses a modified version of the C code from the "OUCH" packa
 \code{\link{mvBM}}
 \code{\link{mvEB}}
 \code{\link{mvSHIFT}}
+\code{\link{mvOUTS}}
+\code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{LRT}}
 \code{\link{optim}}
@@ -176,7 +187,7 @@ plotSimmap(tree,col,fsize=0.6,node.numbers=FALSE,lwd=3, pts=FALSE)
 alpha<-matrix(c(2,0.5,0.5,1),2)
 sigma<-matrix(c(0.1,0.05,0.05,0.1),2)
 theta<-c(2,3,1,1.3)
-data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
+data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, theta=theta,
             names_traits=c("head.size","mouth.size")), model="OUM", nsim=1)
 
 ## Fitting the models
@@ -216,7 +227,7 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, mu=theta,
  alpha<-2.5
  sigma<-0.1
  theta<-c(0,2)
- data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=1, mu=theta,
+ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=1, theta=theta,
              names_traits=c("body_size")), model="OUM", nsim=1)
 
 # Fit the model
