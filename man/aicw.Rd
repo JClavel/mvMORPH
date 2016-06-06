@@ -25,7 +25,7 @@ Options to be passed through; e.g. aicc=TRUE when a list of fitted object is pro
 }
  
 \details{
-This function compute the Akaike weights for a set of models fit. Akaike weights can be used for model comparison and model averaging.
+This function compute the Akaike weights for a set of model fits. Akaike weights can be used for model comparison and model averaging.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{

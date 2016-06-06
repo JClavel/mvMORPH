@@ -6,7 +6,7 @@ Multivariate continuous traits evolution for stationary time serie (Ornstein-Uhl
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU) model on time series.
+This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU) model on time-series.
 Species measurement errors or dispersions can also be included in the model.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
@@ -75,7 +75,7 @@ Arguments in the \bold{"param"} \emph{list} are:
 
 \bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-\bold{"decomp"} - You can further constraint the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options force the eigenvalues to be positives by taking they're logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
+\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
 
 \bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the: \emph{"cholesky"}, \emph{"eigen+"}, and \emph{"spherical"} parameterization. The sigma matrix can also forced to be diagonal using \emph{"diagonal"} or \emph{"equaldiagonal"} and forced to have the same variances: \emph{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
 
@@ -179,6 +179,34 @@ mvOUTS(timeserie, traits2, param=list(decomp="upper"))
 mvOUTS(timeserie, traits2, param=list(decomp="lower"))
 
 
+# try user defined constraints
+set.seed(100)
+ts <- 49
+timeserie <- 1:ts
+
+sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
+# upper triangular matrix with effect of trait 2 on trait 1.
+alpha <- matrix(c(0.4,0,0,-0.5,0.3,0,0,0,0.2),3,3) 
+theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=T, ncol=3); root=TRUE
+
+data <- mvSIM(timeserie, model="OUTS", param=list(alpha=alpha, 
+              sigma=sigma, theta=theta, root=root, 
+              names_traits=c("sp 1", "sp 2", "sp 3")))
+
+# plot
+matplot(data, type="o", pch=1, xlab="Time (relative)")
+legend("bottomright", inset=.05, legend=colnames(data), pch=19, col=c(1,2,3), horiz=TRUE)
+
+# define an user constrained drift matrix
+indice <- matrix(NA,3,3)
+diag(indice) <- c(1,2,3)
+indice[1,2] <- 4
+
+# fit the model
+fit_1 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp=indice))
+fit_2 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp="diagonal"))
+
+LRT(fit_1, fit_2)
 }
 
 

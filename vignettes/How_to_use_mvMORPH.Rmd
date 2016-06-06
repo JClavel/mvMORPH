@@ -502,6 +502,42 @@ $$
 
 Note: the package can't handle matrices with similar eigenvalues currently (e.g., the diagonal values must be slightly differents in a trianbgular matrix).
 
+User-defined constraints on the matrix parameterizations are allowed (but user should check convergence and try with different methods, see the "constraints" section above):
+```{r,comment=">"}
+# try user defined constraints
+set.seed(100)
+ts <- 49
+timeserie <- 1:ts
+
+sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
+# upper triangular matrix with effect of trait 2 on trait 1.
+alpha <- matrix(c(0.4,0,0,-0.5,0.3,0,0,0,0.2),3,3) 
+theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=T, ncol=3); root=TRUE
+
+data <- mvSIM(timeserie, model="OUTS", param=list(alpha=alpha, 
+              sigma=sigma, theta=theta, root=root, 
+              names_traits=c("sp 1", "sp 2", "sp 3")))
+
+# plot
+matplot(data, type="o", pch=1, xlab="Time (relative)")
+legend("bottomright", inset=.05, legend=colnames(data), pch=19, col=c(1,2,3), horiz=TRUE)
+```
+
+Then provides a matrix of integer indices specifying the target structure:
+
+```{r, comment=">", results="hide", message=FALSE, eval=FALSE}
+# define an user constrained drift matrix
+indice <- matrix(NA,3,3)
+diag(indice) <- c(1,2,3)
+indice[1,2] <- 4
+
+# fit the models
+fit_1 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp=indice))
+fit_2 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp="diagonal"))
+
+LRT(fit_1, fit_2)
+```
+
 
 ## 2. the "vcv" argument
 
