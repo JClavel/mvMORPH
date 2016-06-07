@@ -586,7 +586,8 @@ rmvnorm_simul<-function(n=1, mean, var){
 }
 
 # Generate a multi-phylo list for SIMMAP trees
-vcvSplit<-function(tree){
+vcvSplit<-function(tree, internal=FALSE){
+    if(!inherits(tree,"simmap")) stop("tree should be an object of class \"simmap\".")
     multi.tre<-list()
     class(multi.tre)<-"multiPhylo"
     #Array method - better for memory?
@@ -596,10 +597,21 @@ vcvSplit<-function(tree){
         multi.tre[[i]]<-tree
         multi.tre[[i]]$edge.length<-tree$mapped.edge[,i]
         multi.tre[[i]]$state<-colnames(tree$mapped.edge)[i]
-        temp<-vcv.phylo(multi.tre[[i]])
-        C[[i]]<-temp
+        # hack from Liam Revell (change to multiC later)
+        C[[i]]<-if(internal) vcvPhylo(multi.tre[[i]],internal=TRUE) else vcv.phylo(multi.tre[[i]])
     }
 return(C)
+}
+
+# Get the indice of tip species on ancestral vcv
+indiceTip <- function(tree, p){
+    totsp <- Ntip(tree)+(Nnode(tree)-1) # retrieve the root state
+    init  <- res <- (1:Ntip(tree))
+    for(i in 1:(p-1)){
+        init<-init+totsp
+        res <- c(res,init)
+    }
+    return(res)
 }
 
 # Generate box constraints for the likelihood search
@@ -1037,7 +1049,12 @@ print.mvmorph.aicw<-function(x,...){
 }
 
 print.mvmorph.estim<-function(x,...){
-    cat("Dataset with",length(x$NA_index)," imputed missing values.","\n")
+    number_of_missing <- length(x$NA_index)
+    if(is.null(number_of_missing)){
+    cat("Ancestral states reconstructed for",nrow(x$estimates)," nodes and",ncol(x$estimates)," traits.","\n")
+    }else{
+    cat("Dataset with",number_of_missing," imputed missing values.","\n")
+    }
 }
 
 ## Return the model AIC

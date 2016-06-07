@@ -10,7 +10,7 @@ This function impute the missing cases (NA values) according to a phylogenetic m
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-estim(tree, data, object, error=NULL)
+estim(tree, data, object, error=NULL, asr=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{ 
@@ -31,9 +31,16 @@ A fitted object from an mvMORPH model (class "mvmorph").
 Matrix or data frame with species in rows and continuous traits standard error (squared) in columns.
 %%     ~~Describe \code{echo} here~~
 }
+
+\item{asr}{
+If asr=TRUE, the ancestral states are estimated instead of the missing cases.
+%%     ~~Describe \code{echo} here~~
+}
 }
 \details{
 Missing observations for species in a phylogenetic tree are estimated according to a given evolutionary model (and parameters). Multivariate models are useful to recover the variance and covariance structure of the dataset to be imputed.
+
+When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes on the tree. Note that if there is missing cases, they are first reconstructed before estimating the ancestral states.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -106,6 +113,13 @@ imp<-estim(tree, data, fit)
 # Check the imputed data
 imp$estim[1:10,]
 
+## We want the ancestral states values at each nodes:
+nodelabels() # To see where the nodes are situated
+
+imp2<-estim(tree, data, fit, asr=TRUE)
+
+# Check the 10 firsts ancestral states
+imp2$estim[1:10,]
 }
 
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -675,13 +675,13 @@ data[25,1]<-NA
 fit_1<-mvBM(tree,data,model="BM1")
 ```{r,comment=">"}
 # Estimate the missing cases
-imp<-estim(tree, data, fit_1)
+imp<-estim(tree, data, fit_1, asr=FALSE)
 
 # Check the imputed data
 imp$estim[1:10,]
 ```
 
-
+Note that if the _asr_ argument is TRUE, the ancestral states at each nodes are returned instead of the imputed values. If there is missing cases in the dataset, they are first imputed before estimating the ancestral values.
 
 # XI) Tweak mvMORPH
 

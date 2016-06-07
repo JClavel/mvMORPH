@@ -9,7 +9,7 @@
 ################################################################################
 
 
-estim<-function(tree, data, object, error=NULL){
+estim<-function(tree, data, object, error=NULL, asr=FALSE){
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
@@ -19,23 +19,21 @@ traits_names<-colnames(data)
 p <- ncol(data)
 
 # Check if there is missing cases
+Indice_NA<-NULL
 if(any(is.na(data))){
     Indice_NA<-which(is.na(as.vector(data)))
-   }else{
+   }else if(asr!=TRUE){
     stop("There is no missing cases in your dataset!!")
 }
-   
+
 # bind error to a vector
 if(!is.null(error)){error<-as.vector(error[-Indice_NA])}
 
-
-## Estimate ancestors states?
-#if(is.null(param[["asr"]])==TRUE){
-#    asr<-param$asr<-FALSE
-#   }else{
-#    asr<-param$asr
-#}
-
+# First impute the dataset to compute the ancestral states?
+if(any(is.na(data)) & asr==TRUE){
+    warning("Missing cases were first imputed before estimating the ancestral values !!")
+    data <- estim(tree,data,object,error, asr=FALSE)$estimates
+}
 
 ##-------------------Models parameters----------------------------------------##
 if(any(class(object)=="mvmorph")){
@@ -47,18 +45,29 @@ if(any(class(object)=="mvmorph")){
     sigma<-object$sigma
     names_traits<-object$param$traits
     
-    
     ## Ancestral states estimation??
     ## I must adapt it to the simmap format
-    #if(asr==TRUE){
-    #dis <- dist.nodes(tree)
-    #nb.tip <- length(tree$tip.label)
-    #nb.node <- tree$Nnode
-    #MRCA <- mrca(tree, full = TRUE)
-    #varTV <- dis[as.character(nb.tip + 1), MRCA]
-    #dim(varTV) <- rep(sqrt(length(varTV)), 2)
-    #C <- varTV[1:nb.tip,1:nb.tip]
-    #}else{
+    if(asr==TRUE){
+        if(!inherits(tree,"simmap") & k!=1) stop("The tree should be an object of class \"simmap\".")
+        if(!inherits(tree,"phylo")) stop("The \"asr=TRUE\" argument works only with phylogenies.")
+        # number of tips
+        ntip <- length(tree$tip.label)
+        Indice_EXT <- indiceTip(tree,p)
+    
+        # species names
+        sp_names <- tree$tip.label
+        if(any(sp_names==rownames(data))){data<-data[sp_names,]}
+        
+        if(k!=1){
+            C <- vcvSplit(tree, internal=TRUE) # change to multiC later?
+            n <- ncol(C[[1]])
+        }else{
+            C <- vcvPhylo(tree)
+            n <- ncol(C)
+        }
+
+    
+    }else{
         if(inherits(tree,"phylo")){
             
             # number of tips
@@ -84,7 +93,7 @@ if(any(class(object)=="mvmorph")){
                 if(any(sp_names==rownames(data))){C<-C[rownames(data),rownames(data)]}
                 
         }
-    #}
+    }
     
     if(is.null(object$param[["root"]])){
         root<-FALSE
@@ -165,7 +174,11 @@ switch(model,
     V<-.Call("kronecker_mvmorph", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
     
     if(istrend==TRUE){
@@ -191,8 +204,11 @@ switch(model,
     }
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
-    }
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }    }
 },
 "BM1"={
     # Compute the design matrix
@@ -200,11 +216,15 @@ switch(model,
     V<-.Call("kronecker_mvmorph", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
     
     if(istrend==TRUE){
-        Vdiag<-rep(diag(C),p)
+        Vdiag<-rep(diag(C[1:n,1:n]),p)
         W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
         mu<-as.numeric(1)
     }
@@ -213,11 +233,15 @@ switch(model,
     W<-multD(tree,p,n,smean=object$param$smean)
     V<-.Call("kroneckerSum", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k)) # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
     
     if(istrend==TRUE){
-        Vdiag<-rep(diag(C),p)
+        Vdiag<-rep(diag(C[1:n,1:n]),p)
         W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
         mu<-as.numeric(1)
     }
@@ -238,7 +262,11 @@ switch(model,
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "OUM"={
@@ -256,7 +284,11 @@ switch(model,
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "EB"={
@@ -265,7 +297,11 @@ switch(model,
     V<-.Call("kroneckerEB",R=sigma,C=C, beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 
@@ -282,7 +318,11 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "ER"={
@@ -298,7 +338,11 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "CV"={
@@ -308,7 +352,11 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "CVG"={
@@ -318,7 +366,11 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "OV"={
@@ -334,7 +386,11 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 },
 "OVG"={
@@ -350,61 +406,95 @@ switch(model,
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
     if(is.null(error)==FALSE){
-        diag(V)<-diag(V)+error
+        if(asr==TRUE){
+            diag(V[Indice_EXT,Indice_EXT])<-diag(V[Indice_EXT,Indice_EXT])+error
+        }else{
+            diag(V)<-diag(V)+error
+        }
     }
 })
 
-## Parameters estimates
-anc <- as.numeric(W%*%as.numeric(mu))
-
 ##-------------------Prepare the covariance matrices--------------------------##
 # TODO: need first to compute the VCV of simmap trees
-# follow Cunningham et al. 1998
-# Models included in the objects
-## covariance between tip species and ancestral states
-#varAY <- C[-(1:nb.tip), 1:nb.tip]
-## covariance between ancestral states
-#varA <- C[-(1:nb.tip), -(1:nb.tip)]
-## covariance between tip species
-#varY <- C[1:nb.tip,1:nb.tip]
+
     
 # stack the data as a vector
 data<-as.numeric(as.matrix(data))
 
-# Prepare the covariances
-varY<-V[-Indice_NA,-Indice_NA]
-varAY<-V[Indice_NA,-Indice_NA]
-varA<-V[Indice_NA,Indice_NA]
+if(asr==TRUE){
+    ## Parameters estimates
+    anc <- as.numeric(W[Indice_EXT,]%*%as.numeric(mu))
+    anc2 <- as.numeric(W[-Indice_EXT,]%*%as.numeric(mu))
+    
+    # extend Cunningham et al. 1998 to multivariate
+    # Models included in the objects
+    ## covariance between tip species and ancestral states
+    varAY <- V[-Indice_EXT, Indice_EXT]
+    ## covariance between ancestral states
+    varA <- V[-Indice_EXT, -Indice_EXT]
+    ## covariance between tip species
+    varY <- V[Indice_EXT,Indice_EXT]
+    data_complete<-data
+    
+    
+    # Invert the covariance matrix
+    invY<-solve(varY)
+    ## Estimating missing cases; follow Cunningham et al. 1998
+    data_estim <- as.numeric(varAY%*%invY%*%(data_complete-anc))+anc2
+    
+}else{
+    ## Parameters estimates
+    anc <- as.numeric(W%*%as.numeric(mu))
+    
+    # Prepare the covariances
+    varY<-V[-Indice_NA,-Indice_NA]
+    varAY<-V[Indice_NA,-Indice_NA]
+    varA<-V[Indice_NA,Indice_NA]
+    # Prepare the data
+    anc<-anc[Indice_NA]
+    data_complete<-data[-Indice_NA]
+    
+    
+    # Invert the covariance matrix
+    invY<-solve(varY)
+    ## Estimating missing cases; follow Cunningham et al. 1998
+    data_estim <- as.numeric(varAY%*%invY%*%(data_complete-anc))+anc
+}
 
-# Prepare the data
-anc<-anc[Indice_NA]
-data_complete<-data[-Indice_NA]
+
 
 ##-------------------Estimate ancestral or missing states---------------------##
-
-# Invert the covariance matrix
-invY<-solve(varY)
-## Estimating missing cases; follow Cunningham et al. 1998
-data_estim <- as.numeric(varAY%*%invY%*%(data_complete-anc))+anc
 
 ## Estimate the variances of the imputed data
 data_var<-diag(varA - varAY %*% invY %*% t(varAY))
 data_se<-sqrt(data_var)
 # data_CI<-cbind(data_estim + (data_sd * -1.959964), data_estim - (data_sd * -1.959964))
+if(asr==TRUE){
+    ## Names the results
+    results_matrix<-matrix(data_estim, ncol=p)
+    colnames(results_matrix)<-traits_names
+    rownames(results_matrix)<-ntip+2:Nnode(tree)
+    
+    ## Names the results of variance and sd
+    results_var<-matrix(data_var, ncol=p)
+    results_se<-matrix(data_se, ncol=p)
+    rownames(results_var)<-rownames(results_se)<-ntip+2:Nnode(tree)
+    colnames(results_var)<-colnames(results_se)<-traits_names
+  
+}else{
+    ## Names the results
+    results_matrix<-matrix(data, ncol=p)
+    rownames(results_matrix)<-sp_names
+    colnames(results_matrix)<-traits_names
+    results_matrix[Indice_NA]<-data_estim
 
-## Names the results
-results_matrix<-matrix(data, ncol=p)
-rownames(results_matrix)<-sp_names
-colnames(results_matrix)<-traits_names
-results_matrix[Indice_NA]<-data_estim
-
-## Names the results of variance and sd
-results_var<-results_se<-matrix(NA, nrow=n, ncol=p)
-rownames(results_var)<-rownames(results_se)<-sp_names
-colnames(results_var)<-colnames(results_se)<-traits_names
-results_var[Indice_NA]<-data_var
-results_se[Indice_NA]<-data_se
-
+    ## Names the results of variance and sd
+    results_var<-results_se<-matrix(NA, nrow=n, ncol=p)
+    rownames(results_var)<-rownames(results_se)<-sp_names
+    colnames(results_var)<-colnames(results_se)<-traits_names
+    results_var[Indice_NA]<-data_var
+    results_se[Indice_NA]<-data_se
+}
 ##-------------------Store results--------------------------------------------##
 
 results<-list(estimates=results_matrix, var=results_var, se=results_se, NA_index=Indice_NA)
