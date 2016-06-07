@@ -2,11 +2,11 @@
 \alias{estim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Impute missing cases with phylogenetic models
+Ancestral states reconstructions and missing values imputations with phylogenetic models
 %%  ~~function to do ... ~~
 }
 \description{
-This function impute the missing cases (NA values) according to a phylogenetic model (object of class "mvmorph").
+This function impute the missing cases (NA values) according to a phylogenetic model (object of class "mvmorph") and can also do ancestral state reconstruction.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
