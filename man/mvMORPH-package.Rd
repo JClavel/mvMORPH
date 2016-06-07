@@ -38,13 +38,15 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \code{\link{mvBM}}
 \code{\link{mvEB}}
 \code{\link{mvSHIFT}}
+\code{\link{mvOUTS}}
+\code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{mvLL}}
 \code{\link{LRT}}
 \code{\link{halflife}}
 \code{\link{stationary}}
-\code{\link{brownie.lite}}
-\code{\link{evol.vcv}}
+\code{\link{estim}}
+\code{\link{aicw}}
 }
 
 
