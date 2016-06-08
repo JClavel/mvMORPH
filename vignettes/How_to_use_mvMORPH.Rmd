@@ -96,7 +96,7 @@ For some time-serie models; _mvOUTS_ with fixed root vcv (see the "param" list s
 
 # Optimization methods
 
-**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seem to be more efficient, but when the optimizer don't converge or if the fit seem unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seem particularly efficient for the user-defined models. When the optimization is turn to "fixed" only the log-likelihood function is returned without evaluation (see X - log-likelihood function below).
+**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seem to be more efficient, but when the optimizer don't converge or if the fit seem unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seem particularly efficient for the user-defined models. When the optimization is turn to "fixed" only the log-likelihood function is returned without evaluation (see 9 - log-likelihood function section).
 
 
 
