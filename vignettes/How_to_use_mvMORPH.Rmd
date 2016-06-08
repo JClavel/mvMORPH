@@ -11,8 +11,9 @@ output:
     theme: spacelab
     toc: yes
   fontsize: 8pt
-vignette: |
-  %\VignetteIndexEntry{How to use mvMORPH?} %\VignetteEngine{knitr::rmarkdown}
+vignette: >
+  %\VignetteIndexEntry{How to use mvMORPH?}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ***
