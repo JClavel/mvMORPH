@@ -1,7 +1,7 @@
 citHeader("To cite package 'mvMORPH' in publications use:")
 
 citEntry(entry = "Article", 
-  author = personList(as.person("Julien Clavel"), as.person("Gilles Escarguel"), as.person("Gildas Merceron")),
+  author = personList(as.person("Clavel, Julien"), as.person("Escarguel, Gilles"), as.person("Merceron, Gildas")),
   title = "mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data",
   year = 2015, 
   journal = "Methods in Ecology and Evolution",
