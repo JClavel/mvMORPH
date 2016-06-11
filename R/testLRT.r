@@ -25,9 +25,37 @@ L2<-model2$LogLik
 }
 # Set names
 if(class(model1)[2]=="mvmorph.bm" | class(model2)[2]=="mvmorph.bm"){
-    model1$param$model<-if(model1$param$constraint=="equal"){paste(model1$param$model," equal variance/rates")}else if(model1$param$constraint=="shared"){paste(model1$param$model," shared eigenvectors")}else if(model1$param$constraint=="proportional"){paste(model1$param$model," proportional")}else if(model1$param$constraint=="correlation"){paste(model1$param$model," shared correlation")}else if(model1$param$constraint=="diagonal"){paste(model1$param$model," diagonal")}else if(model1$param$constraint=="variance"){paste(model1$param$model," shared variance")}else if(model1$param$constraint=="equaldiagonal"){paste(model1$param$model," equal diagonal")}else{model1$param$model}
+    model1$param$model<-if(model1$param$constraint=="equal"){
+        paste(model1$param$model," equal variance/rates")
+    }else if(model1$param$constraint=="shared"){
+        paste(model1$param$model," shared eigenvectors")
+    }else if(model1$param$constraint=="proportional"){
+        paste(model1$param$model," proportional")
+    }else if(model1$param$constraint=="correlation"){
+        paste(model1$param$model," shared correlation")
+    }else if(model1$param$constraint=="diagonal"){
+        paste(model1$param$model," diagonal")
+    }else if(model1$param$constraint=="variance"){
+        paste(model1$param$model," shared variance")
+    }else if(model1$param$constraint=="equaldiagonal"){
+        paste(model1$param$model," equal diagonal")
+    }else{model1$param$model}
 
-    model2$param$model<-if(model2$param$constraint=="equal"){paste(model2$param$model," equal variance/rates")}else if(model2$param$constraint=="shared"){paste(model2$param$model," shared eigenvectors")}else if(model2$param$constraint=="proportional"){paste(model2$param$model," proportional")}else if(model2$param$constraint=="correlation"){paste(model2$param$model," shared correlation")}else if(model2$param$constraint=="diagonal"){paste(model2$param$model," diagonal")}else if(model2$param$constraint=="variance"){paste(model2$param$model," shared variance")}else if(model2$param$constraint=="equaldiagonal"){paste(model2$param$model," equal diagonal")}else{model2$param$model}
+    model2$param$model<-if(model2$param$constraint=="equal"){
+        paste(model2$param$model," equal variance/rates")
+    }else if(model2$param$constraint=="shared"){
+        paste(model2$param$model," shared eigenvectors")
+    }else if(model2$param$constraint=="proportional"){
+        paste(model2$param$model," proportional")
+    }else if(model2$param$constraint=="correlation"){
+        paste(model2$param$model," shared correlation")
+    }else if(model2$param$constraint=="diagonal"){
+        paste(model2$param$model," diagonal")
+    }else if(model2$param$constraint=="variance"){
+        paste(model2$param$model," shared variance")
+    }else if(model2$param$constraint=="equaldiagonal"){
+        paste(model2$param$model," equal diagonal")
+    }else{model2$param$model}
 }
 
 if(class(model1)[2]=="mvmorph.ou" | class(model2)[2]=="mvmorph.ou"){

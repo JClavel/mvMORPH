@@ -2,7 +2,7 @@
 \alias{estim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Ancestral states reconstructions and missing values imputations with phylogenetic models
+Ancestral state reconstructions and missing values imputation with phylogenetic models
 %%  ~~function to do ... ~~
 }
 \description{
@@ -40,7 +40,7 @@ If asr=TRUE, the ancestral states are estimated instead of the missing cases.
 \details{
 Missing observations for species in a phylogenetic tree are estimated according to a given evolutionary model (and parameters). Multivariate models are useful to recover the variance and covariance structure of the dataset to be imputed.
 
-When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes on the tree. Note that if there is missing cases, they are first reconstructed before estimating the ancestral states.
+When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes on the tree. Note that if there is missing cases, they are first reconstructed before estimating the ancestral state.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{

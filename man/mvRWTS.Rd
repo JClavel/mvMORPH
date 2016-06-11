@@ -2,11 +2,11 @@
 \alias{mvRWTS}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate Brownian motion / Random Walk models of continuous traits evolution on time-serie
+Multivariate Brownian motion / Random Walk model of continuous traits evolution on time-serie
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows the fitting of multivariate rates of evolution under a Brownian motion model. This function can also fit constrained models.
+This function allows the fitting of multivariate Brownian motion\Random walk model on time-series. This function can also fit constrained models.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{

@@ -2,7 +2,7 @@
 \alias{mvOUTS}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate continuous traits evolution for stationary time serie (Ornstein-Uhlenbeck model)
+Multivariate continuous traits evolution for stationary time-series (Ornstein-Uhlenbeck model)
 %%  ~~function to do ... ~~
 }
 \description{
