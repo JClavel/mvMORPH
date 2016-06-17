@@ -485,7 +485,7 @@ $$
 
 _Note: so far, the package can't handle matrices with similar eigenvalues (e.g., the diagonal values must be slightly different in a triangular matrix)._
 
-Non-symmetric matrices can be used to test, for example, hypothesis of evolutionary lag (see chunk of code below). That is, one trait is chasing the optimum of the second one with a sufficient lag to be detected (a triangular matrix), while if the tracking is fast enough a "symmetric" model will be preferred. It should be noted that on ultrametric trees it's difficult to estimate accurately the path from the ancestral state toward the primary optimum and therefore it's hard to test such kind of process with the "OU1" model. For the "OUM" model on ultrametric trees, the path from the first optimum to the other one between traits is compared, which makes the model identifiable.
+Non-symmetric matrices can be used to test, for example, hypotheses of evolutionary lag (see chunk of code below). That is, one trait is chasing the optimum of the second one with a sufficient lag to be detected (a triangular matrix), while if the tracking is fast enough a "symmetric" model will be preferred. It should be noted that on ultrametric trees it's difficult to estimate accurately the path from the ancestral state toward the primary optimum and therefore it's hard to test such kind of process with the "OU1" model. For the "OUM" model on ultrametric trees, the path from the first optimum to the other one between traits is compared, which makes the model identifiable.
 
 ```{r, comment=">", results='hide'}
 set.seed(14)
@@ -498,7 +498,7 @@ theta <- matrix(c(0,1,0,1.3),2)
 # as in Deaner & Nunn 1999 - PRSB
 data<-mvSIM(tree,nsim=1, model="OU1",
             param=list(sigma=sigma, alpha=alpha, theta=theta, root=TRUE, 
-                       names_traits=c("body-size","brain-size")))
+                       names_traits=c("brain-size","body-size")))
 
 # No detectable lag:
 fit_1 <- mvOU(tree, data, model="OU1", param=list(root=TRUE))

@@ -5,7 +5,7 @@ Version: 1.0.7
 Date: 2016-05-25
 Author: Julien Clavel, with contributions from Aaron King, and Emmanuel Paradis
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
-Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees.
+Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees and time series.
 Depends: R(>= 2.9.1), phytools, ape, corpcor, subplex
 Imports: stats, spam
 Suggests: knitr, car

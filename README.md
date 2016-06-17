@@ -14,10 +14,9 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Allows estimating the missing cases (NA)
   + Allows estimating trends
   + User defined constrained models and parameterizations  
-  + Return the log-likelihood
+  + Return the log-likelihood function
   + Package vignette 2
   + Multivariate models for time-series (TS)
-  + Some error fixes and improvements of parameterizations
   + Partial implementation of a tests-suite
 
 2. _TODO_:
@@ -28,7 +27,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Formula option for independent variables
 
 The current stable version of the mvMORPH package (1.0.6) is on the CRAN repository.
-[http://cran.r-project.org/web/packages/mvMORPH/index.html](http://cran.r-project.org/web/packages/mvMORPH/index.html)
+[https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ##**Package Installation**
 
