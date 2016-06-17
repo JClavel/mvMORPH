@@ -11,6 +11,8 @@
 
 mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vcv="randomRoot", decomp=c("cholesky","spherical","eigen","qr","diagonal","upper","lower")),method=c("rpf","inverse","pseudoinverse","univarpf"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL, diagnostic=TRUE, echo=TRUE){
     
+    if(missing(times)) stop("The time-series object is missing!")
+    if(missing(data)) stop("You must provide a dataset along with your time-series!")
     
     # Param
     n <- length(times)
@@ -134,15 +136,27 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     if(is.null(param[["alpha"]])){
       alpha<-param$alpha<-startParam(p,decomp,times,index.user)
     }else{
-      alpha<-param$alpha
+        if(is.matrix(param$alpha)){
+            alpha<-param$alpha<-startParam(p,decomp,times,index.user,hlife=Re(eigen(param$alpha)$values))
+        }else{
+            alpha<-param$alpha
+        }
     }
     
     if(is.null(param[["sigma"]])){
         empirical<-Stationary_to_scatter(buildA(alpha,p)$A, cov(as.matrix(data), use="complete.obs"))
+         test <- try(chol(empirical), silent=TRUE)
+         if(inherits(test ,'try-error')){
+             empirical <- NULL
+         }
         sigma<-param$sigma<-startParamSigma(p, decompSigma, times, data, empirical, index.user2)
         #sigma<-param$sigma<-startParamSigma(p, decompSigma, times, data)
     }else{
-        sigma<-param$sigma
+        if(is.matrix(param$sigma)){
+            sigma<-startParamSigma(p, decompSigma, times, data, param$sigma, index.user2)
+        }else{
+            sigma<-param$sigma
+        }
     }
     
     if(is.null(param[["theta0"]])){
@@ -509,7 +523,7 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     ##-------------------Print results--------------------------------------------##
     if(echo==TRUE){
         cat("\n")
-        cat("-- Summary results for the Time-Serie OU model --","\n")
+        cat("-- Summary results for the Time-Series OU model --","\n")
         cat("LogLikelihood:","\t",LL,"\n")
         cat("AIC:","\t",AIC,"\n")
         cat("AICc:","\t",AICc,"\n")

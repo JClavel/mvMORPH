@@ -11,6 +11,8 @@
 
 mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, decomp="cholesky"),method=c("rpf","inverse","pseudoinverse"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL, diagnostic=TRUE, echo=TRUE){
     
+    if(missing(times)) stop("The time-series object is missing!")
+    if(missing(data)) stop("You must provide a dataset along with your time-series!")
     
     # Param
     n <- length(times)
@@ -44,7 +46,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
         Indice_NA<-which(is.na(as.vector(data)))
     }
     
-    # Scale the time-serie to have the root (oldest point in time) at zero
+    # Scale the time-series to have the root (oldest point in time) at zero
     # check for external time series for the expectation?
     if(scale.height==TRUE){
         times <- times/max(times)
@@ -312,6 +314,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     lik.BM<-function(par,dat,C,D,error,method,precalcMat,n,p, constraint,theta_mle=TRUE,theta=NULL,istrend=FALSE){ ##
         if(istrend==TRUE){
             trend_val<-Vdiag*D%*%par[nsigma+seq_len(ntrend)][index.mat]
+             if(NA_val==TRUE) trend_val<-trend_val[-Indice_NA]
             theta_mle<-FALSE
             theta<-par[nsigma+ntrend+seq_len(ntheta)]
         }
@@ -446,7 +449,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     if(echo==TRUE){
         
         cat("\n")
-        cat("-- Summary results for the Time-Serie BM/RW model --","\n")
+        cat("-- Summary results for the Time-Series BM/RW model --","\n")
         cat("LogLikelihood:","\t",LL,"\n")
         cat("AIC:","\t",AIC,"\n")
         cat("AICc:","\t",AICc,"\n")

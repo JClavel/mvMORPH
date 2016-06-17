@@ -72,7 +72,7 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvOU function fit a multivariate model of evolution according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states. SIMMAP mapping allows one to assign parts of branchs to different selective regimes, and allows testing for change in trait variance that is not synchronous with the species divergence events. See the package vignette: browseVignettes("mvMORPH").
+The mvOU function fit a multivariate model of evolution according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states (phytools objects of class "simmap"). SIMMAP mapping allows one to assign parts of branchs to different selective regimes, and allows testing for change in trait variance that is not synchronous with the species divergence events. See the package vignette: browseVignettes("mvMORPH").
 
 Mapping of ancestral states can be done using the "make.simmap", "make.era.map" or "paintSubTree" functions from the "phytools" package.
 
@@ -80,7 +80,7 @@ The "method" argument allows the user to try different algorithms for computing 
 
 Arguments in the \bold{"param"} \emph{list} are:
 
-\bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
+\bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma (scatter) and alpha (drift) matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
 \bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
 
@@ -91,7 +91,7 @@ The \emph{vcv="randomRoot"} option assumes that the value at the root is a rando
 
 \bold{"root"} - This argument allows the user to specify if the ancestral state at the root (theta 0) should be estimated (\emph{root=TRUE}), or assumed to be at the oldest regime state stationary distribution (\emph{root=FALSE}). An alternative is to follow Beaulieu et al. (2012) and explicitly drop the root state influence (\emph{root="stationary"}). The first option should be used with non-ultrametric trees (i.e., with fossil species - e.g., Hansen 1997) where information on the ancestral state is directly available from the data. Indeed, estimating shifts in the ancestral state from extant species could be problematic and it seems preferable to assume each regime optimums to be at the stationary distribution.
 
-For the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided.
+For the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided. See ?mvBM and ?mvRWTS.
 
 
 Note on the returned Hessian matrix in the result list (param$opt$hessian):

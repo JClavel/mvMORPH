@@ -77,8 +77,8 @@ For instance:
 fossil_ages <- c(55,46,43,38,35,32.5)
 
 # The time-series becomes:
-timeserie <- max(fossil_ages)-fossil_ages
-timeserie
+timeseries <- max(fossil_ages)-fossil_ages
+timeseries
 ```
  
  The _"scale.height=TRUE"_ option will scale the time series between 0 and 1 to provide the relative ages. Similarly to the analysis on phylogenetic trees, this changes the scale of the parameter estimates (such as sigma or alpha) but not the log-likelihood.
@@ -90,7 +90,7 @@ timeserie
 Matrix or data frame must have species in rows and continuous traits (variables) in columns, rownames must match tip names. Missing cases are currently allowed as **NA** values with the "rpf", "inverse", and "pseudoinverse" methods. The measurement error or sampling variance is a matrix of similar size (note that the sampling variance is given by the square of the standard-errors of species mean estimates). 
 Measurement error missing values (**NA** or "0") are allowed. 
 
-For some time-serie models; _mvOUTS_ with fixed root vcv (see the "param" list section below) and _mvRWTS_; the sampling variance for the first obsevations in the time-serie must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
+For some time-series models; _mvOUTS_ with fixed root vcv (see the "param" list section below) and _mvRWTS_; the sampling variance for the first obsevations in the time-series must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
 
 
 
@@ -213,7 +213,7 @@ mvOU(tree, data, model="OU1", param=list(root=TRUE))
 For the _mvOUTS_ function, the path from the initial state to the optimum is explicitely estimated (_root=TRUE_, the default value), otherwise the ancestral (initial) state and the optimum are assumed to be the same _root=FALSE_.
 
 ```{r, comment=">", message=FALSE, results='hide'}
-# timeserie
+# timeseries 
 ts <- 0:49
 sigma<-matrix(c(0.1,0.05,0.05,0.1),2)
 alpha <- matrix(c(1,0.5,0.5,0.8),2,2)
@@ -300,17 +300,17 @@ In the same way we can fit a directional random walk on time-series data.
 
 ```{r,comment=">", results='hide', message=FALSE}
 # Simulate the time serie and data
-timeserie <- 0:49
+timeseries  <- 0:49
 error <- matrix(0, nrow=50, ncol=2); error[1,] <- 0.001
-data<-mvSIM(timeserie, error=error, model="RWTS", 
+data<-mvSIM(timeseries , error=error, model="RWTS", 
             param=list(sigma=sigma, theta=theta, trend=trend), nsim=1)
 
 # plot the time serie
 matplot(data, type="o", pch=1, xlab="Time (relative)")
 
 # model fit
-fit1 <- mvRWTS(timeserie, data, error)
-fit2 <- mvRWTS(timeserie, data, error, param=list(trend=c(1,1)))
+fit1 <- mvRWTS(timeseries , data, error)
+fit2 <- mvRWTS(timeseries , data, error, param=list(trend=c(1,1)))
 ```{r,comment=">"}
 LRT(fit2,fit1)
 ```
@@ -518,14 +518,14 @@ User-defined constraints on the matrix parameterizations are allowed (but user s
 # try user defined constraints
 set.seed(100)
 ts <- 49
-timeserie <- 1:ts
+timeseries  <- 1:ts
 
 sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 # upper triangular matrix with effect of trait 2 on trait 1.
 alpha <- matrix(c(0.4,0,0,-0.5,0.3,0,0,0,0.2),3,3) 
 theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=T, ncol=3); root=TRUE
 
-data <- mvSIM(timeserie, model="OUTS", param=list(alpha=alpha, 
+data <- mvSIM(timeseries , model="OUTS", param=list(alpha=alpha, 
               sigma=sigma, theta=theta, root=root, 
               names_traits=c("sp 1", "sp 2", "sp 3")))
 
@@ -543,8 +543,8 @@ diag(indice) <- c(1,2,3)
 indice[1,2] <- 4
 
 # fit the models
-fit_1 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp=indice))
-fit_2 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp="diagonal"))
+fit_1 <- mvOUTS(timeseries , data, param=list(vcv="fixedRoot", decomp=indice))
+fit_2 <- mvOUTS(timeseries , data, param=list(vcv="fixedRoot", decomp="diagonal"))
 
 LRT(fit_1, fit_2)
 ```
@@ -585,6 +585,7 @@ abs(logLik(fit_3))-abs(logLik(fit_4)) # small half-life
 
 ```
 
+Note: when the strength of selection is high the multivariate theta estimates may be aberrant when using the "fixedRoot" option on ultrametric trees.
 
 
 # Functions
@@ -680,7 +681,7 @@ set.seed(14)
 tree<-rtree(50)
 
 # Simulate two correlated traits evolving along the phylogeny
-sigma<-matrix(c(0.1,0.05,0.05,0.1),2); theta<-c(0,0)
+sigma<-matrix(c(0.1,0.05,0.05,0.1),2); theta<-c(0,2)
 traits<-mvSIM(tree, model="BM1", param=list(sigma=sigma, theta=theta))
 
 # Introduce some missing cases (NA values)
@@ -717,7 +718,7 @@ asr$estim[1:10,]
 
 We can use the returned log-likelihood of the mvMORPH functions, or the _mvLL_ function to fit user-defined models. Here we show two simple examples of how the architecture of the package can be used.
 
-Making your own model!
+Make your own model!
 -
 
 ```{r,comment=">"}
@@ -794,16 +795,16 @@ We can also use the likelihood returned by the mvMORPH functions to fit custom m
 ```{r,comment=">"}
 set.seed(123)
 # Simulate the time serie
-timeserie <- 0:99
+timeseries <- 0:99
 
 # Simulate the traits
 sigma_1 <- matrix(c(0.015,0.005,0.005,0.01),2)
 sigma_2 <- matrix(c(0.03,0.01,0.01,0.02),2)
 theta <- c(0.5,1)
 error <- matrix(0,ncol=2,nrow=100);error[1,]=0.001
-data_1<-mvSIM(timeserie, error=error, 
+data_1<-mvSIM(timeseries , error=error, 
               param=list(sigma=sigma_1, theta=theta), model="RWTS", nsim=1)
-data_2<-mvSIM(timeserie+100, error=error,
+data_2<-mvSIM(timeseries +100, error=error,
               param=list(sigma=sigma_2, theta=data_1[100,]), model="RWTS", nsim=1)
 data <- rbind(data_1,data_2)
 
@@ -811,8 +812,8 @@ data <- rbind(data_1,data_2)
 matplot(data, type="o", pch=1, xlab="Time (relative)", cex=0.8)
 
 # 1) log-likelihood function
-fun_ts_1 <- mvRWTS(timeserie, data_1, error=error, optimization="fixed")
-fun_ts_2 <- mvRWTS(timeserie+100, data_2, error=error, optimization="fixed")
+fun_ts_1 <- mvRWTS(timeseries , data_1, error=error, optimization="fixed")
+fun_ts_2 <- mvRWTS(timeseries +100, data_2, error=error, optimization="fixed")
 
 # a model of shift
 log_lik_RWshift <- function(par){
@@ -849,7 +850,7 @@ print(results)
 
 # Bayesian mcmc
 
-**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using the separation strategy based on the spherical parameterization (angles in the interval [0, pi] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5, 0.4]; see for instance Lu & Ades 2009; and the matrix parameterization section above).
+**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using the separation strategy based on the spherical parameterization (angles in the interval [0, $\pi$] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5, 0.4]; see for instance Lu & Ades 2009; and the matrix parameterization section above).
 
 ```{r, comment=">", results="hide", eval=FALSE}
 set.seed(1)

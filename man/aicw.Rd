@@ -6,7 +6,7 @@ Akaike weights
 %%  ~~function to do ... ~~
 }
 \description{
-This function return the Akaike weights for a set of models fit.
+This function return the Akaike weights for a set of fitted models.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -25,13 +25,13 @@ Options to be passed through; e.g. aicc=TRUE when a list of fitted object is pro
 }
  
 \details{
-This function compute the Akaike weights for a set of model fits. Akaike weights can be used for model comparison and model averaging.
+This function compute the Akaike weights for a set of model AIC or AICc. Akaike weights can be used for model comparison and model averaging.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
 \item{models }{List of models}
 \item{AIC }{Akaike Information Criterion}
-\item{diff }{AIC difference with the best fitting model}
+\item{diff }{AIC difference with the best fit model}
 \item{wi }{Absolute weight}
 \item{aicweights }{Akaike weights (relative weights)}
 %%  ~Describe the value returned
@@ -80,6 +80,9 @@ fit2 <- mvBM(tree, data, model="BM1", method="pic", param=list(constraint="diago
 fit3 <- mvBM(tree, data, model="BM1", method="pic", param=list(constraint="equal"))
 
 results <- list(fit1,fit2,fit3)
+
+# or
+# results <- c(AIC(fit1), AIC(fit2), AIC(fit3))
 
 # Akaike weights
 aicw(results)

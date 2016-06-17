@@ -92,6 +92,9 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         ## Default values for simulating data
         # Choose the model
         model<-model[1]
+        # check
+        if(missing(tree)) stop("The tree or the time-series object is missing")
+        
         if(model=="ACDC" | model=="AC"){model<-"EB"}
         
         # traits names
@@ -356,6 +359,8 @@ if(root=="stationary"){
 ##Species covariance matrix
 # switch methods depending on the nature of the tree object
 if(inherits(tree,"phylo")){
+    
+    if(model=="OUTS" | model=="RWTS") stop("Error! you must provides a time-series, not a phylo object.")
     ## Nombre d'especes / number of species
     n<-length(tree$tip.label)
       if(model=="OU1" | model=="BM1" | model=="EB"){
@@ -431,7 +436,7 @@ switch(model,
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     if(istrend==TRUE){
         Vdiag<-rep(diag(C),p)
@@ -448,7 +453,7 @@ switch(model,
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
     if(istrend==TRUE){
         Vdiag<-rep(diag(C),p)
         W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
@@ -462,10 +467,10 @@ switch(model,
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     if(istrend==TRUE){
-        Vdiag<-rep(diag(C),p)
+        Vdiag<-rep(diag(Reduce('+',C)),p)
         W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
         mu<-as.numeric(1)
     }
@@ -489,7 +494,7 @@ switch(model,
     }else{
     W<-multD(NULL,p,n,smean=TRUE)
     }
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -515,7 +520,7 @@ switch(model,
     }
     
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -541,7 +546,7 @@ switch(model,
     }
     
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -553,7 +558,7 @@ switch(model,
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
     V<-.Call("kroneckerEB",R=sigma,C=C, beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -573,7 +578,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -592,7 +597,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -605,7 +610,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -618,7 +623,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -637,7 +642,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){
@@ -656,7 +661,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    if(ncol(W)!=length(mu)) stop("The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+    if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
     if(is.null(error)==FALSE){

@@ -10,6 +10,9 @@
 
 mvOU<-function(tree,data,error=NULL,model=c("OUM","OU1"),param=list(sigma=NULL,alpha=NULL, vcv="fixedRoot", decomp=c("cholesky","spherical","eigen","qr","diagonal","upper","lower")),method=c("rpf","sparse","inverse","pseudoinverse","univarpf"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL,diagnostic=TRUE, echo=TRUE){
 
+if(missing(tree)) stop("The tree object is missing!")
+if(missing(data)) stop("You must provide a dataset along with your tree!")
+
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
 
@@ -199,13 +202,22 @@ if(length(param$alpha)==2){
   alpha=param$alpha[[2]]}}else{ alpha=rep(0.1,p)}
    decomp<-"diagonal"
 }else{
-    alpha<-param$alpha
+    if(is.matrix(param$alpha)){
+        alpha<-param$alpha<-startParam(p,decomp,tree,index.user,hlife=Re(eigen(param$alpha)$values))
+    }else{
+        alpha<-param$alpha
+    }
+    
 }
 
 ## initial alpha and sigma matrix if not provided / or constrained models
 # sigma matrix
 if(is.null(param[["sigma"]])){
     empirical<-Stationary_to_scatter(buildA(alpha,p)$A, cov(as.matrix(data),use="complete.obs"))
+    test <- try(chol(empirical), silent=TRUE)
+    if(inherits(test ,'try-error')){
+        empirical <- NULL
+    }
     sigma<-param$sigma<-startParamSigma(p, decompSigma, tree, data, empirical, index.user2)
     #sigma<-param$sigma<-startParamSigma(p, decompSigma, tree, data)
 }
@@ -215,7 +227,11 @@ if(!is.numeric(param$sigma[[1]])){
     }else{ sigma=rep(0.1,p) }
   decompSigma<-param$decompSigma<-"diagonal"
 }else{
-    sigma<-param$sigma
+    if(is.matrix(param$sigma)){
+        sigma<-startParamSigma(p, decompSigma, tree, data, param$sigma, index.user2)
+    }else{
+        sigma<-param$sigma
+    }
 }
      
 # number of parameters for each matrix

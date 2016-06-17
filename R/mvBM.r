@@ -14,6 +14,8 @@ mvBM<-function(tree, data, error=NULL, model=c("BMM","BM1"),param=list(constrain
 # select default model
 model<-model[1]
 method<-method[1]
+if(missing(tree)) stop("The tree object is missing!")
+if(missing(data)) stop("You must provide a dataset along with your tree!")
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
@@ -451,6 +453,7 @@ buildSigma<-function(par,index.mat=NULL,sig=NULL,model,constraint){
 lik.Mult<-function(par,dat,C,D,index.mat,sig,error, p, k, n, precalcMat, method,constraint,theta_mle=TRUE,theta=NULL,istrend=FALSE){
     if(istrend==TRUE){
         trend_val<-Vdiag*(D%*%par[nparsig+seq_len(npartrend)][tr_index])
+        if(NA_val==TRUE) trend_val<-trend_val[-Indice_NA]
         theta_mle<-FALSE
         theta<-par[nparsig+npartrend+seq_len(npartheta)]
     }
@@ -464,6 +467,7 @@ lik.Mult<-function(par,dat,C,D,index.mat,sig,error, p, k, n, precalcMat, method,
 lik.BM1<-function(par,dat,C,D,error,method,precalcMat,n,p, constraint,theta_mle=TRUE,theta=NULL,istrend=FALSE){ ##
     if(istrend==TRUE){
         trend_val<-Vdiag*(D%*%par[nparsig+seq_len(npartrend)][tr_index])
+         if(NA_val==TRUE) trend_val<-trend_val[-Indice_NA]
         theta_mle<-FALSE
         theta<-par[nparsig+npartrend+seq_len(npartheta)]
     }
@@ -995,8 +999,13 @@ if(param$smean==TRUE){
 
 # trend matrix
 if(istrend==TRUE){
-    trend.mat<-matrix(estim$par[nparsig+seq_len(npartrend)][tr_index], nrow=1)
-    rownames(trend.mat)<-c("drift:")
+    if(param$smean==TRUE){
+        trend.mat<-matrix(estim$par[nparsig+seq_len(npartrend)][tr_index], nrow=1)
+        rownames(trend.mat)<-c("drift:")
+    }else{
+        trend.mat<-matrix(estim$par[nparsig+seq_len(npartrend)][tr_index], nrow=k)
+        rownames(trend.mat)<-colnames(tree$mapped.edge)
+    }
     colnames(trend.mat)<-names_data_matrix
 }
 

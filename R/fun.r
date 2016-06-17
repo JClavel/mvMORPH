@@ -116,6 +116,7 @@ startParamSigma <- function(p, matrix, tree, data, guess=NULL, index.user=NULL){
         if(!is.null(guess)){
             n <- length(tree$tip.label)
             sigma <- guess
+            
         }else{
             n <- length(tree$tip.label)
             sigma <- varBM(tree,data,n,p)
@@ -165,6 +166,7 @@ startParamSigma <- function(p, matrix, tree, data, guess=NULL, index.user=NULL){
     },
     "cholesky"={
         value <- sym.unpar(sigma)
+        
     },
     "user"={
         value <- user_guess(index.user, sigma)
@@ -177,19 +179,26 @@ startParamSigma <- function(p, matrix, tree, data, guess=NULL, index.user=NULL){
 
 
 # default matrix parameterization for A
-startParam <- function(p, matrix, tree, index.user=NULL){
+startParam <- function(p, matrix, tree, index.user=NULL, ...){
     
-    if(inherits(tree,"phylo")){
-        if(is.ultrametric(tree)){
-            times <- branching.times(tree)
+    args <- list(...)
+    
+    if(is.null(args[["hlife"]])){
+        if(inherits(tree,"phylo")){
+            if(is.ultrametric(tree)){
+                times <- branching.times(tree)
+            }else{
+                times <- nodeHeights(tree)
+            }
         }else{
-            times <- nodeHeights(tree)
-        }
-    }else{
             times <- max(tree)
-    }
+        }
     # set default hlife to 1/3
-    hlife <- log(2)/(max(times)/(2+seq_len(p)))
+        hlife <- log(2)/(max(times)/(2+seq_len(p)))
+    }else{
+        hlife <- args$hlife
+    }
+    
     # off-diagonal dimension
     dim1<-p*(p-1)/2
     

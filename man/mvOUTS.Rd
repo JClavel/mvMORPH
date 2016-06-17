@@ -21,15 +21,15 @@ mvOUTS(times, data, error = NULL, param = list(sigma = NULL, alpha = NULL,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{times}{
-Time serie - vector of samples ages.
+Time series - vector of samples ages.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns. NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species in rows and continuous traits in columns. NA values are allowed.
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous trait standard errors (squared) in columns.
+Matrix or data frame with species in rows and continuous trait sampling variance (squared standard errors) in columns.
 %%     ~~Describe \code{error} here~~
 }
 
@@ -42,7 +42,7 @@ Choose between "rpf", "inverse", "pseudoinverse", or "univarpf" for computing th
 %%     ~~Describe \code{method} here~~
 }
   \item{scale.height}{
-Whether the tree should be scaled to length 1 or not.
+Whether the time series should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
@@ -58,7 +58,7 @@ Optional. precalculation of fixed parameters. See ?mvmorph.Precalc for details.
 %%     ~~Describe \code{precalc} here~~
 }
   \item{diagnostic}{
- Whether the convergence diagnostics should be returned or not.
+Whether the convergence diagnostics should be returned or not.
 %%     ~~Describe \code{diagnostic} here~~
 }
   \item{echo}{
@@ -69,22 +69,22 @@ Whether the results must be returned or not.
 \details{
 The mvOUTS function fit a multivariate model of trait evolution on time-series according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"}, \emph{"univarpf"} (for univariate analysis) and \emph{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \emph{"inverse"} approach use the \emph{"stable"} standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"}, \emph{"univarpf"} (for univariate analysis) methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \emph{"inverse"} approach use the \emph{"stable"} standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
 
 Arguments in the \bold{"param"} \emph{list} are:
 
-\bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma and alpha matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
+\bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma (scatter) and alpha (drift) matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
+\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for the "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
 
 \bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the: \emph{"cholesky"}, \emph{"eigen+"}, and \emph{"spherical"} parameterization. The sigma matrix can also forced to be diagonal using \emph{"diagonal"} or \emph{"equaldiagonal"} and forced to have the same variances: \emph{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
 
 \bold{"vcv"} - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument depending on how the root is treated. 
-The \emph{vcv="randomRoot"} option assumes that the value at the root is a random variable with the stationary distribution of the process. It cannot be used with the "sparse" method to speed up the computations. The \emph{vcv="fixedRoot"} option assumes that the root is a fixed parameter. On ultrametric trees both approaches should converge on the same results when the OU process is stationary.
+The \emph{vcv="randomRoot"} option assumes that the value at the root is a random variable with the stationary distribution of the process. The \emph{vcv="fixedRoot"} option assumes that the root is a fixed parameter.
 
-\bold{"root"} - If root=TRUE, the ancestral state and the optimum (stationary mean) are estimated, otherwise (root=FALSE) the ancestral (initial) state and the optimum are assumed to be the same.
+\bold{"root"} - If root=TRUE, the ancestral state and the optimum (stationary mean) are estimated, otherwise (root=FALSE) the ancestral (initial) state and the optimum (long-term expectation) are assumed to be the same.
 
-Note: for the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided.
+Note: for the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided. See ?mvBM and ?mvRWTS.
 
 %%  ~~ If necessary, more details than the description above ~~
 }
@@ -137,59 +137,60 @@ Julien Clavel
 \code{\link{mvSIM}}
 \code{\link{LRT}}
 \code{\link{optim}}
-\code{\link{make.simmap}}
-\code{\link{make.era.map}}
-\code{\link{paintSubTree}}
+
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
 ## Toy example
 
 \donttest{
-# Simulate the time serie
+# Simulate the time series
 set.seed(14)
-timeserie <- 0:49
+timeseries <- 0:49
 # Parameters with general alpha matrix on two competitive species (or two traits)
-alpha <- matrix(c(0.15,0,0.1,0.1),2,2) # asymetric matrix with intervention from the lowest layer
+# asymetric (drift) matrix with intervention from the lowest layer
+alpha <- matrix(c(0.15,0,0.1,0.1),2,2) 
+# scatter matrix
 sigma <- matrix(c(0.01,0.005,0.005,0.01),2)
+# ancestral states and long term optimum expectation
 theta <- matrix(c(0,1,0,.5),2) # columns=traits
 
 # Simulate the data
-traits <- mvSIM(timeserie, model="OUTS", param=list(theta=theta, alpha=alpha, sigma=sigma))
+traits <- mvSIM(timeseries, model="OUTS", param=list(theta=theta, alpha=alpha, sigma=sigma))
 
 # Plot the time series
 matplot(traits,type="o",pch=1,  xlab="Time (relative)")
 
-fit1 <- mvOUTS(timeserie, traits, param=list(decomp="qr"))
+fit1 <- mvOUTS(timeseries, traits, param=list(decomp="qr"))
 
-fit2 <- mvOUTS(timeserie, traits, param=list(decomp="eigen"))
+fit2 <- mvOUTS(timeseries, traits, param=list(decomp="eigen"))
 
-fit3 <- mvOUTS(timeserie, traits, param=list(decomp="diagonal"))
+fit3 <- mvOUTS(timeseries, traits, param=list(decomp="diagonal"))
 
 results <- list(fit1,fit2,fit3)
 aicw(results)
 
 # Simulate under the MLE
-traits2 <- simulate(fit1,tree=timeserie)
+traits2 <- simulate(fit1,tree=timeseries)
 matplot(traits2, type="o", pch=1, xlab="Time (relative)")
 
-mvOUTS(timeserie, traits2, param=list(decomp="eigen"))
-mvOUTS(timeserie, traits2, param=list(decomp="diagonal"))
-mvOUTS(timeserie, traits2, param=list(decomp="upper"))
-mvOUTS(timeserie, traits2, param=list(decomp="lower"))
+mvOUTS(timeseries, traits2, param=list(decomp="eigen"))
+mvOUTS(timeseries, traits2, param=list(decomp="diagonal"))
+mvOUTS(timeseries, traits2, param=list(decomp="upper"))
+mvOUTS(timeseries, traits2, param=list(decomp="lower"))
 
 
 # try user defined constraints
 set.seed(100)
 ts <- 49
-timeserie <- 1:ts
+timeseries <- 1:ts
 
 sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 # upper triangular matrix with effect of trait 2 on trait 1.
 alpha <- matrix(c(0.4,0,0,-0.5,0.3,0,0,0,0.2),3,3) 
 theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=T, ncol=3); root=TRUE
 
-data <- mvSIM(timeserie, model="OUTS", param=list(alpha=alpha, 
+data <- mvSIM(timeseries, model="OUTS", param=list(alpha=alpha, 
               sigma=sigma, theta=theta, root=root, 
               names_traits=c("sp 1", "sp 2", "sp 3")))
 
@@ -203,8 +204,8 @@ diag(indice) <- c(1,2,3)
 indice[1,2] <- 4
 
 # fit the model
-fit_1 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp=indice))
-fit_2 <- mvOUTS(timeserie, data, param=list(vcv="fixedRoot", decomp="diagonal"))
+fit_1 <- mvOUTS(timeseries, data, param=list(vcv="fixedRoot", decomp=indice))
+fit_2 <- mvOUTS(timeseries, data, param=list(vcv="fixedRoot", decomp="diagonal"))
 
 LRT(fit_1, fit_2)
 }
@@ -214,6 +215,6 @@ LRT(fit_1, fit_2)
 }% Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ Ornstein Uhlenbeck }
-\keyword{ Time serie }
+\keyword{ Time series }
 \keyword{ Hessian }
 \keyword{ OU }% __ONLY ONE__ keyword per line

@@ -18,6 +18,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Package vignette 2
   + Multivariate models for time-series (TS)
   + Some error fixes and improvements of parameterizations
+  + Partial implementation of a tests-suite
 
 2. _TODO_:
   + Incorporation of a tests-suite

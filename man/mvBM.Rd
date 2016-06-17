@@ -75,7 +75,8 @@ The "method" argument allows the user to try different algorithms for computing 
 
 The \bold{"param"} \emph{list} arguments:
 
-\bold{"constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\emph{constraint="diagonal"}, or \emph{constraint="equaldiagonal"}). If \emph{constraint="equal"}, the model forces the sigma values for each studied trait to be the same using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015), which allow considering the covariations between traits.
+
+\bold{"constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each studied trait  using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
 
 This approach is extended here to the multi-rate case, by specifying that the rates must be the same in different parts of the tree (common selective regime). It's also possible to constraint the rates matrices in the "BMM" model to share the same eigen vectors (\emph{constraint="shared"}); the same variance but different covariances (\emph{ constraint="variance"}); same correlation but different variances (\emph{ constraint="correlation"}); or to fit a model with different but proportional rates matrices (\emph{constraint="proportional"}).
 
@@ -83,11 +84,15 @@ Finally user-defined constrained models can be specified through a numeric matri
 
 Significance of nested model fit can be assessed using the "LRT" function. See example below and ?LRT.
 
+
 \bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods are the: "cholesky", "eigen+", and "spherical" parameterization.
+
 
 \bold{"smean"} - Default set to TRUE. If FALSE, the ancestral state for each selective regime is estimated (e.g., Thomas et al., 2006).
 
-\bold{"trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift linearly with time. This model is identifiable only with non-ultrametric trees. Note that it is possible to provide a vector of integer indices to constraint the the estimated trends (see the vignette).
+
+\bold{"trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift linearly with time. This model is identifiable only with non-ultrametric trees. Note that it is possible to provide a vector of integer indices to constraint the the estimated trends (see the vignettes).
+
 
 \bold{"sigma"} - Starting values for the likelihood estimation. By default the theoretical expected values are used as starting values for the likelihood optimization (for measurement errors, multiple rates,...). The user can specify starting values with a list() object for the "BMM" model (e.g., two objects in the list for a two-regime analysis), or a simple vector of values for the "BM1" model. The parameterization is done using various factorizations for symmetric matrices (e.g., for the "decomp" argument; Pinheiro & Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
 
@@ -202,8 +207,10 @@ starting_values<-chol_factor[upper.tri(chol_factor,TRUE)]
 mvBM(tree, data, model="BMM", method="sparse",
     param=list( sigma=list(starting_values, starting_values)))
 
+
 # Multiple mean
 mvBM(tree, data, model="BMM", method="sparse", param=list(smean=FALSE))
+
 
 # Introduce some missing cases (NA values)
 data2<-data
@@ -211,6 +218,7 @@ data2[8,2]<-NA
 data2[25,1]<-NA
 
 mvBM(tree, data2, model="BM1")
+
 
 ## FAST FOR THE UNIVARIATE CASE!!
 \donttest{

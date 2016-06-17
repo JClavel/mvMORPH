@@ -2,11 +2,11 @@
 \alias{mvRWTS}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate Brownian motion / Random Walk model of continuous traits evolution on time-serie
+Multivariate Brownian motion / Random Walk model of continuous traits evolution on time-series
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows the fitting of multivariate Brownian motion\Random walk model on time-series. This function can also fit constrained models.
+This function allows the fitting of multivariate Brownian motion/Random walk model on time-series. This function can also fit constrained models.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -20,15 +20,15 @@ mvRWTS(times, data, error = NULL, param =
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{times}{
-Phylogenetic tree in SIMMAP format by default. A "phylo" object can also be used with the "BM1" model.
+Time series - vector of samples ages.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
-Matrix or data frame with species in rows and continuous traits in columns (preferentially with names and in the same order than in the tree). NA values are allowed with the "rpf", "inverse", and "pseudoinverse" methods.
+Matrix or data frame with species/sampled points in rows and continuous traits in columns
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous traits standard error (squared) in columns.
+Matrix or data frame with species/sampled points in rows and continuous traits sampling variance (squared standard error) in columns.
 %%     ~~Describe \code{error} here~~
 }
 
@@ -41,7 +41,7 @@ Choose between "rpf", "inverse", or "pseudoinverse" for log-likelihood computati
 %%     ~~Describe \code{method} here~~
 }
   \item{scale.height}{
-Whether the time-serie should be scaled to length 1 or not.
+Whether the time-series should be scaled to length 1 or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
@@ -72,14 +72,14 @@ The "method" argument allows the user to try different algorithms for computing 
 
 The \bold{ "param"} emph{list} arguments:
 
-\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the model forces the sigma values for each studied trait to be the same using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015), which allow considering the covariations between traits.
+\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each studied trait  using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
 
 Finally user-defined constraints can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
 Significance of nested model fit can be assessed using the "LRT" function. See example below and ?LRT.
 
 \bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods are the: "cholesky", "eigen+", and "spherical" parameterization.
 
-\bold{ "trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift leading to a directional random walk. Note that it is possible to provide a vector of integer indices to constraint the the estimated trends when p>1 (see the vignette).
+\bold{ "trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift leading to a directional random walk. Note that it is possible to provide a vector of integer indices to constraint the estimated trends when p>1 (see the vignettes).
 
 \bold{ "sigma"} - Starting values for the likelihood estimation. By default the traits covariances are used as starting values for the likelihood optimization. The user can specify starting values as square symmetric matrices or a simple vector of values for the upper factor of the sigma matrix. The parameterization is done using the factorization determined through the "decomp" argument (Pinheiro and Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
 
@@ -128,54 +128,51 @@ Julien Clavel
 \code{\link{mvOUTS}}
 \code{\link{LRT}}
 \code{\link{optim}}
-\code{\link{brownie.lite}}
-\code{\link{evol.vcv}}
-\code{\link{make.simmap}}
-\code{\link{make.era.map}}
-\code{\link{paintSubTree}}
+
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
 ## Toy example
 
 set.seed(1)
-# Simulate the time serie
-timeserie <- 0:49
+# Simulate the time series
+timeseries <- 0:49
 
 # Simulate the traits
 sigma <- matrix(c(0.01,0.005,0.005,0.01),2)
 theta <- c(0,1)
 error <- matrix(0,ncol=2,nrow=50);error[1,]=0.001
-data<-mvSIM(timeserie, error=error, 
+data<-mvSIM(timeseries, error=error, 
             param=list(sigma=sigma, theta=theta), model="RWTS", nsim=1)
 
-# plot the time serie
+# plot the time series
 matplot(data, type="o", pch=1, xlab="Time (relative)")
 
 # model fit
-mvRWTS(timeserie, data, error=error, param=list(decomp="diagonal"))
-mvRWTS(timeserie, data, error=error, param=list(decomp="equal"))
-mvRWTS(timeserie, data, error=error, param=list(decomp="cholesky"))
+mvRWTS(timeseries, data, error=error, param=list(decomp="diagonal"))
+mvRWTS(timeseries, data, error=error, param=list(decomp="equal"))
+mvRWTS(timeseries, data, error=error, param=list(decomp="cholesky"))
 
 # Random walk with trend
 set.seed(1)
 trend <- c(0.02,0.02)
-data<-mvSIM(timeserie, error=error, 
+data<-mvSIM(timeseries, error=error, 
             param=list(sigma=sigma, theta=theta, trend=trend), model="RWTS", nsim=1)
 
 # plot the time serie
 matplot(data, type="o", pch=1, xlab="Time (relative)")
 
 # model fit
-mvRWTS(timeserie, data, error=error, param=list(trend=TRUE))
+mvRWTS(timeseries, data, error=error, param=list(trend=TRUE))
 
 # we can specify a vector of indices
-mvRWTS(timeserie, data, error=error, param=list(trend=c(1,1)))
+mvRWTS(timeseries, data, error=error, param=list(trend=c(1,1)))
 
 }% Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ Brownian Motion }
 \keyword{ Random walk }
-\keyword{ Time serie }
+\keyword{ Time series }
 \keyword{ Evolutionary rates }
+\keyword{ User defined constraints }
 \keyword{ Cholesky constraint }% __ONLY ONE__ keyword per line

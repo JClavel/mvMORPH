@@ -16,7 +16,7 @@ estim(tree, data, object, error=NULL, asr=FALSE)
 \arguments{ 
 
  \item{tree}{
-Phylogenetic tree (an object of class "phylo" or in SIMMAP format) or a time-serie.
+Phylogenetic tree (an object of class "phylo" or "simmap") or a time-series.
 %%     ~~Describe \code{model2} here~~
 }
   \item{data}{
@@ -28,7 +28,7 @@ A fitted object from an mvMORPH model (class "mvmorph").
 %%     ~~Describe \code{echo} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous traits standard error (squared) in columns.
+Matrix or data frame with species in rows and continuous traits sampling variance (squared standard error) in columns.
 %%     ~~Describe \code{echo} here~~
 }
 
@@ -40,7 +40,9 @@ If asr=TRUE, the ancestral states are estimated instead of the missing cases.
 \details{
 Missing observations for species in a phylogenetic tree are estimated according to a given evolutionary model (and parameters). Multivariate models are useful to recover the variance and covariance structure of the dataset to be imputed.
 
-When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes on the tree. Note that if there is missing cases, they are first reconstructed before estimating the ancestral state.
+When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes (except the root) on the tree (this option is not available for the time-series). Note that if there are missing cases, they are first reconstructed before estimating the ancestral states.
+
+
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -76,6 +78,7 @@ Julien Clavel
 \code{\link{mvEB}}
 \code{\link{mvBM}}
 \code{\link{mvSHIFT}}
+
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{

@@ -10,6 +10,9 @@
 
 mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL,sig=NULL,beta=NULL),model=c("ER","RR","EC","RC","SR","EBOU","OUEB","EBBM","BMEB"), method=c("rpf","sparse","inverse","pseudoinverse"),scale.height=FALSE, optimization=c("L-BFGS-B","Nelder-Mead","subplex"),control=list(maxit=20000),precalc=NULL,diagnostic=TRUE,echo=TRUE){
    
+    if(missing(tree)) stop("The tree object is missing!")
+    if(missing(data)) stop("You must provide a dataset along with your tree!")
+    
     #set data as a matrix if a vector is provided instead
     if(!is.matrix(data)){data<-as.matrix(data)}
     

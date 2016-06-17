@@ -10,6 +10,9 @@
 
 mvEB<-function(tree, data, error=NULL, param=list(up=0), method=c("rpf","sparse","inverse","pseudoinverse","pic"), scale.height=FALSE, optimization=c("Nelder-Mead","L-BFGS-B","subplex"), control=list(maxit=20000), precalc=NULL, diagnostic=TRUE, echo=TRUE){
 
+if(missing(tree)) stop("The tree object is missing!")
+if(missing(data)) stop("You must provide a dataset along with your tree!")
+
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
 

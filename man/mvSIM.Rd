@@ -17,7 +17,7 @@ mvSIM(tree, nsim = 1, error = NULL, model = c("BM1", "BMM", "OU1", "OUM", "EB"),
 \arguments{
   \item{tree}{
 Phylogenetic tree with mapped ancestral states in SIMMAP format.
-    (See make.simmap function from phytools package) or a standard "phylo" object (ape).
+    (See make.simmap function from phytools package) or a standard "phylo" object (ape). Or a time-series
 %%     ~~Describe \code{tree} here~~
 }
   \item{nsim}{
@@ -39,10 +39,10 @@ Alternatively you can provide a fitted object of class "mvmorph". See details.
 }
 }
 \details{
-This function simulates multivariate (as well as univariate) continuous traits evolving according to a BM (Brownian motion), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early Bursts), and SHIFT models of phenotypic evolution. The traits are simulated by random sampling from a Multivariate Normal Distribution (Paradis, 2012).
-Phylogenetic tree with mapped ancestral states in SIMMAP format (see make.simmap function from phytools package) or a standard "phylo" object (ape).
+This function simulates multivariate (as well as univariate) continuous traits evolving according to a BM/RW (Brownian motion/Random walk), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early Bursts), and SHIFT models of phenotypic evolution. The traits are simulated by random sampling from a Multivariate Normal Distribution (Paradis, 2012).
 
-The mvSIM function allows simulating continuous trait (univariate or multivariate) evolution along a phylogeny with user specified parameters or estimated parameters from a previous fit.
+
+The mvSIM function allows simulating continuous trait (univariate or multivariate) evolution along a phylogeny (or a time-series) with user specified parameters or estimated parameters from a previous fit.
 
 The "simulate" wrapper can also be used with a fitted object of class "mvmorph":
     simulate(object, nsim=1, tree=tree). See example.
@@ -92,6 +92,8 @@ As this method uses Multivariate Normal distribution (MVN) for simulating the tr
 \code{\link{mvEB}}
 \code{\link{mvBM}}
 \code{\link{mvSHIFT}}
+\code{\link{mvRWTS}}
+\code{\link{mvOUTS}}
 \code{\link{mvLL}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
