@@ -40,7 +40,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         istrend<-FALSE
     }else{
         istrend<-TRUE
-        trend<-param$trend
+        trend<-as.vector(param$trend)
     }
     
     if(any(class(param)=="mvmorph.shift")){

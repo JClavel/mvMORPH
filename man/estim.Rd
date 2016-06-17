@@ -2,11 +2,11 @@
 \alias{estim}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Ancestral state reconstructions and missing values imputation with phylogenetic models
+Ancestral states reconstructions and missing value imputation with phylogenetic/time-series models
 %%  ~~function to do ... ~~
 }
 \description{
-This function impute the missing cases (NA values) according to a phylogenetic model (object of class "mvmorph") and can also do ancestral state reconstruction.
+This function imputes the missing cases (NA values) according to a given phylogenetic model (object of class "mvmorph"); it can also do ancestral state reconstruction.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -28,7 +28,7 @@ A fitted object from an mvMORPH model (class "mvmorph").
 %%     ~~Describe \code{echo} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous traits sampling variance (squared standard error) in columns.
+Matrix or data frame with species in rows and continuous traits sampling variance (squared standard errors) in columns.
 %%     ~~Describe \code{echo} here~~
 }
 
@@ -40,7 +40,7 @@ If asr=TRUE, the ancestral states are estimated instead of the missing cases.
 \details{
 Missing observations for species in a phylogenetic tree are estimated according to a given evolutionary model (and parameters). Multivariate models are useful to recover the variance and covariance structure of the dataset to be imputed.
 
-When \emph{asr=TRUE} the estimates, their variance and standard errors are those of the ancestral states at each nodes (except the root) on the tree (this option is not available for the time-series). Note that if there are missing cases, they are first reconstructed before estimating the ancestral states.
+When \emph{asr=TRUE}, the estimates, their variances and standard errors are those of the ancestral states at each node (except the root) of the tree (this option is not available for the time-series). Note that if there are missing cases, they are first imputed before estimating the ancestral states.
 
 
 %%  ~~ If necessary, more details than the description above ~~

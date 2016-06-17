@@ -15,11 +15,11 @@ aicw(x,...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
-A list with the fitted object or a list/vector of AIC
+A list with the fitted objects or a list/vector of AIC
 %%     ~~Describe \code{tree} here~~
 	}
   \item{...}{
-Options to be passed through; e.g. aicc=TRUE when a list of fitted object is provided.
+Options to be passed through; e.g. aicc=TRUE when a list of fitted objects is provided.
 %%     ~~Describe \code{tree} here~~
 	}
 }
@@ -58,8 +58,6 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 set.seed(1)
 # Generating a random tree
 tree<-pbtree(n=50)

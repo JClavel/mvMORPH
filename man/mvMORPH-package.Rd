@@ -6,7 +6,7 @@
 Multivariate Comparative Methods for Fitting Evolutionary Models to Morphometric Data
 }
 \description{
-Fits of multivariate evolutionary models on trees (with one or multiple selective regimes) dedicated to morphometrics or biometric continuous data with covariation. Testing for a phylogenetic signal in a multivariate dataset (either on fossil or extant taxa), changes in rate or mode of evolution of continuous traits, simulating multivariate traits evolution, computing the likelihood of multivariate models and other things...
+Fits of multivariate evolutionary models on trees (with one or multiple selective regimes) and time-series dedicated to morphometrics or biometric continuous data with covariation. Testing for a phylogenetic signal in a multivariate dataset (including fossil and/or extant taxa), changes in rate or mode of evolution of continuous traits, simulating multivariate traits evolution, computing the likelihood of multivariate models, accounts for measurement errors and missing data, and other things...
 }
 \details{
 \tabular{ll}{

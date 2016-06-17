@@ -6,7 +6,7 @@ Simulation of (multivariate) continuous traits on a phylogeny
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows simulating multivariate (as well as univariate) continuous traits evolving according to a BM (Brownian motion), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early bursts), and SHIFT models of phenotypic evolution.
+This function allows simulating multivariate (as well as univariate) continuous traits evolving according to a BM (Brownian Motion), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early bursts), or SHIFT models of phenotypic evolution.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -16,8 +16,7 @@ mvSIM(tree, nsim = 1, error = NULL, model = c("BM1", "BMM", "OU1", "OUM", "EB"),
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tree}{
-Phylogenetic tree with mapped ancestral states in SIMMAP format.
-    (See make.simmap function from phytools package) or a standard "phylo" object (ape). Or a time-series
+Phylogenetic tree with mapped ancestral states in SIMMAP format (see make.simmap function from phytools package) or a standard "phylo" object (ape). Or a time-series
 %%     ~~Describe \code{tree} here~~
 }
   \item{nsim}{
@@ -25,7 +24,7 @@ The number of simulated traits (or datasets for multivariate analysis).
 %%     ~~Describe \code{nsim} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous trait standard errors (squared) in columns.
+Matrix or data frame with species in rows and continuous trait sampling variance (squared standard errors) in columns.
 %%     ~~Describe \code{error} here~~
 }
   \item{model}{
@@ -34,35 +33,35 @@ The model of trait evolution for the simulations. Could be any of the models use
 }
   \item{param}{
 List of parameter arguments used for the simulations. You should provide the sigma (values or matrix), alpha (for OU and SHIFT models), beta (EB and SHIFT), theta (ancestral states), ntraits (the number of traits) or others param arguments used in the models.
-Alternatively you can provide a fitted object of class "mvmorph". See details.
+Alternatively you can provide a fitted object of class "mvmorph". See details below.
 %%     ~~Describe \code{param} here~~
 }
 }
 \details{
-This function simulates multivariate (as well as univariate) continuous traits evolving according to a BM/RW (Brownian motion/Random walk), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early Bursts), and SHIFT models of phenotypic evolution. The traits are simulated by random sampling from a Multivariate Normal Distribution (Paradis, 2012).
+This function simulates multivariate (as well as univariate) continuous traits evolving along a given phylogenetic tree or time series according to a BM/RW (Brownian Motion/Random walk), OU (Ornstein-Uhlenbeck), ACDC (Accelerating rates and Decelerating rates/Early Bursts), and SHIFT models of phenotypic evolution. The traits are simulated by random sampling from a Multivariate Normal Distribution (Paradis, 2012).
 
 
-The mvSIM function allows simulating continuous trait (univariate or multivariate) evolution along a phylogeny (or a time-series) with user specified parameters or estimated parameters from a previous fit.
+The mvSIM function allows simulating continuous trait (univariate or multivariate) evolution along a phylogeny (or a time-series) with user specified parameters or parameters estimated from a previous fit.
 
 The "simulate" wrapper can also be used with a fitted object of class "mvmorph":
-    simulate(object, nsim=1, tree=tree). See example.
+    simulate(object, nsim=1, tree=tree). See example below.
 
-If parameters values are not provided, the default values are fixed to 1 (sigma, sig, alpha, beta) or to 0 for the mean at the root (ancestral state).
+If parameter values are not provided, the default values are fixed to 1 (sigma, sig, alpha, beta) or to 0 for the mean at the root (ancestral state).
 
-For the "BMM" model were different parts of the tree have their own rate, a list with one rate (or matrix of rates) per selective regimes must be provided.
+For the "BMM" model were different parts of the tree have their own rate, a list with one rate (or matrix of rates) per selective regime must be provided.
 
-For the "OU1" and "OUM" models, the user can define if the ancestral state (theta0) should be computed (param$root=TRUE), assumed to be at the oldest regime state (param$root=FALSE), or that there is no root and each regimes is at the stationary point (param$root="stationary"). (See also ?mvOU).
+For the "OU1" and "OUM" models, the user can specify if the ancestral state (theta0) should be computed (param$root=TRUE), assumed to be at the oldest regime state (param$root=FALSE), or if there is no root and each regimes is at the stationary point (param$root="stationary"; see also ?mvOU).
 
-For the "BM1", "BMM", and "RWTS" models, a trend can be simulated by providing the "trend" argument and values in the "param" list.
+For the "BM1", "BMM", and "RWTS" models, a trend can be simulated by providing values to the "trend" argument in the "param" list.
 
 Traits names can be provided with the "names_traits" argument in the "param" list.
-For all the shift models, if the tree is not mapped the age of the shift should be directly provided (in unit of times of the tree) by the "age" argument in the "param" list.
+For all the shift models, if the tree is not mapped the age of the shift should be directly provided (in unit of times of the tree) using the "age" argument in the "param" list.
 
 
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
-A matrix with simulated traits (columns) for the univariate case, or a list of matrix for the multivariate case (with nsim>1).
+A matrix with simulated traits (columns) for the univariate case, or a list of matrix for the multivariate case (nsim>1).
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -80,7 +79,7 @@ Julien Clavel
 }
 \note{
 Ancestral states for Ornstein-Uhlenbeck processes (param$root=TRUE) should be used with non-ultrametric trees.
-As this method uses Multivariate Normal distribution (MVN) for simulating the traits, it is advised to avoid its use with very large datasets/trees and rely instead on recursive algorithms (see e.g., ?rTraitCont from "ape").
+As this method uses Multivariate Normal distribution (MVN) for simulating the traits, it is advised to avoid its use with very large datasets/trees and rely instead on recursive algorithms (see, e.g., ?rTraitCont from "ape").
 %%  ~~further notes~~
 }
 

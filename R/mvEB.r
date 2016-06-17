@@ -232,7 +232,7 @@ sig1<-param$sigma
 
 ## Check first if we want to return the log-likelihood function only
 if(optimization=="fixed"){
-    message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+    message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
     param$sigmafun<-sigmafun
     param$nbspecies<-n
     param$ntraits<-k
@@ -332,7 +332,7 @@ cat("Rate change:","\n")
 cat("______________________","\n")
 print(r)
 cat("\n")
-cat("Estimated rates matrix","\n")
+cat("Estimated rate matrix","\n")
 cat("______________________","\n")
 print(resultList)
 cat("\n")

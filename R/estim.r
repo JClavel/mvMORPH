@@ -11,6 +11,9 @@
 
 estim<-function(tree, data, object, error=NULL, asr=FALSE){
 
+if(missing(tree)) stop("The tree or time-series object is missing!")
+if(missing(data)) stop("You must provide a dataset along with your tree/time-series!")
+
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
 traits_names<-colnames(data)
@@ -31,7 +34,7 @@ if(!is.null(error)){error<-as.vector(error[-Indice_NA])}
 
 # First impute the dataset to compute the ancestral states?
 if(any(is.na(data)) & asr==TRUE){
-    warning("Missing cases were first imputed before estimating the ancestral values !!")
+    warning("Missing cases were first imputed before estimating the ancestral values!!")
     data <- estim(tree,data,object,error, asr=FALSE)$estimates
 }
 

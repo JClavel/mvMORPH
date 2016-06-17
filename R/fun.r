@@ -817,7 +817,7 @@ print.mvmorph.bm<-function(x,...){
     
     cat("\n")
     if(x$param$constraint==TRUE){
-        cat("-- Summary results for multiple constrained rates",x$param$model,"model --","\n")
+        cat("-- Summary results for multiple constrained rate",x$param$model,"model --","\n")
     }else if(x$param$constraint=="default" & x$param$decomp=="user"){
         cat("-- Summary results for user-defined",x$param$model,"constrained model --","\n")
     }else if(x$param$constraint=="correlation"){
@@ -825,18 +825,18 @@ print.mvmorph.bm<-function(x,...){
     }else if(x$param$constraint=="shared"){
         cat("-- Summary results for shared eigenvectors ",x$param$model,"model --","\n")
     }else if(x$param$constraint=="proportional"){
-        cat("-- Summary results for proportional rates matrices ",x$param$model,"model --","\n")
+        cat("-- Summary results for proportional rate matrices ",x$param$model,"model --","\n")
     }else if(x$param$constraint=="variance"){
         cat("-- Summary results for common variance ",x$param$model,"model --","\n")
     }else{
-        cat("-- Summary results for multiple rates",x$param$model,"model --","\n")
+        cat("-- Summary results for multiple rate",x$param$model,"model --","\n")
     }
     cat("LogLikelihood:","\t",x$LogLik,"\n")
     cat("AIC:","\t",x$AIC,"\n")
     cat("AICc:","\t",x$AICc,"\n")
     cat(x$param$nparam,"parameters","\n")
     cat("\n")
-    cat("Estimated rates matrix","\n")
+    cat("Estimated rate matrix","\n")
     cat("______________________","\n")
     print(x$sigma)
     cat("\n")
@@ -866,7 +866,7 @@ print.mvmorph.acdc<-function(x,...){
     cat("______________________","\n")
     print(x$beta)
     cat("\n")
-    cat("Estimated rates matrix","\n")
+    cat("Estimated rate matrix","\n")
     cat("______________________","\n")
     print(x$sigma)
     cat("\n")

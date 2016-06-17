@@ -2,11 +2,11 @@
 \alias{mvOUTS}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate continuous traits evolution for stationary time-series (Ornstein-Uhlenbeck model)
+Multivariate continuous trait evolution for a stationary time series (Ornstein-Uhlenbeck model)
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU) model on time-series.
+This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU) model to a time series.
 Species measurement errors or dispersions can also be included in the model.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
@@ -21,7 +21,7 @@ mvOUTS(times, data, error = NULL, param = list(sigma = NULL, alpha = NULL,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{times}{
-Time series - vector of samples ages.
+Time series - vector of sample ages.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
@@ -34,27 +34,27 @@ Matrix or data frame with species in rows and continuous trait sampling variance
 }
 
   \item{param}{
-List of arguments to be passed to the function. See details.
+List of arguments to be passed to the function. See details below.
 %%     ~~Describe \code{param} here~~
 }
   \item{method}{
-Choose between "rpf", "inverse", "pseudoinverse", or "univarpf" for computing the log-likelihood during the fitting process. See details.
+Choose between "rpf", "inverse", "pseudoinverse", or "univarpf" for computing the log-likelihood during the fitting process. See details below.
 %%     ~~Describe \code{method} here~~
 }
   \item{scale.height}{
-Whether the time series should be scaled to length 1 or not.
+Whether the time series should be scaled to unit length or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines. (See ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
+Methods used by the optimization routines (see ?optim and ?subplex for details). The "fixed" method returns the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
-Max. bound for the number of iteration of the optimizer; other options can be fixed on the list. (See ?optim or ?subplex).
+Max. bound for the number of iteration of the optimizer; other options can be fixed in the list (see ?optim or ?subplex).
 %%     ~~Describe \code{control} here~~
 }
   \item{precalc}{
-Optional. precalculation of fixed parameters. See ?mvmorph.Precalc for details.
+Optional. Precalculation of fixed parameters. See ?mvmorph.Precalc for details.
 %%     ~~Describe \code{precalc} here~~
 }
   \item{diagnostic}{
@@ -67,19 +67,20 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvOUTS function fit a multivariate model of trait evolution on time-series according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors.
+The mvOUTS function fits a multivariate model of trait evolution on a time series according to an Ornstein-Uhlenbeck process. The user can include measurement errors to the analyzed dataset.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"}, \emph{"univarpf"} (for univariate analysis) methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \emph{"inverse"} approach use the \emph{"stable"} standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"}, \emph{"univarpf"} (for univariate analysis) methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \emph{"inverse"} approach uses the \emph{"stable"} standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. See ?mvLL for details.
 
 Arguments in the \bold{"param"} \emph{list} are:
 
 \bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma (scatter) and alpha (drift) matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. For general square matrices (non-symmetric) the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for the "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
+\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \emph{"cholesky"}, \emph{"eigen"}, or \emph{"spherical"} option. 
+For general square (non-symmetric) matrices the \emph{"svd"}, \emph{"qr"} and \emph{"schur"} parameterizations can be used. The \emph{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \emph{"svd+"}, \emph{"qr+"} or \emph{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \emph{"diagonal"} which is similar to the use of the "constraint" argument for the "alpha" argument, or to use \emph{"equal"} and \emph{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \emph{"upper"} or \emph{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
 
-\bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the: \emph{"cholesky"}, \emph{"eigen+"}, and \emph{"spherical"} parameterization. The sigma matrix can also forced to be diagonal using \emph{"diagonal"} or \emph{"equaldiagonal"} and forced to have the same variances: \emph{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
+\bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure its positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the \emph{"cholesky"}, \emph{"eigen+"}, and \emph{"spherical"} parameterization. The sigma matrix can also be forced to be diagonal using \emph{"diagonal"} or \emph{"equaldiagonal"} and forced to have the same variances using \emph{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
 
-\bold{"vcv"} - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument depending on how the root is treated. 
+\bold{"vcv"} - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument, depending on how the root is treated. 
 The \emph{vcv="randomRoot"} option assumes that the value at the root is a random variable with the stationary distribution of the process. The \emph{vcv="fixedRoot"} option assumes that the root is a fixed parameter.
 
 \bold{"root"} - If root=TRUE, the ancestral state and the optimum (stationary mean) are estimated, otherwise (root=FALSE) the ancestral (initial) state and the optimum (long-term expectation) are assumed to be the same.
@@ -93,10 +94,10 @@ Note: for the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined
 \item{AIC }{Akaike Information Criterion for the optimal model.}
 \item{AICc }{Sample size-corrected AIC.}
 \item{theta }{Estimated ancestral states.}
-\item{alpha }{Matrix of estimated alpha values (strength of selection).}
-\item{sigma }{Evolutionary rates matrix (drift).}
+\item{alpha }{Matrix of estimated alpha values (strength of selection, drift matrix).}
+\item{sigma }{Evolutionary rate matrix (scatter).}
 \item{convergence }{Convergence status of the optimizing function; "0" indicates convergence. (See ?optim for details).}
-\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. See details.}
+\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. See details on ?mvOU.}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
 \item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 
@@ -141,8 +142,6 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 \donttest{
 # Simulate the time series
 set.seed(14)

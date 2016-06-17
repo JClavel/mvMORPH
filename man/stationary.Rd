@@ -6,7 +6,7 @@ The stationary variance of an Ornstein-Uhlenbeck process
 %%  ~~function to do ... ~~
 }
 \description{
-This function return the stationary variance for an Ornstein-Uhlenbeck process (object of class "ou").
+This function returns the stationary variance for an Ornstein-Uhlenbeck process (object of class "ou").
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -21,8 +21,8 @@ Object fitted with the "mvOU" function.
 }
  
 \details{
-This function compute the dispersion parameter of the Ornstein-Uhlenbeck process (i.e., the expected variance when the process is stationary).
-The multivariate normal stationary distribution of the Ornstein-Uhlenbeck process is computed following Bartoszeck et al. (2012).
+This function computes the dispersion parameter of the Ornstein-Uhlenbeck process (i.e., the expected variance when the process is stationary).
+The multivariate normal stationary distribution of the Ornstein-Uhlenbeck process is computed following Bartoszek et al. (2012).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -52,8 +52,6 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 # Simulated dataset
 set.seed(14)
 # Generating a random tree

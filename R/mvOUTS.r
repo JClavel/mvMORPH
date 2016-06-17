@@ -436,7 +436,7 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
 
     ## Check first if we want to return the log-likelihood function only
     if(optimization=="fixed"){
-        message("No optimizations performed, only the Log-likelihood function is returned.")
+        message("No optimization performed, only the Log-likelihood function is returned.")
         param$nbspecies<-n
         param$ntraits<-p
         param$method<-method

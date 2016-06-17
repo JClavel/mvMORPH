@@ -6,7 +6,7 @@ The phylogenetic half-life for an Ornstein-Uhlenbeck process
 %%  ~~function to do ... ~~
 }
 \description{
-This function return the phylogenetic half-life for an Ornstein-Uhlenbeck process (object of class "ou").
+This function returns the phylogenetic half-life for an Ornstein-Uhlenbeck process (object of class "ou").
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -21,7 +21,7 @@ Object fitted with the "mvOU" function.
 }
  
 \details{
-The phylogenetic half-life describe the time to move halfway from the ancestral state to the primary optimum (Hansen, 1997).
+The phylogenetic half-life describes the time to move halfway from the ancestral state to the primary optimum (Hansen, 1997).
 The multivariate counterpart is computed on the eigenvalues of the "selection" matrix (Bartoszeck et al. 2012).
 %%  ~~ If necessary, more details than the description above ~~
 }
@@ -54,8 +54,6 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 # Simulated dataset
 set.seed(14)
 # Generating a random tree

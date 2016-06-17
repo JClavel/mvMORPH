@@ -549,7 +549,7 @@ decompfun <- function(par){
 
 ## Check first if we want to return the log-likelihood function only
 if(optimization=="fixed"){
-    message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+    message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
     param$alphafun<-decompfun
     param$sigmafun<-sigmafun
     param$nbspecies<-n

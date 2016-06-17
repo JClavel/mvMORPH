@@ -32,7 +32,7 @@ Phylogenetic trees
  + _paintBranches_ (Assigns a given discrete state to a particular branch)
  + _paintSubTree_ (Assigns a given discrete state to a particular sub-tree)
  
-For instance, users may be interested in directly using prior knowledge to specify different states on particular parts of the tree (or use results from other ancestral reconstructions methods). The user must refer to the **phytools** documentation for more details.
+For instance, a users may be interested in directly using prior knowledge to specify different states on particular parts of the tree (or use results from other ancestral reconstructions methods). The user must refer to the **phytools** documentation for more details.
 ```{r, results="hide", message=FALSE}
 # Load the package and dependencies (ape, phytools, corpcor, subplex)
 library(mvMORPH)
@@ -63,7 +63,7 @@ tree4 <- paintSubTree(tree4, branch_2, state="group_3", stem=0.5)
 plot(tree4)
 ```
 
- Note that the tree length can be scaled to unity using the _"scale.height = TRUE"_ option. Why? Scaling the tree will not change the value of the maximum log-likelihood (or AIC), but will change the scale of the parameter estimates. This is particularly useful to relatively compare analysis on different trees or to directly interpret estimates such as the phylogenetic halflife in % of the tree size (see ?_halflife_). Besides, working on scaled trees can sometimes speed up the computations.
+ Note that the tree length can be scaled to unity using the _"scale.height = TRUE"_ option. Why? Scaling the tree will not change the value of the maximum log-likelihood (or AIC), but will change the scale of the parameter estimates. This is particularly useful to compare analyses on different trees or to directly interpret estimates such as the phylogenetic halflife in % of the tree height (see ?_halflife_). Besides, working on scaled trees can sometimes speed up the computations.
  
  
 Time series
@@ -73,7 +73,7 @@ The _mvRWTS_ and _mvOUTS_ functions allow fitting multivariate models of continu
 
 For instance:
 ```{r, comment=">"}
-# Make a tiny time-series object from fossil ages between [55; 32.5] Ma
+# Make a tiny time-series object from fossil ages within [55; 32.5] Ma
 fossil_ages <- c(55,46,43,38,35,32.5)
 
 # The time-series becomes:
@@ -90,23 +90,23 @@ timeseries
 Matrix or data frame must have species in rows and continuous traits (variables) in columns, rownames must match tip names. Missing cases are currently allowed as **NA** values with the "rpf", "inverse", and "pseudoinverse" methods. The measurement error or sampling variance is a matrix of similar size (note that the sampling variance is given by the square of the standard-errors of species mean estimates). 
 Measurement error missing values (**NA** or "0") are allowed. 
 
-For some time-series models; _mvOUTS_ with fixed root vcv (see the "param" list section below) and _mvRWTS_; the sampling variance for the first obsevations in the time-series must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
+For some time-series models (_mvOUTS_ with fixed root vcv and _mvRWTS_; see the "param" list section below) the sampling variance for the first obsevations in the time-series must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
 
 
 
 # Optimization methods
 
-**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seem to be more efficient, but when the optimizer doesn't converge or if the fit seems unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seems particularly efficient for the user-defined models. When the optimization is turn to "fixed" only the log-likelihood function is returned without evaluation (see 9 - log-likelihood function section).
+**mvMORPH** rely on the _optim_ and _subplex_ functions to optimize the log-likelihood of the models. The "L-BFGS-B" and "Nelder-Mead" algorithms are used by default for most models. The "L-BFGS-B" algorithm is generally faster and seems to be more efficient, but when the optimizer doesn't converge or if the fit seems unreliable (i.e., when $convergence or the $hess.value in the results are not 0) it may help to switch between these methods or to change the options of these methods in the "control" argument (see ?optim or ?subplex). The _subplex_ algorithm seems particularly efficient for the user-defined models. When the optimization is turned to "fixed" only the log-likelihood function is returned without evaluation (see 9.1 - log-likelihood function section).
 
 
 
 # Likelihood computation methods
 
-**mvMORPH** uses various methods based on generalized least square (GLS) or the prunning algorithm (contrasts) to compute the log-likelihood. 
-While GLS based approaches are very flexible and allow fitting almost all models, to deal with missing cases and measurement error very easily, and are particularly safe for optimization (e.g., the "pseudoinverse" method), their naive implementations are computationally intensive (e.g., "inverse" and "pseudoinverse" methods). Two alternative and efficient algorithms also based on GLS are proposed ("rpf" and "sparse"). The "sparse" method is both efficient in terms of computational time and memory use, but is limited by the sparsity structure of the variance-covariance (vcv) of the phylogenetic tree while the "rpf" is not. While these approaches are up to ten times faster than the "inverse" or the "pseudoinverse" methods, they may suffer from singularity issues during optimization in some cases. 
-The "pic" method is the fastest one (thousand of time faster than the GLS based methods implemented here), but currently available for a couple of models and handle dichotomic trees only.
+**mvMORPH** uses various methods based on generalized least squares (GLS) or the prunning algorithm (contrasts) to compute the log-likelihood. 
+While GLS-based approaches are very flexible and allow fitting almost all models, to deal with missing cases and measurement errors very easily, and are particularly safe for optimization (e.g., the "pseudoinverse" method), their naive implementations are computationally intensive (e.g., "inverse" and "pseudoinverse" methods). Two alternative and efficient algorithms also based on GLS are proposed ("rpf" and "sparse"). The "sparse" method is both efficient in terms of computational time and memory use, but is limited by the sparsity structure of the variance-covariance (vcv) matrix of the phylogenetic tree while the "rpf" is not. While these approaches are up to ten times faster than the "inverse" or "pseudoinverse" methods, they may suffer from singularity issues during optimization in some cases. 
+The "pic" method is the fastest one (thousands of time faster than the GLS-based methods implemented here), but is currently available only for a couple of models and dichotomic trees.
 
-The various methods available for each models currently (stay tuned on gitHub) on mvMORPH are presented in the table below (from the fastest to the slowest)
+The various methods for each model currently available on mvMORPH (stay tuned on gitHub) are presented in the table below (from the fastest to the slowest)
 
 --------------------------------------------------------------------------------------------------------------------------------------------------
 **functions**                _pic_               _sparse_           _univarpf_             _rpf_              _inverse_           _pseudoinv._          
@@ -192,7 +192,7 @@ Ancestral state and primary optimum
 The "root" argument in the "param" _list_ of the _mvOU_ function allows specifying if the root state and the optimum must be estimated (root=TRUE), unless we assume that the root state and the primary optimum are distributed according to the stationary distribution of the process (root=FALSE; Fig. 1). Indeed, the root state and the primary optimum are not identifiable separately on extant species. A slight variant of root=FALSE is root="stationary" where the root state is explicitely dropped and we assume the optimum is stationary (e.g., the implementation used in the OUwie package).
 
 ![alt text](root.png "Fig. 1")
-**Fig. 1.** *Treatment of the root state options in the _mvOU_ and _mvBM_ functions. For the OU process, when root=FALSE the ancestral state at the root is directly derived from the oldest regime state (the ancestral state and the optimum are not estimated separately). With root=TRUE the ancestral state and the optimum are explicitely estimated. It should be noted that the root=TRUE option provides unreliable estimates without fossil data. For the BM model, the smean=TRUE option estimate a single ancestral state (the phylogenetic mean) while smean=FALSE estimate separates phylogenetic mean*
+**Fig. 1.** *Treatment of the root state options in the _mvOU_ and _mvBM_ functions. For the OU process, when root=FALSE the ancestral state at the root is directly derived from the oldest regime state (the ancestral state and the optimum are not estimated separately). With root=TRUE the ancestral state and the optimum are explicitely estimated. It should be noted that the root=TRUE option provides unreliable estimates without fossil data. For the BM model, the smean=TRUE option estimates a single ancestral state (the phylogenetic mean) while smean=FALSE estimates separates phylogenetic means*
 
 
 ```{r,comment=">", message=FALSE, results='hide'}
@@ -210,7 +210,7 @@ mvOU(tree, data, model="OU1", param=list(root=TRUE))
 ```
 
 
-For the _mvOUTS_ function, the path from the initial state to the optimum is explicitely estimated (_root=TRUE_, the default value), otherwise the ancestral (initial) state and the optimum are assumed to be the same _root=FALSE_.
+For the _mvOUTS_ function, the path from the initial state to the optimum is explicitely estimated (_root=TRUE_, the default value), otherwise the ancestral (initial) state and the optimum are assumed to be the same (_root=FALSE_).
 
 ```{r, comment=">", message=FALSE, results='hide'}
 # timeseries 
@@ -228,9 +228,9 @@ mvOUTS(ts, data, param=list(root=FALSE))
 Multiple phylogenetic means
 -
 
-The "smean" argument in the "param" _list_ of the _mvBM_ function allows estimating either one ancestral state (smean=TRUE) for the whole tree (even if there are multiple regime states) or multiple ancestral states for each regimes (smean=FALSE). Note: contrary to the OU model, the reconstructed history of the discrete state don't affects the model fit.
+The "smean" argument in the "param" _list_ of the _mvBM_ function allows estimating either one ancestral state (smean=TRUE) for the whole tree (even if there are multiple regime states) or multiple ancestral states (one for each regimes; smean=FALSE). Note: contrary to the OU model, the reconstructed history of the discrete state doesn't affect the model fit.
 
-When differences between groups/regimes states are only related to the phylogenetic mean, a multiple rate model can be misleadingly preferred over a single rate model:
+When differences between group/regime states are only related to the phylogenetic mean, a multiple rate model can be misleadingly preferred over a single rate model:
 
 ```{r,comment=">", results='hide', message=FALSE}
 # BM model with two selective regimes
@@ -255,7 +255,7 @@ fit_3 <- mvBM(tree, data, model="BM1", param=list(smean=FALSE))
 fit_4 <- mvBM(tree, data, model="BMM", param=list(smean=FALSE))
 ```
 
-Unless we consider the multiple mean models, the multipe rate matrix is misleadingly preferred (AIC>4) over the single rate matrix (the generating) model.
+Unless we consider the multiple mean models, the multiple rate matrix is misleadingly preferred ($\Delta$AIC>4) over the single rate matrix (the generating) model.
 ```{r,comment=">"}
 # Compare the fitted models.
 results <- list(fit_1,fit_2,fit_3,fit_4)
@@ -315,36 +315,36 @@ fit2 <- mvRWTS(timeseries , data, error, param=list(trend=c(1,1)))
 LRT(fit2,fit1)
 ```
 
-Note that the theta parameters cannot be estimated analytically for the "trend" model (i.e., option root.mle=TRUE, in the returned log-likelihood function)
+Note that the theta parameters cannot be estimated analytically for the "trend" model (i.e., option root.mle=TRUE in the returned log-likelihood function)
 
 
 
 # Constraints
 
-Overview of the various constraints parameterizations in **mvMORPH**
+Overview of the various constraint parameterizations in **mvMORPH**
 -
 
-Comparison of constrained models allows testing various evolutionary hypothesis such as independent evolution, comparing evolutionary rates between traits, common structure, phenotypic integration... etc. The constraints methods currently available on mvMORPH are the following (see also Fig. 2):
+Comparison of constrained models allows testing various evolutionary hypotheses such as independent evolution, comparing evolutionary rates between traits, common structure, phenotypic integration, ... etc. The constraint methods currently available on mvMORPH are the following (see also Fig. 2):
 
 
 ![alt text](constraints.png "Fig. 2")
 **Fig. 2.** *Bivariate representation of the covariance constraints used in mvMORPH.*
 
 
- + **"default"** : no constraints imposed on the structure of the rate (evolutionary variance and covariance) matrix
- + **"diagonal"** : there are no evolutionary covariances between the traits, the rate matrix is diagonal.
- + **"equaldiagonal"** there are no evolutionary covariances and the traits share the same variance.
- + **"equal"** the traits covaries and share the same variance (or evolutionary rates).
- + **"proportional"** (only with "BMM") the rates matrices are proportional for different regimes/states mapped on the tree. 
- + **"correlation"** (only with "BMM") the rates matrices share the same correlations between traits for different regimes/states mapped on the tree.
- + **"variance"** (only with "BMM") the rates matrices share the same variances (rates) between regimes/states mapped on the tree.
- + **"shared"** (only with "BMM") the rates matrices share the same eigen-vectors (orientation) between regimes/states mapped on the tree.
- + **"user"** : the design of the rate matrix is directly defined by the user. Note that for 2 traits, all the combinations are readily available from the default methods. See example below.
+ + **"default"**: no constraint imposed on the structure of the rate (evolutionary variance and covariance) matrix
+ + **"diagonal"**: there are no evolutionary covariance between traits $\rightarrow$ the rate matrix is diagonal.
+ + **"equaldiagonal"**: there are no evolutionary covariance and the traits share the same variance.
+ + **"equal"**: the traits covaries and share the same variance (or evolutionary rate).
+ + **"proportional"** (only with "BMM"): the rate matrices are proportional for different regimes/states mapped on the tree. 
+ + **"correlation"** (only with "BMM"): the rate matrices share the same correlations between traits for different regimes/states mapped on the tree.
+ + **"variance"** (only with "BMM"): the rate matrices share the same variances (rates) between regimes/states mapped on the tree.
+ + **"shared"** (only with "BMM"): the rate matrices share the same eigen-vectors (orientations) between regimes/states mapped on the tree.
+ + **"user"**: the design of the rate matrix is directly defined by the user. Note that for 2 traits, all the combinations are readily available from the default methods. See example below.
  
 "User-defined" constraints
 -
 
-**User-defined** constraints are done by providing a symmetric square matrix with integer values taken as indices of the parameters. To constrain covariance values to zero the user must use **NA** values as indices. Because a covariance matrix must be symmetric positive definite, negative eigenvalues are automatically shrunk to a specified tolerance value (=1). This value can be changed through the "param" _list_ with the "tol" argument. This value must be changed with various estimates (e.g. 1e-5, 10...) if convergence of the optimizer has not been achieved. The alternative optimization methods may help. __The "subplex" optimization method is advised__.
+**User-defined** constraints are done by providing a symmetric square matrix with integer values taken as indices of the parameters. To constrain covariance values to zero, the user must use **NA** values as indices. Because a covariance matrix must be symmetric positive definite, negative eigenvalues are automatically shrunk to a specified tolerance value (=1). This value can be changed through the "param" _list_ with the "tol" argument. This value must be changed with various estimates (e.g. 1e-5, 10...) if convergence of the optimizer has not been achieved. The alternative optimization methods may help. __The "subplex" optimization method is advised__.
 
 ```{r, results="hide", comment=">", message=FALSE}
 set.seed(14)
@@ -356,7 +356,7 @@ sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 theta<-c(0,0,0)
 data<-mvSIM(tree, model="BM1", nsim=1, param=list(sigma=sigma, theta=theta))
 
-# Fit user defined contrained model
+# Fit user-defined contrained model
 user_const <- matrix(c(1,4,4,4,2,5,4,5,3),3)
 fit1 <- mvBM(tree, data, model="BM1", method="pic"
              , param=list(constraint=user_const), optimization="subplex")
@@ -377,12 +377,12 @@ fit3 <- mvBM(tree, data, model="BM1", method="pic"
 
 ```
 
-Note: the user-defined option can also be used with the _decomp_ or _decompSigma_ argument for the OU processes (see below). Diagonal elements values are automatically squared to obtain positive definite matrices or positive eigenvalues.
+Note: the user-defined option can also be used with the _decomp_ or _decompSigma_ argument for the OU processes (see below). The diagonal elements are automatically squared to obtain positive definite matrices or positive eigenvalues.
 
 
 # The "param" list 
 
-The "param" list argument allows specifying multiple options in **mvMORPH** functions (starting value estimate for the optimization, constraints, matrix parameterization...)
+The "param" _list_ argument allows specifying multiple options in **mvMORPH** functions (starting value estimate for the optimization, constraints, matrix parameterization...)
 
 ## The "decomp" and "decompSigma" options
 
@@ -391,9 +391,9 @@ $$dX(t)=A(\theta(t) - X(t))dt + \Sigma dW(t)$$
 and Brownian motion:
 $$ dX(t)=\Sigma dW(t) $$
 
-For symmetric matrices (e.g. the variance-covariance matrix of Brownian rates $\Sigma$) **mvMORPH** uses various parameterizations to ensure the positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterizes a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g. _decompSigma="cholesky"_. 
+For symmetric matrices (e.g., the variance-covariance matrix of Brownian rates $\Sigma$), **mvMORPH** uses various parameterizations to ensure the positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterizes a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g., _decompSigma="cholesky"_. 
 
-Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The firsts _p(p-1)/2_ parameters are used to compute the cholesky factors of spherical angles, or the orthogonal matrices; the next _p_ parameters are the eigenvalues (in "eigen") or the standard deviations (in "spherical"). The bivariate case is illustrated here:
+Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The first _p(p-1)/2_ parameters are used to compute the cholesky factors of spherical angles, or the orthogonal matrices; the next _p_ parameters are the eigenvalues (in "eigen") or the standard deviations (in "spherical"). The bivariate case is illustrated here:
 
 
 
@@ -432,7 +432,7 @@ $$
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\ \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}^T
 $$
 
-For the OU process, the alpha matrix can be more general. Matrix parameterization such as singular value decomposition (_decomp="svd"_), QR (_decomp="qr"_), or Schur decomposition (_decomp="schur"_) are nevertheless used to make decomposable and real matrices. The _decomp="svd+"_, _decomp="qr+"_, and _decomp="schur+"_ options forces the eigenvalues to be positive by taking their logarithm, and ensure uniqueness for the QR factorization. These matrices are parameterized by $p^2$ parameters. The firsts _p(p-1)/2_ parameters are used to compute the first orthogonal matrix, the next _p_ parameters for the eigenvalues ("svd") or diagonal values of the upper triangular matrix ("qr" and "schur"). The last _p(p-1)/2_ parameters are used to compute the second othogonal matrix ("svd"), or to fill the upper off-diagonal of the triangular matrix in the "schur" and "qr" parameterizations.
+For the OU process, the alpha matrix can be more general. Matrix parameterization such as singular value decomposition (_decomp="svd"_), QR (_decomp="qr"_), or Schur decomposition (_decomp="schur"_) are nevertheless used to generate decomposable and real matrices. The _decomp="svd+"_, _decomp="qr+"_, and _decomp="schur+"_ options forces the eigenvalues to be positive by taking their logarithm, and ensure uniqueness for the QR factorization. These matrices are parameterized by $p^2$ parameters. The first _p(p-1)/2_ parameters are used to compute the first orthogonal matrix, while the next _p_ parameters are used for the eigenvalues ("svd") or diagonal values of the upper triangular matrix ("qr" and "schur"). The last _p(p-1)/2_ parameters are used to compute the second othogonal matrix ("svd"), or to fill the upper off-diagonal of the triangular matrix in the "schur" and "qr" parameterizations.
 
 
 
@@ -460,7 +460,7 @@ A=
 $$
 
 
-Finally, the alpha matrix can be diagonal (independent effects) or triangular. Triangular parameterizations are for instance used on time-series forecasting to determine if a given variable is helpful in predicting a second one; the so-called Granger causality (e.g., the lower process drives the upper one for a upper triangular matrix). Similarly to symmetric matrices, upper and lower triangular matrices are parameterized by _p(p+1)/2_ parameters. The firsts _p(p-1)/2_ parameters are used for the upper or lower off-diagonal of the matrices, while the next _p_ parameters are in the diagonal.
+Finally, the alpha matrix can be diagonal (independent effects) or triangular. Triangular parameterizations are for instance used on time-series forecasting to determine if a given variable is helpful in predicting a second one (the so-called Granger causality; e.g., the lower process drives the upper one for an upper triangular matrix). Similarly to symmetric matrices, upper and lower triangular matrices are parameterized by _p(p+1)/2_ parameters. The first _p(p-1)/2_ parameters are used for the upper or lower off-diagonal of the matrices, while the next _p_ parameters are in the diagonal.
 
 
 
@@ -483,9 +483,9 @@ A=
 \begin{bmatrix} \log{(d_{11})} & 0 \\ l_{21} & \log{(d_{22})} \end{bmatrix}
 $$
 
-_Note: the package can't handle matrices with similar eigenvalues currently (e.g., the diagonal values must be slightly differents in a triangular matrix)._
+_Note: so far, the package can't handle matrices with similar eigenvalues (e.g., the diagonal values must be slightly different in a triangular matrix)._
 
-Non-symmetric matrices can be used to test, for example, hypothesis of evolutionary lag (see chunk of code below). That is, one trait is chasing the optimum of the second one with a sufficient lag to be detected (a triangular matrix), while if the tracking is fast enough a "symmetric" model will be preferred. It should be noted that on ultrametric trees it's difficult to estimate accurately the path from the ancestral state toward the primary optimum and therefore it's hard to test such kind of process with the "OU1" model. For the "OUM" model on ultrametric trees, the path from the first to the other optimum between traits is compared, which make the model identifiable.
+Non-symmetric matrices can be used to test, for example, hypothesis of evolutionary lag (see chunk of code below). That is, one trait is chasing the optimum of the second one with a sufficient lag to be detected (a triangular matrix), while if the tracking is fast enough a "symmetric" model will be preferred. It should be noted that on ultrametric trees it's difficult to estimate accurately the path from the ancestral state toward the primary optimum and therefore it's hard to test such kind of process with the "OU1" model. For the "OUM" model on ultrametric trees, the path from the first optimum to the other one between traits is compared, which makes the model identifiable.
 
 ```{r, comment=">", results='hide'}
 set.seed(14)
@@ -513,12 +513,12 @@ aicw(results)
 ```
 
 
-User-defined constraints on the matrix parameterizations are allowed (but user should check convergence and try with different methods, see the "constraints" section above):
+User-defined constraints on the matrix parameterizations are allowed (but user should check convergence and try with different methods; see the "constraints" section above):
 ```{r,comment=">"}
 # try user defined constraints
 set.seed(100)
-ts <- 49
-timeseries  <- 1:ts
+ts <- 50
+timeseries  <- 0:ts
 
 sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 # upper triangular matrix with effect of trait 2 on trait 1.
@@ -552,7 +552,7 @@ LRT(fit_1, fit_2)
 
 ## the "vcv" argument
 
-For the Ornstein-Uhlenbeck process (OU), the variance-covariance matrix (vcv) is conditioned depending on how the root is treated. The _vcv="randomRoot"_ option assumes that the root is a random variable with the distribution of the stationary process; the _vcv="fixedRoot"_ option assume that the root state is a fixed parameter. While the computation of the "randomRoot" variance-covariance is faster, we cannot use it with the _method="sparse"_ option to compute the log-likelihood. However when the process is stationary (i.e., when the alpha value/eigenvalues are large enough) both approaches should converge to the same results:
+For the Ornstein-Uhlenbeck process (OU), the variance-covariance matrix (vcv) is conditioned depending on how the root is treated. The _vcv="randomRoot"_ option assumes that the root is a random variable with the distribution of the stationary process; the _vcv="fixedRoot"_ option assumes that the root state is a fixed parameter. While the computation of the "randomRoot" variance-covariance is faster, we cannot use it with the _method="sparse"_ option to compute the log-likelihood. However when the process is stationary (i.e., when the alpha value/eigenvalues are large enough) both approaches should converge to the same results:
 
 ```{r, comment=">", results='hide'}
 set.seed(1)
@@ -621,7 +621,7 @@ all.equal(fit$llik(par),logLik(fit)) # similar results
 fit$llik(par, theta=TRUE)
 ```
  
-On all the **mvMORPH** models, the ancestral states (optimum or theta), are the maximum likelihood estimate (mle) analytic solution. But the user can specify manually the values for the root state (e.g., for mcmc evaluation):
+On all **mvMORPH** models, the ancestral states (optimum or theta) are the maximum likelihood estimate (mle) analytic solutions (conditioned on the other parameters). Nevertheless, the user can specify manually the values for the root state (e.g., for mcmc evaluation):
 
 ```{r, comment=">"}
 # Use the maximum likelihood parameters from the optimizer
@@ -632,7 +632,7 @@ fit$llik(c(par,fit$theta), root.mle=FALSE)
 The matrix parameterization functions
 -
 
-The model object also return functions in the "param" _list_. The _sigmafun_ and _alphafun_ functions returns the parameterizations functions used to fit the models (see the "parameterization" section).
+The model object also returns functions in the "param" _list_. The _sigmafun_ and _alphafun_ functions return the parameterization functions used to fit the models (see the "parameterization" section).
 
 ```{r, comment=">"}
 # Reconstruct sigma with the untransformed values of the optimizer
@@ -666,7 +666,7 @@ Methods specifically dedicated to work with fossil data:
   +  _mvOU_ param=list(root=TRUE)
   +  _mvOUTS_ multivariate OU for time-series (coevolution, causal links...)
   +  _mvRWTS_ multivariate random walk (=BM process) for time series
-  +  _mvRWTS_ param=list(trend=TRUE); directional random walk
+  +  _mvRWTS_ param=list(trend=TRUE) directional random walk
 
 Imputing missing values
 --
@@ -702,7 +702,7 @@ imp$estim[1:10,]
 Ancestral state reconstructions
 --
 
-Note that if the _asr_ argument is TRUE, the ancestral states at each nodes are returned instead of the imputed values. If there is missing cases in the dataset, they are first imputed before estimating the ancestral values.
+Note that if the _asr_ argument is TRUE, the ancestral states at each node are returned instead of the imputed values. If there is missing cases in the dataset, they are first imputed before estimating the ancestral values.
 
 ```{r, comment=">"}
 plot(tree, cex=0.6)
@@ -787,10 +787,10 @@ result <- list(logLik=fit$value, kappa=fit$par, sigma2=log_lik(fit$par, tree,
 print(result)
 ```
 
-Reuse the returned log-likelihood functions
+Reuse of the returned log-likelihood functions
 -
 
-We can also use the likelihood returned by the mvMORPH functions to fit custom models using joint optimizations. Here an example with time-series data to fit a shift in rates and covariances.
+We can also use the likelihood returned by the mvMORPH functions to fit custom models using joint optimizations. Here is an example with time-series data to fit a shift in rates and covariances.
 
 ```{r,comment=">"}
 set.seed(123)
@@ -829,8 +829,8 @@ log_lik_RWshift <- function(par){
 }
 
 # 2) starting values (only for sigma because theta is computed analytically)
-guess_value <- c(chol(sigma_1)[upper.tri(sigma_1, TRUE)], 
-                 chol(sigma_2)[upper.tri(sigma_2, TRUE)])
+guess_value <- c(chol(sigma_1)[upper.tri(sigma_1, diag=TRUE)], 
+                 chol(sigma_2)[upper.tri(sigma_2, diag=TRUE)])
 
 # optimize the model!
 fit <- optim(guess_value, function(par){log_lik_RWshift(par)},

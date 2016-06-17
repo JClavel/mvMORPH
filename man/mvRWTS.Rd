@@ -2,7 +2,7 @@
 \alias{mvRWTS}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate Brownian motion / Random Walk model of continuous traits evolution on time-series
+Multivariate Brownian motion / Random Walk model of continuous traits evolution on time series
 %%  ~~function to do ... ~~
 }
 \description{
@@ -20,7 +20,7 @@ mvRWTS(times, data, error = NULL, param =
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{times}{
-Time series - vector of samples ages.
+Time series - vector of sample ages.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
@@ -33,27 +33,27 @@ Matrix or data frame with species/sampled points in rows and continuous traits s
 }
 
   \item{param}{
-List of arguments to be passed to the function. See details.
+List of arguments to be passed to the function. See details below.
 %%     ~~Describe \code{param} here~~
 }
   \item{method}{
-Choose between "rpf", "inverse", or "pseudoinverse" for log-likelihood computation during the fitting process. See details.
+Choose between "rpf", "inverse", or "pseudoinverse" for log-likelihood computation during the fitting process. See details below.
 %%     ~~Describe \code{method} here~~
 }
   \item{scale.height}{
-Whether the time-series should be scaled to length 1 or not.
+Whether the time series should be scaled to unit length or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines (see ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
+Methods used by the optimization routines (see ?optim and ?subplex for details). The "fixed" method returns the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
-Max. bound for the number of iteration of the optimizer; other options can be fixed on the list (see ?optim or ?subplex).
+Max. bound for the number of iteration of the optimizer; other options can be fixed in the list (see ?optim or ?subplex).
 %%     ~~Describe \code{control} here~~
 }
   \item{precalc}{
-Optional. precalculation of fixed parameters. See ?mvmorph.Precalc.
+Optional. Precalculation of fixed parameters. See ?mvmorph.Precalc.
 %%     ~~Describe \code{precalc} here~~
 }
   \item{diagnostic}{
@@ -66,22 +66,22 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvRWTS function fits a multivariate Random Walk (RW) (the time-series counterpart of the Brownian motion) process.
+The mvRWTS function fits a multivariate Random Walk (RW; i.e., the time series counterpart of the Brownian motion process).
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf" and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The "inverse" approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for more details on these computational methods.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf" and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The "inverse" approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. See ?mvLL for more details on these computational methods.
 
-The \bold{ "param"} emph{list} arguments:
+Arguments in the \bold{ "param"} \emph{list} are:
 
-\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each studied trait  using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
+\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each trait using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
 
-Finally user-defined constraints can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
-Significance of nested model fit can be assessed using the "LRT" function. See example below and ?LRT.
+User-defined constraints can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
+Difference between two nested fitted models can be assessed using the "LRT" function. See example below and ?LRT.
 
-\bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure it's positive definiteness (Pinheiro and Bates, 1996). These methods are the: "cholesky", "eigen+", and "spherical" parameterization.
+\bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure its positive definiteness (Pinheiro and Bates, 1996). These methods are the "cholesky", "eigen+", and "spherical" parameterizations.
 
 \bold{ "trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift leading to a directional random walk. Note that it is possible to provide a vector of integer indices to constraint the estimated trends when p>1 (see the vignettes).
 
-\bold{ "sigma"} - Starting values for the likelihood estimation. By default the traits covariances are used as starting values for the likelihood optimization. The user can specify starting values as square symmetric matrices or a simple vector of values for the upper factor of the sigma matrix. The parameterization is done using the factorization determined through the "decomp" argument (Pinheiro and Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix - see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
+\bold{ "sigma"} - Starting values for the likelihood estimation. By default the trait covariances are used as starting values for the likelihood optimization. The user can specify starting values as square symmetric matrices or a simple vector of values for the upper factor of the sigma matrix. The parameterization is done using the factorization determined through the "decomp" argument (Pinheiro and Bates, 1996). Thus, you should provide p*(p+1)/2 values, with p the number of traits (e.g., random numbers or the values from the cholesky factor of a symmetric positive definite sigma matrix; see example below). If a constrained model is used, the number of starting values is (p*(p-1)/2)+1.
 
 
 %%  ~~ If necessary, more details than the description above ~~
@@ -91,9 +91,9 @@ Significance of nested model fit can be assessed using the "LRT" function. See e
 \item{AIC }{Akaike Information Criterion for the optimal model.}
 \item{AICc }{Sample size-corrected AIC.}
 \item{theta }{Estimated ancestral states.}
-\item{sigma }{Evolutionary rates matrix for each selective regime.}
-\item{convergence }{Convergence status of the optimizing function; "0" indicates convergence (See ?optim for details).}
-\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. (See ?mvOU).}
+\item{sigma }{Evolutionary rate matrix for each selective regime.}
+\item{convergence }{Convergence status of the optimizing function; "0" indicates convergence (see ?optim for details).}
+\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached (see ?mvOU).}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
 \item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 %%  ~Describe the value returned
@@ -132,8 +132,6 @@ Julien Clavel
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 set.seed(1)
 # Simulate the time series
 timeseries <- 0:49

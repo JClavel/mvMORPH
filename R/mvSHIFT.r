@@ -183,12 +183,12 @@ nsigma<-length(sigma)
         after<-1
         if(model=="EBOU"){
             model<-"OV"
-            nmod<-"ACDC to OU process with the same rates"
+            nmod<-"ACDC to OU process with the same rate"
             nsig<-nalpha
             nbeta<-nsig+nsigma
         }else if(model=="EBOUi"){
             model<-"OVG"
-            nmod<-"ACDC to OU process with independent rates"
+            nmod<-"ACDC to OU process with independent rate"
             nsig<-nalpha+nsigma
             nbeta<-nsig+nsigma
         }
@@ -197,12 +197,12 @@ nsigma<-length(sigma)
         after<-2
         if(model=="OUEB"){
             model<-"OV"
-            nmod<-"OU to ACDC process with the same rates"
+            nmod<-"OU to ACDC process with the same rate"
             nsig<-nalpha
             nbeta<-nsig+nsigma
         }else if(model=="OUEBi"){
             model<-"OVG"
-            nmod<-"OU to ACDC process with independent rates"
+            nmod<-"OU to ACDC process with independent rate"
             nsig<-nalpha+nsigma
             nbeta<-nsig+nsigma
         }
@@ -211,13 +211,13 @@ nsigma<-length(sigma)
         after<-1
         if(model=="EBBM"){
             model<-"CV"
-            nmod<-"ACDC to BM process with the same rates"
+            nmod<-"ACDC to BM process with the same rate"
             nalpha<-1
             nbeta<-1
             nsig<-nbeta
         }else if(model=="EBBMi"){
             model<-"CVG"
-            nmod<-"ACDC to BM process with independent rates"
+            nmod<-"ACDC to BM process with independent rate"
             nalpha<-1
             nbeta<-1
             nsig<-nbeta+nsigma
@@ -227,13 +227,13 @@ nsigma<-length(sigma)
         after<-2
         if(model=="BMEB"){
             model<-"CV"
-            nmod<-"BM to ACDC process with the same rates"
+            nmod<-"BM to ACDC process with the same rate"
             nalpha<-1
             nbeta<-1
             nsig<-nbeta
         }else if(model=="BMEBi"){
             model<-"CVG"
-            nmod<-"BM to ACDC process with independent rates"
+            nmod<-"BM to ACDC process with independent rate"
             nalpha<-1
             nbeta<-1
             nsig<-nbeta+nsigma
@@ -439,7 +439,7 @@ if(model=="OVG" || model =="OV"){
     
     ## Check first if we want to return the log-likelihood function only
     if(optimization=="fixed"){
-        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
         param$sigmafun<-sigmafun
         param$alphafun<-decompfun
         param$nbspecies<-n
@@ -502,7 +502,7 @@ if(model=="OVG" || model =="OV"){
     
     ## Check first if we want to return the log-likelihood function only
     if(optimization=="fixed"){
-        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
         param$sigmafun<-sigmafun
         param$alphafun<-decompfun
         param$nbspecies<-n
@@ -565,7 +565,7 @@ if(model=="OVG" || model =="OV"){
     
     ## Check first if we want to return the log-likelihood function only
     if(optimization=="fixed"){
-        message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+        message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
         param$sigmafun<-sigmafun
         param$alphafun<-decompfun
         param$nbspecies<-n

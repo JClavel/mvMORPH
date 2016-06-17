@@ -502,7 +502,7 @@ if(model=="BMM"){
             }else{
                 starting<-unlist(lapply(1:length(param$sigma),function(x){sym.unpar(param$sigma[[x]])}))
             }
-            if(length(starting)!=(k*npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+            if(length(starting)!=(k*npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
         }
         
         # length of sigma parameters
@@ -537,7 +537,7 @@ if(model=="BMM"){
                 }else{
                     starting<-unlist(lapply(1:length(param$sigma),function(x){diag(param$sigma[[x]])}))
                 }
-                if(length(starting)!=(k*npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+                if(length(starting)!=(k*npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
             }
             
             # length of sigma parameters
@@ -576,7 +576,7 @@ if(model=="BMM"){
 
                 }
                 starting<-c(starting,varval)
-                if(length(starting)!=p*k+npar){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+                if(length(starting)!=p*k+npar){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
             }
             # length of sigma parameters
             nparsig<-length(starting)
@@ -614,7 +614,7 @@ if(model=="BMM"){
                     varval<-diag(param$sigma[[1]])
                 }
                 starting<-c(varval,starting)
-                if(length(starting)!=k*npar+p){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+                if(length(starting)!=k*npar+p){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
             }
             # length of sigma parameters
             nparsig<-length(starting)
@@ -652,7 +652,7 @@ if(model=="BMM"){
                     varval<-unlist(lapply(1:length(param$sigma),function(x){diag(param$sigma[[x]])}))
                 }
                 starting<-c(starting,varval)
-                if(length(starting)!=p*k+npar){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+                if(length(starting)!=p*k+npar){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
                 }
             
             # length of sigma parameters
@@ -679,7 +679,7 @@ if(model=="BMM"){
                 }else{
                     starting<-startParamSigma(p, decomp, tree, data, param$sigma)
                 }
-                if(length(starting)!=(npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+                if(length(starting)!=(npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
             }
          
             starting<-c(proportionalval,starting)
@@ -711,7 +711,7 @@ if(model=="BMM"){
             }else{
                 starting<-unlist(lapply(1:length(param$sigma),function(x){c(param$sigma[[x]][[1]],param$sigma[[x]][lower.tri(param$sigma[[x]])])}))
             }
-            if(length(starting)!=(k*npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+            if(length(starting)!=(k*npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
         }
         # length of sigma parameters
         nparsig<-length(starting)
@@ -763,7 +763,7 @@ sigmafun <- function(par) {buildSigma(par,index.mat=index.mat,sig=sig,model=mode
             
 ## Check first if we want to return the log-likelihood function only
 if(optimization=="fixed"){
-    message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+    message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
     param$sigmafun<-sigmafun
     param$model<-model
     param$constraint<-constraint
@@ -816,7 +816,7 @@ estim<-subplex(par=starting,fn=function (par){lik.Mult(par=par, dat=data, C=C2, 
             }else{
                 starting<-startParamSigma(p, decomp, tree, data, guess=param$sigma, index.user=index.user)
             }
-            if(length(starting)!=(npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+            if(length(starting)!=(npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
         }
         # length of sigma parameters
         nparsig<-length(starting)
@@ -837,7 +837,7 @@ estim<-subplex(par=starting,fn=function (par){lik.Mult(par=par, dat=data, C=C2, 
                 starting<-startParamSigma(p, decomp, tree, data, guess=param$sigma, index.user=index.user)
                 #starting<-c(param$sigma[[1]][[1]],param$sigma[[1]][lower.tri(param$sigma[[1]])])
             }
-        if(length(starting)!=(npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+        if(length(starting)!=(npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
     
         }
         # length of sigma parameters
@@ -859,7 +859,7 @@ estim<-subplex(par=starting,fn=function (par){lik.Mult(par=par, dat=data, C=C2, 
                 starting<-startParamSigma(p, decomp, tree, data, guess=param$sigma, index.user=index.user)
                 #starting<-c(param$sigma[[1]][[1]],param$sigma[[1]][lower.tri(param$sigma[[1]])])
             }
-            if(length(starting)!=(npar)){stop("The number of starting values for the rates matrix do not match, see ?mvBM for providing user specified starting values")}
+            if(length(starting)!=(npar)){stop("The number of starting values for the rate matrix do not match, see ?mvBM for providing user specified starting values")}
             
         }
         # length of sigma parameters
@@ -911,7 +911,7 @@ sigmafun <- function(par){ buildSigma(par,NULL,NULL,model,constraint)}
     
 ## Check first if we want to return the log-likelihood function only
 if(optimization=="fixed"){
-    message("No optimizations performed, only the Log-likelihood function is returned with default parameters.")
+    message("No optimization performed, only the Log-likelihood function is returned with default parameters.")
     param$sigmafun<-sigmafun
     param$model<-model
     param$constraint<-constraint
@@ -1043,7 +1043,7 @@ cat("a reliable solution has been reached","\n")}
 if(echo==TRUE){
 cat("\n")
 if(constraint==TRUE | constraint=="diagonal" | constraint=="equal"){
-cat("-- Summary results for constrained rates ",model,"model --","\n")
+cat("-- Summary results for constrained rate ",model,"model --","\n")
 }else if(constraint=="default" & decomp=="user"){
 cat("-- Summary results for user-defined",model,"constrained model --","\n")
 }else if(constraint=="correlation"){
@@ -1051,18 +1051,18 @@ cat("-- Summary results for common correlation ",model,"model --","\n")
 }else if(constraint=="shared"){
 cat("-- Summary results for shared eigenvectors ",model,"model --","\n")
 }else if(constraint=="proportional"){
-cat("-- Summary results for proportional rates matrices ",model,"model --","\n")
+cat("-- Summary results for proportional rate matrices ",model,"model --","\n")
 }else if(constraint=="variance"){
 cat("-- Summary results for common variance",model,"model --","\n")
 }else{
-cat("-- Summary results for multiple rates",model,"model --","\n")
+cat("-- Summary results for multiple rate",model,"model --","\n")
 }
 cat("LogLikelihood:","\t",LL,"\n")
 cat("AIC:","\t",AIC,"\n")
 cat("AICc:","\t",AICc,"\n")
 cat(nparam,"parameters","\n")
 cat("\n")
-cat("Estimated rates matrix","\n")
+cat("Estimated rate matrix","\n")
 cat("______________________","\n")
 print(resultList)
 cat("\n")

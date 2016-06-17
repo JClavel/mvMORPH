@@ -6,7 +6,7 @@ Multivariate (and univariate) algorithms for log-likelihood estimation of arbitr
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows computing the log-likelihood and estimating ancestral state of arbitrary tree or variance-covariance matrix with differents algorithms based on GLS (Generalized Least Square) and Independent Contrasts. Works for univariate or multivariate models. Can be wrapped for maximizing the log-likelihood of user-defined models.
+This function allows computing the log-likelihood and estimating ancestral states of an arbitrary tree or variance-covariance matrix with differents algorithms based on GLS (Generalized Least Squares) or Independent Contrasts. Works for univariate or multivariate models. Can be wrapped for maximizing the log-likelihood of user-defined models.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -17,7 +17,7 @@ mvLL(tree, data, error = NULL, method = c("pic", "rpf", "sparse", "inverse",
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tree}{
-Whether a phylogenetic tree of class "phylo" or a variance-covariance matrix (vcv) of that tree.
+A phylogenetic tree of class "phylo" or a variance-covariance matrix (vcv) of that tree (or time-series).
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
@@ -25,7 +25,7 @@ Matrix or data frame with species in rows and continuous traits in columns. NA v
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous trait standard errors (squared) in columns.
+Matrix or data frame with species in rows and continuous trait sampling variance (squared standard errors) in columns.
 %%     ~~Describe \code{error} here~~
 }
   \item{method}{
@@ -42,13 +42,13 @@ Optional. Object of class "precalc.mvmorph". See ?mv.Precalc for details.
 }
 }
 \details{
-The mvLL function computes the log-likelihood and the ancestral states (mean at the root-theta) for arbitrary variance-covariance matrix (or trees for the prunning algorithm based on independent contrasts "pic") provided by the user. This function can be wrapped for optimizing various multivariate models of trait evolution (by transforming the branch lengths of a tree for the "pic" method, or feeding it with variance-covariance and design matrices for the others methods).
+The mvLL function computes the log-likelihood and the ancestral states (mean at the root-theta) for an arbitrary variance-covariance matrix (or trees for the prunning algorithm based on independent contrasts "pic") provided by the user. This function can be wrapped for optimizing various multivariate models of trait evolution (by transforming the branch lengths of a tree for the "pic" method, or feeding it with variance-covariance and design matrices for the other methods).
 
 Five methods are proposed to compute the log-likelihood:
 
 -"pic" is a very fast prunning algorithm based on independent contrasts which should be used with strictly dichotomic trees (i.e., no polytomies). This method can neither be used with measurement errors nor for multiple ancestral states estimation (theta values).
 
--"rpf" is a GLS algorithm using the rectangular packed format Cholesky factorization for solving the linear system without computing the inverse of the variance-covariance matrix and its determinant (normally used in the loglikelihood estimation). This algorithm use fast BLAS 3 routines with half storage in packed format for computing the Cholesky upper factor. This method is more efficient than the "inverse" method and can be used with dense matrices (no zero entries).
+-"rpf" is a GLS algorithm using the rectangular packed format Cholesky factorization for solving the linear system without computing the inverse of the variance-covariance matrix and its determinant (normally used in the loglikelihood estimation). This algorithm uses fast BLAS 3 routines with half storage in packed format for computing the Cholesky upper factor. This method is more efficient than the "inverse" method and can be used with dense matrices (no zero entries).
 
 -"sparse" is a GLS algorithm using Cholesky factorization for sparse matrices (including zero entries). The matrices are stored in the "old Yale sparse format" internally. Depending on the sparsity structure of the variance-covariance matrix this algorithm can be more efficient than the "rpf" method.
 
@@ -67,7 +67,7 @@ You can choose to provide differently scaled trees for multivariate data with th
 \value{
 \item{logl }{Estimated log-likelihood for the data with the given matrix/tree.}
 \item{theta }{Estimated ancestral states at the root. They are defined by the design matrix (D) for all the methods but "pic".}
-\item{sigma }{Estimated rate(s) parameters. Only when param$estim=TRUE with the "pic" method.}
+\item{sigma }{Estimated rate parameters. Only when param$estim=TRUE with the "pic" method.}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}

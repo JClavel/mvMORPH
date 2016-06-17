@@ -358,7 +358,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     
     ## Check first if we want to return the log-likelihood function only
     if(optimization=="fixed"){
-        message("No optimizations performed, only the Log-likelihood function is returned.")
+        message("No optimization performed, only the Log-likelihood function is returned.")
         param$nbspecies<-n
         param$ntraits<-p
         param$method<-method
@@ -455,7 +455,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
         cat("AICc:","\t",AICc,"\n")
         cat(nparam,"parameters","\n")
         cat("\n")
-        cat("Estimated rates matrix","\n")
+        cat("Estimated rate matrix","\n")
         cat("______________________","\n")
         print(sigma.mat)
         cat("\n")

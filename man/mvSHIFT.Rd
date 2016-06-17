@@ -2,7 +2,7 @@
 \alias{mvSHIFT}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Multivariate change in mode of continuous traits evolution
+Multivariate change in mode of continuous trait evolution
 %%  ~~function to do ... ~~
 }
 \description{
@@ -20,7 +20,7 @@ mvSHIFT(tree, data, error = NULL, param = list(age = NULL, sigma = NULL,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tree}{
- Phylogenetic tree with shift mapped. (See "make.era.map" function from "phytools" package). A "phylo" object can be used if the "age" argument is provided in the "param" list.
+ Phylogenetic tree with a shift mapped (see "make.era.map" function from "phytools" package). A "phylo" object can be used if the "age" argument is provided in the "param" list.
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
@@ -28,7 +28,7 @@ Matrix or data frame with species in rows and continuous traits in columns. NA v
 %%     ~~Describe \code{data} here~~
 }
   \item{error}{
-Matrix or data frame with species in rows and continuous trait standard errors (squared) in columns.
+Matrix or data frame with species in rows and continuous trait sampling variance (squared standard errors) in columns.
 %%     ~~Describe \code{error} here~~
 }
   \item{param}{
@@ -40,23 +40,23 @@ Choose between the different models "OUBM", "BMOU", "EBOU", "OUEB", "BMEB", "EBB
 %%     ~~Describe \code{model} here~~
 }
   \item{method}{
-Choose between "rpf", "sparse", "inverse", or "pseudoinverse" for computing the log-likelihood during the fitting process. See details.
+Choose between "rpf", "sparse", "inverse", or "pseudoinverse" for computing the log-likelihood during the fitting process. See details below.
 %%     ~~Describe \code{method} here~~
 }
   \item{scale.height}{
-Whether the tree should be scaled to length 1 or not.
+Whether the tree should be scaled to unit length or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{optimization}{
-Methods used by the optimization routines. (See ?optim and ?subplex for details). The "fixed" method return the log-likelihood function only.
+Methods used by the optimization routines (see ?optim and ?subplex for details). The "fixed" method returns the log-likelihood function only.
 %%     ~~Describe \code{optimization} here~~
 }
   \item{control}{
-Max. bound for the number of iteration of the optimizer; other options can be fixed on the list (See ?optim and ?subplex for details).
+Max. bound for the number of iteration of the optimizer; other options can be fixed in the list (see ?optim and ?subplex for details).
 %%     ~~Describe \code{control} here~~
 }
   \item{precalc}{
-Optional. precalculation of fixed parameters. See ?mvmorph.Precalc for details.
+Optional. Precalculation of fixed parameters. See ?mvmorph.Precalc for details.
 %%     ~~Describe \code{precalc} here~~
 }
   \item{diagnostic}{
@@ -69,18 +69,18 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvSHIFT function fits a shift in mode or rate of evolution at a fixed point in time, as previously proposed by some authors (O'Meara et al. 2006; O'Meara, 2012; Slater, 2013). Shift in mode of evolution could be mapped on a modified "phylo" object using the "make.era.map" function from the "phytools" package.
-Note that only one shift is allowed by the current version. The age of the shift could be otherwise directly provided (in unit of times of the tree) in the function by the "age" argument in the "param" list.
+The mvSHIFT function fits a shift in mode or rate of evolution at a fixed point in time, as previously proposed by some authors (O'Meara et al. 2006; O'Meara, 2012; Slater, 2013). Shift in mode of evolution can be mapped on a modified "phylo" object using the "make.era.map" function from the "phytools" package.
+Note that only one shift is allowed by the current version of mvMORPH. The age of the shift can be otherwise directly provided (in unit of times of the tree) in the function by the "age" argument in the "param" list.
 
-The function allows fitting model with shift from an Orstein-Uhlenbeck to a Brownian motion process and vice-versa ("OUBM" and "BMOU"), shifts from a Brownian motion to/from an Early Burst (ACDC) model ("BMEB" and "EBBM"), or shifts from an Orstein-Uhlenbeck to/from an Early Burst (ACDC) model ("OUEB" and "EBOU"). (-- The shift models with OU process are relevant only if you use fossil species!! --)
+The function allows fitting model with shift from an Orstein-Uhlenbeck to a Brownian motion process and vice-versa ("OUBM" and "BMOU"), shifts from a Brownian motion to/from an Early Burst (ACDC) model ("BMEB" and "EBBM"), or shifts from an Orstein-Uhlenbeck to/from an Early Burst (ACDC) model ("OUEB" and "EBOU"). Note that the shift models with OU process are relevant only if you use fossil species.
 
-In all these cases it is possible to allow the drift parameter to vary after the fixed point by specifying "i" (for independent) after the model name. For instance, to fit models of "ecological release" or "ecological release and radiate" following Slater (2013), we can use  "OUBM" or "OUBMi" respectively.
+In all these cases it is possible to allow the drift parameter to vary after the fixed point by specifying "i" (for independent) after the model name. For instance, to fit models of "ecological release" or "ecological release and radiate" following Slater (2013), one can use  "OUBM" or "OUBMi", respectively.
 
-Alternatively it is also possible to use the shortcuts "ER" or "RR" to fit respectively models of "ecological release" and "ecological release and radiate", and "EC" for a model of "constrained ecology" (e.g., after invasion of a competitive species in a given ecosystem) where traits are constrained in an Ornstein-Uhlenbeck process after a fixed point in time ("RC" is the same model but assumes an independent rate during the early radiative phase). The "SR" model allows fitting different (Brownian) rates/drift before and after the shift point (note that this model could also be fitted using the mvBM function).
+Alternatively it is also possible to use the shortcuts "ER" or "RR" to fit models of "ecological release" and "ecological release and radiate" respectively, and "EC" for a model of "constrained ecology" (e.g., after invasion of a competitive species in a given ecosystem) where traits are constrained in an Ornstein-Uhlenbeck process after a fixed point in time ("RC" is the same model but assumes an independent rate during the early radiative phase). The "SR" model allows fitting different (Brownian) rates/drift before and after the shift point (note that this model could also be fitted using the mvBM function).
 
 The "param" list can be used to provide lower and upper bounds for the exponential rate parameter of the Early-Burst/ACDC model. See ?mvEB for details.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf" and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The "inverse" approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but very time consuming. See ?mvLL for details.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The "rpf" and "sparse" methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The "inverse" approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The "pseudoinverse" method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. See ?mvLL for details.
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -90,10 +90,10 @@ The "method" argument allows the user to try different algorithms for computing 
 \item{theta }{Estimated ancestral states.}
 \item{alpha }{Matrix of estimated alpha values (strength of selection).}
 \item{beta }{Exponent rate (of decay or increase) for the ACDC/Early-Burst model.}
-\item{sigma }{Evolutionary rates matrix (drift) for the BM process before the shift.}
-\item{sig   }{Evolutionary rates matrix (drift) for the BM process after the shift (only for "i" models).}
-\item{convergence }{Convergence status of the optimizing function; "0" indicates convergence. (See ?optim for details).}
-\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached. (See ?mvOU for details).}
+\item{sigma }{Evolutionary rate matrix (drift) for the BM process before the shift.}
+\item{sig   }{Evolutionary rate matrix (drift) for the BM process after the shift (only for "i" models).}
+\item{convergence }{Convergence status of the optimizing function; "0" indicates convergence (see ?optim for details).}
+\item{hess.values }{Reliability of the likelihood estimates calculated through the eigen-decomposition of the hessian matrix. "0" means that a reliable estimate has been reached (see ?mvOU for details).}
 \item{param }{List of model fit parameters (optimization, method, model, number of parameters...).}
 \item{llik }{The log-likelihood function evaluated in the model fit "$llik(par, root.mle=TRUE)".}
 
@@ -139,8 +139,6 @@ Changes in rate of evolution and optima can also be fitted using the mvBM and mv
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{
-## Toy example
-
 # Simulated dataset
 set.seed(14)
 # Generating a random tree

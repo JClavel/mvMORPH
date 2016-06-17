@@ -6,7 +6,7 @@ Model parameterization for the various mvMORPH functions
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows computing the fixed parameters or objects needed by the mvMORPH functions. This could be useful in bootstrap-like computations (see exemple)
+This function allows computing the fixed parameters or objects needed by the mvMORPH functions. This could be useful for bootstrap-like computations (see exemple)
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
@@ -24,7 +24,7 @@ The number of traits involved in the subsequent analysis.
 %%     ~~Describe \code{nb.traits} here~~
 }
   \item{scale.height}{
-Whether the tree should be scaled to unit length.
+Whether the tree should be scaled to unit length or not.
 %%     ~~Describe \code{scale.height} here~~
 }
   \item{param}{
@@ -40,11 +40,13 @@ In the "param" list you should provide the details about the model fit:
 
 -method (which kind of algorithm is used for computing the log-likelihood).
 
--smean (whether there is one ancestral state per traits or per selective regimes - for mvBM only).
+-smean (whether there is one ancestral state per trait or per selective regimes - for mvBM only).
 
 Additional parameters can be fixed:
--root (estimation of the ancestral state for the Ornstein-Uhlenbeck model, see ?mvOU).
--pivot (pivot method used by the "sparse" matrix method for computing the log-likelihood, see ?spam).
+
+-root (estimation of the ancestral state for the Ornstein-Uhlenbeck model; see ?mvOU).
+
+-pivot (pivot method used by the "sparse" matrix method for computing the log-likelihood; see ?spam).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
