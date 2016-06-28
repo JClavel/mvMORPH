@@ -35,9 +35,11 @@ You can download the current beta version (1.0.7) binaries for Windows and Mac O
 
 You can also install it directly from gitHub through devtools:
 
+```
 library(devtools)
 
 install_github("JClavel/mvMORPH", build_vignettes = TRUE)
+``
 
 (The installation may crash if your dependencies are not up to date. Note that you may also need to install Rtools to compile the C codes included in the package. For [Windows] (https://cran.r-project.org/bin/windows/Rtools/) and for [Mac] (http://r.research.att.com) (and [Tools] (https://r.research.att.com/tools/) )
 
