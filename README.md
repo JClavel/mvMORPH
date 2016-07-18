@@ -21,12 +21,13 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
 2. _TODO_:
   + Incorporation of a tests-suite
+  + Add "simulating traits" to the package vignette
   + Implement the sampler (upcomming mvMORPH 1.0.8) 
   + Code improvements
   + Extend the shift model to TS
   + Formula option for independent variables
 
-The current stable version of the mvMORPH package (1.0.6) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.0.7) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ##**Package Installation**
