@@ -630,7 +630,8 @@ dimnames(alpha.mat)<-names_data
 # AIC
 AIC<- -2*LL+2*nparam
 # AIC corrected
-AICc<-AIC+((2*nparam*(nparam+1))/(n-nparam-1)) # Hurvich et Tsai, 1989
+nobs <- length(which(!is.na(data)))
+AICc<-AIC+((2*nparam*(nparam+1))/(nobs-nparam-1)) # Hurvich et Tsai, 1989
 # matrix of estimated theta values
 theta.mat<-matrix(res.theta,nrow=k)
 if(model=="OUM"){

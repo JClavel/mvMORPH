@@ -1016,7 +1016,8 @@ LL<--estim$value
 AIC<--2*LL+2*nparam
 
 # AIC corrected
-AICc<-AIC+((2*nparam*(nparam+1))/(n-nparam-1)) #Hurvich et Tsai, 1989
+nobs <- length(which(!is.na(data)))
+AICc<-AIC+((2*nparam*(nparam+1))/(nobs-nparam-1)) #Hurvich et Tsai, 1989
 # Maybe n need to be changed by length(data)? Moreover it can change when there is missing cases
 ##---------------------Diagnostics--------------------------------------------##
 

@@ -298,7 +298,8 @@ LL<--estim$value
 nparam=k+npar+1 # length(estim$par) # AIC
 AIC<--2*LL+2*nparam
 # AIC corrected
-AICc<-AIC+((2*nparam*(nparam+1))/(n-nparam-1)) #Hurvich et Tsai, 1989
+nobs <- length(which(!is.na(data)))
+AICc<-AIC+((2*nparam*(nparam+1))/(nobs-nparam-1)) #Hurvich et Tsai, 1989
 ##---------------------Diagnostics--------------------------------------------##
 
 if(estim$convergence==0 & diagnostic==TRUE){  
