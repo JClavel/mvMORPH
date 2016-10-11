@@ -16,6 +16,12 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
     #set data as a matrix if a vector is provided instead
     if(!is.matrix(data)){data<-as.matrix(data)}
     
+    # number of species (tip)
+    n<-dim(data)[1]
+    
+    # number of variables
+    p<-dim(data)[2]
+    
     # Check the order of the dataset and the phylogeny
     if(!is.null(rownames(data))) {
         if(any(tree$tip.label==rownames(data))){
@@ -43,10 +49,7 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
         }
         Indice_NA<-which(is.na(as.vector(data)))
     }
-    # number of species (tip)
-    n<-dim(data)[1]
-    # number of variables
-    p<-dim(data)[2]
+    
     # choose model
     model=model[1]
     # root (current default value)
@@ -744,17 +747,17 @@ param$alphafun<-decompfun
 param$opt<-estim
 ##------------------List results----------------------------------------------##
 if(model=="ER"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="RR"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="CV"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="CVG"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="OV"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="OVG"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }
 class(results)<-c("mvmorph","mvmorph.shift")
 invisible(results)
