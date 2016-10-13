@@ -92,7 +92,56 @@ Measurement error missing values (**NA** or "0") are allowed.
 
 For some time-series models (_mvOUTS_ with fixed root vcv and _mvRWTS_; see the "param" list section below) the sampling variance for the first obsevations in the time-series must be provided otherwise an arbitrary value of 0.01 is set automatically to avoid singularity issues.
 
+# Simulating data
 
+The _mvSIM_ function can be used to simulate multivariate (and univariate) datasets.
+
+```{r, comment=">", eval=FALSE}
+set.seed(14)
+# Generating a random tree with 50 species
+tree<-pbtree(n=50)
+
+# Setting the regime states of tip species
+sta<-as.vector(c(rep("Forest",20),rep("Savannah",30))); names(sta)<-tree$tip.label
+
+# Making the simmap tree with mapped states
+tree<-make.simmap(tree, sta , model="ER", nsim=1)
+
+# Number of simulated datasets
+nsim<-1
+
+# Rates matrices for the "Forest" and the "Savannah" regimes
+# Note: use lists for multiple rates (matrices or scalars)
+sigma<-list(Forest=matrix(c(2,0.5,0.5,1),2), Savannah=matrix(c(5,3,3,4),2))
+
+# ancestral states for each traits
+theta<-c(0,0)
+
+# Simulate the "BMM" model
+simul_1<-mvSIM(tree, nsim=nsim, model="BMM", param=list(sigma=sigma, theta=theta))
+
+head(simul_1)
+```
+
+The _simulate_ function directly generate datasets from estimated parameters of fitted models. This is useful for assessing uncertainty of estimated parameters through parametric bootstrap for instance.
+
+```{r, comment=">", results="hide", eval=FALSE}
+# fit the BMM model on simulated data
+fit <- mvBM(tree, simul_1)
+
+# simulate 100 datasets from the fitted object
+simul_2 <- simulate(fit, tree=tree, nsim=100)
+
+# parametric bootstrap; e.g.:
+bootstrap <- lapply(simul_2, function(x) mvBM(tree, x, echo=F, diagnostic=F))
+
+# retrieve results; e.g. for the log-likelihood
+log_distribution <- sapply(bootstrap, logLik)
+
+hist(log_distribution, main="Log-likelihood distribution")
+abline(v=fit$LogLik, lty=2, lwd=5, col="red")
+```
+See also the following sections examples.
 
 # Optimization methods
 
@@ -585,7 +634,7 @@ abs(logLik(fit_3))-abs(logLik(fit_4)) # small half-life
 
 ```
 
-Note: when the strength of selection is high the multivariate theta estimates may be aberrant when using the "fixedRoot" option on ultrametric trees.
+Note: when the strength of selection is high the theta/alpha estimates may be aberrant when using the "fixedRoot" option, particularly on ultrametric trees.
 
 
 # Functions
@@ -850,7 +899,7 @@ print(results)
 
 # Bayesian mcmc
 
-**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using the separation strategy based on the spherical parameterization (angles in the interval [0, $\pi$] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5, 0.4]; see for instance Lu & Ades 2009; and the matrix parameterization section above).
+**mvMORPH** models can be estimated using Bayesian mcmc. For instance we can use weakly informative priors using the various parameterizations in **mvMORPH**, or directly put priors on the final parameters (e.g., the inverse Wishart for the rate matrix sigma). Here is an example using the separation strategy based on the spherical parameterization (angles in the interval [0, $\pi$] to ensure the uniqueness of the spherical parameterization; and standard deviations expressed as uniform priors on [1e-5, 0.4] (but half-t or inverse Gamma should be preferred); see for instance Lu & Ades 2009; and the matrix parameterization section above).
 
 ```{r, comment=">", results="hide", eval=FALSE}
 set.seed(1)

@@ -308,7 +308,7 @@ LRT(model_6,model_1)
 ```
 
 
-As expected, AIC criterion shows that the generating "unrelated matrix model" we simulated is preferred over all other fitted models. LRT tests further show that the difference with the second best-fit models ("shared eigenvectors") is non-significant (at a 0.05 level). This indicate that the main differences in the rate matrices are in their covariances. 
+AIC criterion shows that the generating "unrelated matrix model" we simulated and the "shared eigenvectors" model are preferred over all other fitted models. LRT tests further show that the difference between both models is non-significant (at a 0.05 level). This indicate that the main differences in the rate matrices are in their covariances. 
 From the rates matrices (evolutionary covariances), we can compute the evolutionary correlation in both groups using the *cov2cor* function in the R package **stats**.
 
 ```{r, comment=">"}
