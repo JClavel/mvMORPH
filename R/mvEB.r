@@ -15,6 +15,14 @@ if(missing(data)) stop("You must provide a dataset along with your tree!")
 
 #set data as a matrix if a vector is provided instead
 if(!is.matrix(data)){data<-as.matrix(data)}
+# number of species (tip)
+n<-dim(data)[1]
+# number of variables
+k<-dim(data)[2]
+# method for the optimizer & algorithm
+optimization<-optimization[1]
+# select default model
+method<-method[1]
 
 # Check the order of the dataset and the phylogeny
 if(!is.null(rownames(data))) {
@@ -27,8 +35,7 @@ if(!is.null(rownames(data))) {
     cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
 }
 
-# select default model
-method<-method[1]
+
 # Check if there is missing cases
 NA_val<-FALSE
 Indice_NA<-NULL
@@ -46,12 +53,7 @@ if(!is.null(error)){
     error[is.na(error)] <- 0
 }
 
-# number of species (tip)
-n<-dim(data)[1]
-# number of variables
-k<-dim(data)[2]
-# method for the optimizer & algorithm
-optimization<-optimization[1]
+
 # scale height of the tree
 maxHeight<-1
 if(scale.height==TRUE){
