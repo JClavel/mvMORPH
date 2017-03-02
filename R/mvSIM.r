@@ -669,16 +669,19 @@ switch(model,
     }
 })
 
+# Select the method for drawing values from the multivariate normal distribution; default is "cholesky"
+if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
+
 ## Simulate the traits from a multivariate normal distribution
 
     if(nsim==1){
-        traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p)
+        traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)),V,methodSim),ncol=p)
         rownames(traits)<-names_rows
         colnames(traits)<-names_traits
     }else if(nsim>1 & p!=1){
-        traits<-lapply(1:nsim,function(x){traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)), V ),ncol=p);rownames(traits)<-names_rows; colnames(traits)<-names_traits;traits})
+        traits<-lapply(1:nsim,function(x){traits<-matrix(rmvnorm_simul(n=1,as.numeric(W%*%as.numeric(mu)),V,methodSim),ncol=p);rownames(traits)<-names_rows; colnames(traits)<-names_traits;traits})
     }else{
-        traits<-matrix(rmvnorm_simul(n=nsim,as.numeric(W%*%as.numeric(mu)),V ),ncol=nsim)
+        traits<-matrix(rmvnorm_simul(n=nsim,as.numeric(W%*%as.numeric(mu)),V,methodSim),ncol=nsim)
         rownames(traits)<-names_rows
         colnames(traits)<-names_traits
     }

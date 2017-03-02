@@ -426,8 +426,8 @@ data<-as.numeric(as.matrix(data))
 
 if(asr==TRUE){
     ## Parameters estimates
-    anc <- as.numeric(W[Indice_EXT,]%*%as.numeric(mu))
-    anc2 <- as.numeric(W[-Indice_EXT,]%*%as.numeric(mu))
+    anc <- as.numeric(as.matrix(W[Indice_EXT,])%*%as.numeric(mu))
+    anc2 <- as.numeric(as.matrix(W[-Indice_EXT,])%*%as.numeric(mu))
     
     # extend Cunningham et al. 1998 to multivariate
     # Models included in the objects

@@ -569,15 +569,17 @@ user_guess <- function(user_const, sigma){
 }
 
 # Generate random multivariate distributions
-rmvnorm_simul<-function(n=1, mean, var){
+rmvnorm_simul<-function(n=1, mean, var, method="cholesky"){
     
     p<-length(mean)
     if (!all(dim(var)==c(p,p)))
     stop("length of ",sQuote("mean")," must equal the dimension of the square matrix ",sQuote("var"))
     
     # try with fast cholesky
-     chol_factor <- try(t(chol(var)), silent = TRUE)
-    # else use svd
+    if(method=="cholesky"){
+        chol_factor <- try(t(chol(var)), silent = TRUE)
+        
+      # else use svd
       if(inherits(chol_factor ,'try-error')){
         warning("An error occured with the Cholesky decomposition, the \"svd\" method is used instead")
         s. <- svd(var)
@@ -587,8 +589,17 @@ rmvnorm_simul<-function(n=1, mean, var){
         R <- t(s.$v %*% (t(s.$u) * sqrt(s.$d)))
         X <- matrix(mean,p,n) + t(matrix(rnorm(n * p), nrow=n )%*%  R)
 
-     } else {
+      } else {
         X <- matrix(mean,p,n) + chol_factor%*%matrix(rnorm(p*n),p,n)
+      }
+      
+    }else{
+        s. <- svd(var)
+        if (!all(s.$d >= -sqrt(.Machine$double.eps) * abs(s.$d[1]))){
+            warning("The covariance matrix is numerically not positive definite")
+        }
+        R <- t(s.$v %*% (t(s.$u) * sqrt(s.$d)))
+        X <- matrix(mean,p,n) + t(matrix(rnorm(n * p), nrow=n )%*%  R)
     }
     
     return(X)
@@ -616,6 +627,7 @@ return(C)
 indiceTip <- function(tree, p){
     totsp <- Ntip(tree)+(Nnode(tree)-1) # retrieve the root state
     init  <- res <- (1:Ntip(tree))
+    if(p==1) return(init)
     for(i in 1:(p-1)){
         init<-init+totsp
         res <- c(res,init)
