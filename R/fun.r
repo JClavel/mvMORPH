@@ -70,11 +70,11 @@ symPar <-function(par, decomp="cholesky", p=NULL, index.user=NULL, tol=0.1){
             sigma<-Q%*%diag(T)%*%invQ
         },
         "diagonal"={
-            d_par<-diag(par)
+            d_par<-diag(par,p)
             sigma<-d_par%*%t(d_par)
         },
         "equaldiagonal"={
-            d_par<-diag(par)
+            d_par<-diag(par,p)
             sigma<-d_par%*%t(d_par)
         },
         "equal"={
