@@ -128,7 +128,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         if(is.null(param[["ntraits"]])){
             
             if(!is.null(param[["alpha"]])){
-                p<-dim(as.matrix(alpha))[1]
+                p<-dim(as.matrix(param$alpha))[1]
             }else if(!is.null(param[["sigma"]])){
                 if(model=="BMM"){
                 p<-dim(as.matrix(param$sigma[[1]]))[1]
@@ -310,7 +310,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
         if(model=="EB" | model=="CV" | model=="CVG" | model=="OVG" | model=="OV"){
             if(is.null(param[["beta"]])==TRUE){
                 beta<-1
-                cat("No values provided for alpha, default value fixed to:",beta,"\n")
+                cat("No values provided for beta, default value fixed to:",beta,"\n")
                 if(p!=1){
                     beta<-matrix(1,p,p)
                 }
