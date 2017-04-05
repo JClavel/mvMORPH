@@ -460,8 +460,15 @@ multD<-function(tree,k,nbtip,smean=TRUE){
           stop("The specified tree must be in SIMMAP format with different regimes")
         }
         namestip<-sapply(1:nbtip,function(i){
-        ind<-which(tree$edge[,2]==i);
-        names(tree$maps[[ind]][length(tree$maps[[ind]])])})
+            if(i==Ntip(tree)+1){
+                ind <- which(tree$edge[,1]==i)
+                names(tree$maps[[ind[1]]][1]) # we take only one of the root?
+            }else{
+                ind<-which(tree$edge[,2]==i);
+                names(tree$maps[[ind]][length(tree$maps[[ind]])])
+            }
+        })
+
         group<-as.numeric(as.factor(namestip))
         
         if(k==1){
@@ -605,6 +612,16 @@ rmvnorm_simul<-function(n=1, mean, var, method="cholesky"){
     return(X)
 }
 
+# Compute variance-covariance matrix of tips as well as internal nodes
+vcvPhyloInternal <- function(tree){
+    nbtip <- Ntip(tree)
+    dis <- dist.nodes(tree)
+    MRCA <- mrca(tree, full = TRUE)
+    M <- dis[as.character(nbtip + 1), MRCA]
+    dim(M) <- rep(sqrt(length(M)), 2)
+    return(M)
+}
+
 # Generate a multi-phylo list for SIMMAP trees
 vcvSplit<-function(tree, internal=FALSE){
     if(!inherits(tree,"simmap")) stop("tree should be an object of class \"simmap\".")
@@ -618,14 +635,14 @@ vcvSplit<-function(tree, internal=FALSE){
         multi.tre[[i]]$edge.length<-tree$mapped.edge[,i]
         multi.tre[[i]]$state<-colnames(tree$mapped.edge)[i]
         # hack from Liam Revell (change to multiC later)
-        C[[i]]<-if(internal) vcvPhylo(multi.tre[[i]],internal=TRUE) else vcv.phylo(multi.tre[[i]])
+        C[[i]]<-if(internal) vcvPhyloInternal(multi.tre[[i]]) else vcv.phylo(multi.tre[[i]])
     }
 return(C)
 }
 
 # Get the indice of tip species on ancestral vcv
 indiceTip <- function(tree, p){
-    totsp <- Ntip(tree)+(Nnode(tree)-1) # retrieve the root state
+    totsp <- Ntip(tree)+Nnode(tree) # retrieve the root state
     init  <- res <- (1:Ntip(tree))
     if(p==1) return(init)
     for(i in 1:(p-1)){
