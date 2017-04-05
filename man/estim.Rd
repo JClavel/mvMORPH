@@ -40,7 +40,7 @@ If asr=TRUE, the ancestral states are estimated instead of the missing cases.
 \details{
 Missing observations for species in a phylogenetic tree are estimated according to a given evolutionary model (and parameters). Multivariate models are useful to recover the variance and covariance structure of the dataset to be imputed.
 
-When \emph{asr=TRUE}, the estimates, their variances and standard errors are those of the ancestral states at each node (except the root) of the tree (this option is not available for the time-series). Note that if there are missing cases, they are first imputed before estimating the ancestral states.
+When \emph{asr=TRUE}, the estimates, their variances and standard errors are those of the ancestral states at each node of the tree (this option is not available for the time-series). Note that if there are missing cases, they are first imputed before estimating the ancestral states.
 
 
 %%  ~~ If necessary, more details than the description above ~~
