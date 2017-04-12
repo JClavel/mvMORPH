@@ -612,7 +612,7 @@ rmvnorm_simul<-function(n=1, mean, var, method="cholesky"){
     return(X)
 }
 
-# Compute variance-covariance matrix of tips as well as internal nodes
+# Compute the variance-covariance matrix of tips as well as internal nodes
 vcvPhyloInternal <- function(tree){
     nbtip <- Ntip(tree)
     dis <- dist.nodes(tree)
@@ -634,7 +634,7 @@ vcvSplit<-function(tree, internal=FALSE){
         multi.tre[[i]]<-tree
         multi.tre[[i]]$edge.length<-tree$mapped.edge[,i]
         multi.tre[[i]]$state<-colnames(tree$mapped.edge)[i]
-        # hack from Liam Revell (change to multiC later)
+        # hack from Liam Revell
         C[[i]]<-if(internal) vcvPhyloInternal(multi.tre[[i]]) else vcv.phylo(multi.tre[[i]])
     }
 return(C)
@@ -650,6 +650,134 @@ indiceTip <- function(tree, p){
         res <- c(res,init)
     }
     return(res)
+}
+
+# Return the path from the root to a node
+pathToNode <- function(tree, node, root=NULL){
+    ntip <- Ntip(tree)
+    if(is.null(root)) root <- ntip+1 # ?? always true?
+    if(node==root) return(node)
+    vector_of_nodes = NULL # Memory allocation may be better...
+    increment = 1
+    ind = node
+    repeat{
+        ind <- tree$edge[which(tree$edge[,2]==ind),1]
+        vector_of_nodes[increment] = ind
+        increment = increment+1
+        if(ind==root) break
+    }
+    return(c(rev(vector_of_nodes),node))
+}
+
+
+# Prepar the epochs and regime lists to compute the weight-matrix of the OU process
+prepWOU <- function(tree, n, p, k, model="OUM", root=FALSE){
+    
+    # Compute root to tip nodes paths
+    ntip = Ntip(tree)
+    nnode = tree$Nnode
+    root2tip <- .Call("seq_root2tipM", tree$edge, ntip, nnode)
+
+    # parameters
+    root_node = ntip+1
+    ntot = ntip+nnode
+    # hack
+    if(n>ntip){
+        for(i in root_node:ntot){
+            root2tip[[i]] <- pathToNode(tree,i)
+        }
+    }
+    
+    if(model=="OUM"){
+        
+        # lineages maps
+        valLineage<-sapply(1:n,function(z){
+            if(z!=root_node){ # ntip+1 is assumed to be the root
+                rev(unlist(
+                sapply(1:(length(root2tip[[z]])-1),function(x){vec<-root2tip[[z]][x:(x+1)]; val<-which(tree$edge[,1]==vec[1] & tree$edge[,2]==vec[2]); tree$maps[[val]]<-tree$maps[[val]]},simplify=FALSE)))
+                
+            }else{
+                val <- max(nodeHeights(tree))
+                ind <- which(tree$edge[,1]==z)
+                names(val) <- names(tree$maps[[ind[1]]][1])
+                val
+            }
+        },simplify=FALSE)
+        
+        
+        # set factors
+        if(root==FALSE | root=="stationary"){
+            facInd<-factor(colnames(tree$mapped.edge))
+        }else if(root==TRUE){
+            facInd<-factor(c("_root_state",colnames(tree$mapped.edge)))
+        }
+        
+        # indice factors
+        indice<-lapply(1:n,function(z){
+            if(z!=root_node){
+                rev(unlist(lapply(1:(length(root2tip[[z]])-1),function(x){vec<-root2tip[[z]][x:(x+1)]; val<-which(tree$edge[,1]==vec[1] & tree$edge[,2]==vec[2]); factor(names(tree$maps[[val]]),levels=facInd)})))
+            }else{
+              if(root==FALSE | root=="stationary"){
+                ind <- which(tree$edge[,1]==root_node)
+                factor(names(tree$maps[[ind[1]]][1]), levels=facInd)
+              }else{
+                factor("_root_state", levels=facInd)
+              }
+            }
+        })
+        
+    }else{ # model is "OU1"
+        
+        # change the number of regimes to 1
+        k <- 1
+        
+        # lineage maps
+        valLineage<-sapply(1:n,function(z){
+            if(z!=ntip+1){
+                rev(unlist(
+                sapply(1:(length(root2tip[[z]])-1),function(x){vec<-root2tip[[z]][x:(x+1)]; val<-which(tree$edge[,1]==vec[1] & tree$edge[,2]==vec[2]); tree$edge.length[val]<-tree$edge.length[val]},simplify=FALSE)))
+            }else{
+                max(nodeHeights(tree))
+            }
+        } ,simplify=FALSE)
+        
+        if(root==TRUE){
+            k<-k+1
+            facInd<-factor(c("_root_state","theta_1"))
+            indice<-lapply(1:n,function(z){ 
+              if(z!=root_node){
+                as.factor(rep(facInd[facInd=="theta_1"],length(valLineage[[z]])))
+              }else{
+                factor("_root_state", levels=facInd)
+              }
+            })
+        }else{
+            indice<-lapply(1:n,function(z){ as.factor(rep(1,length(valLineage[[z]])))})
+        }
+        
+    }
+    
+    # Liste avec dummy matrix
+    if(root==FALSE){
+        indiceA<-indiceReg(n, indice, facInd, FALSE)
+        mod_stand<-0 # the root is not provided nor assumed to be one of the selected regimes, so we rowstandardize (could be optional)
+    }else if(root==TRUE){
+        indiceA<-indiceReg(n, indice, facInd, TRUE)
+        mod_stand<-0
+    }else if(root=="stationary"){
+        indiceA<-indiceReg(n, indice, facInd, FALSE)
+        mod_stand<-1
+    }
+    
+    ## Return the epochs and regime lists
+    
+    # regime lists
+    listReg<-sapply(1:n,function(x){sapply(1:p,function(db){regimeList(indiceA[[x]],k=k,root)},simplify=FALSE)},simplify=FALSE)
+    # mapped epochs
+    epochs<-sapply(1:n,function(x){lineage<-as.numeric(c(cumsum(valLineage[[x]])[length(valLineage[[x]])],(cumsum(valLineage[[x]])[length(valLineage[[x]])]-cumsum(valLineage[[x]])))); lineage[which(abs(lineage)<1e-15)]<-0; lineage },simplify=FALSE)
+    
+    results <- list(epochs=epochs, listReg=listReg, mod_stand=mod_stand)
+    return(results)
 }
 
 # Generate box constraints for the likelihood search

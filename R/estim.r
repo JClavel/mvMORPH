@@ -254,10 +254,11 @@ switch(model,
     }
 },
 "OU1"={
-    param_ou<-mv.Precalc(tree,nb.traits=p,param=list(model="OU1", root=root))
+    param_ou<-prepWOU(tree, n=n, p=p, k=k, model="OU1", root=root) #mv.Precalc(tree,nb.traits=p,param=list(model="OU1", root=root))
     epochs<-param_ou$epochs
     listReg<-param_ou$listReg
-    bt<-param_ou$C1
+    if (is.list(C)) C <- Reduce("+", C)
+    bt<-C
     eig<-eigen(alpha)
     svec<-solve(eig$vectors)
     if(object$param$vcv=="fixedRoot" | object$param$vcv=="univarpfFixed" | object$param$vcv=="univarFixed" | object$param$vcv=="sparse"){
@@ -277,16 +278,17 @@ switch(model,
     }
 },
 "OUM"={
-    param_ou<-mv.Precalc(tree,nb.traits=p,param=list(model="OUM", root=root))
+    param_ou<-prepWOU(tree, n=n, p=p, k=k, model="OUM", root=root) #mv.Precalc(tree,nb.traits=p,param=list(model="OUM", root=root))
     epochs<-param_ou$epochs
     listReg<-param_ou$listReg
-    bt<-param_ou$C1
+    if (is.list(C)) C <- Reduce("+", C)
+    bt<-C
     eig<-eigen(alpha)
     svec<-solve(eig$vectors)
     if(object$param$vcv=="fixedRoot"| object$param$vcv=="univarpfFixed" | object$param$vcv=="univarFixed" | object$param$vcv=="sparse"){
         V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else{
-        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma)
+        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
     W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
     # Add measurment error?
