@@ -8,5 +8,5 @@ citEntry(entry = "Article",
   volume = "6",
   pages = "1311-1319",
   textVersion = paste("Clavel, J., Escarguel, G., and Merceron, G. (2015)", 
-        "mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data", 
+        "mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data.", 
         "Methods in Ecology and Evolution, 6(11):1311-1319. doi: 10.1111/2041-210X.12420"))
