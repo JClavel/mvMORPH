@@ -123,4 +123,5 @@ sum(log(M$varNode))
 % R documentation directory.
 \keyword{ Matrix square root }
 \keyword{ Determinant }
-\keyword{ Contrasts }% __ONLY ONE__ keyword per line
+\keyword{ GLS }
+\keyword{ Independent contrasts }% __ONLY ONE__ keyword per line
