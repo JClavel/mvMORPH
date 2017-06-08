@@ -3,9 +3,6 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME:
- Check these declarations against the C/Fortran source code.
- */
 
 /* .Call calls */
 extern SEXP Chol_RPF(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SEXP ismserr);
