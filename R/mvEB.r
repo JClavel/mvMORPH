@@ -139,28 +139,28 @@ if(method=="sparse"){
 switch(method,
 "rpf"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
-        V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
+        V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n), PACKAGE="mvMORPH")
         loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "sparse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
-        V<-.Call("kroneckerSparEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n),  IA=as.integer(precalcMat@rowpointers-1), JA=as.integer(precalcMat@colindices-1), A=precalcMat@entries)
+        V<-.Call("kroneckerSparEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n),  IA=as.integer(precalcMat@rowpointers-1), JA=as.integer(precalcMat@colindices-1), A=precalcMat@entries, PACKAGE="mvMORPH")
         loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=NULL,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "pseudoinverse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
-        V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
+        V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n), PACKAGE="mvMORPH")
         loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
         return(loglik)
     }
 },
 "inverse"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
-    V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n))
+    V<-.Call("kroneckerEB",R=sig,C=C, beta=matrix(beta,k,k), Rrows=as.integer(k),  Crows=as.integer(n), PACKAGE="mvMORPH")
     loglik<-loglik_mvmorph(dat,V,D,n,k,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta) ######### A modif pour sparse
     return(loglik)
     }
@@ -168,7 +168,7 @@ switch(method,
 "pic"={
     eb_fun_matrix<-function(beta,sig,n,k,precalcMat,C,D,dat,error,method,precalc,theta_mle,theta){
 
-        res<-.Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=tt, rate=as.double(rep(beta,k)), Tmax=1, Model=as.integer(1), mu=theta, sigma=sig)
+        res<-.Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=tt, rate=as.double(rep(beta,k)), Tmax=1, Model=as.integer(1), mu=theta, sigma=sig, PACKAGE="mvMORPH")
         logl<- -0.5 * ( n * k * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
         # return the beta value provided instead of the MLE...
         if(theta_mle==TRUE){ theta<-res[[7]] }
@@ -257,7 +257,7 @@ if(method=="pic"){
     warning<-eval_polytom(tree)
     tree<-reorder.phylo(tree,"postorder")
     # times from the root
-    tt<-.Call("times_root", brlength=tree$edge.length, edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), ntip=as.integer(n), Nnode=as.integer(tree$Nnode))
+    tt<-.Call("times_root", brlength=tree$edge.length, edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), ntip=as.integer(n), Nnode=as.integer(tree$Nnode), PACKAGE="mvMORPH")
     
     if(optimization=="subplex"){
         estim <- subplex(par=c(ebval,sig1), fn = function (par) {likEB(dat=as.matrix(data), error=error, C=C, D=D, beta=ratevalue(up,low,par[1]), sig=sigmafun(par[1+seq_len(npar)]),k=k, n=n, method=method, precalc=precalc, precalcMat=precalcMat)$loglik }, hessian=TRUE, control=control)

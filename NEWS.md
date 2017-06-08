@@ -1,4 +1,6 @@
 ## mvMORPH 1.0.9
+    + Registration of compiled codes
+    + New pruning algorithm to compute the determinant and square root matrix
 	+ Bugs fixes in "estim" for ancestral state reconstructions with OU models and "smean=FALSE" option.
 	+ Bug fix for "estim" with univariate data.
 	+ Corrected bug in mvSIM.

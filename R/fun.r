@@ -53,18 +53,18 @@ symPar <-function(par, decomp="cholesky", p=NULL, index.user=NULL, tol=0.1){
         },
         "spherical"={
             dim1<-p*(p-1)/2
-            sigma <- .Call("spherical", param=par[1:dim1], variance=par[(dim1+1):(dim1+p)], dim=as.integer(p))
+            sigma <- .Call("spherical", param=par[1:dim1], variance=par[(dim1+1):(dim1+p)], dim=as.integer(p), PACKAGE="mvMORPH")
         },
         "eigen"={
             dim1<-p*(p-1)/2
-            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p))
+            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
             T<-par[(dim1+1):(dim1+p)]
             invQ<-t(Q)
             sigma<-Q%*%diag(T)%*%invQ
         },
         "eigen+"={
             dim1<-p*(p-1)/2
-            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p))
+            Q<-.Call("givens_ortho", Q=diag(p), angle=par[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
             T<-exp(par[(dim1+1):(dim1+p)])
             invQ<-t(Q)
             sigma<-Q%*%diag(T)%*%invQ
@@ -83,7 +83,7 @@ symPar <-function(par, decomp="cholesky", p=NULL, index.user=NULL, tol=0.1){
             # with the Adams parameterization I always obtain problems with more than 2 traits (even with the original code)
             if(p>2){
                  dim1<-p*(p-1)/2
-                 sigma <- .Call("spherical", param=par[1:dim1], variance=rep(par[(dim1+1)],p), dim=as.integer(p))
+                 sigma <- .Call("spherical", param=par[1:dim1], variance=rep(par[(dim1+1)],p), dim=as.integer(p), PACKAGE="mvMORPH")
             }
             
         },
@@ -288,25 +288,25 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     switch(matrix,
     "svd"={ # svd decomposition
         dim1<-p*(p-1)/2
-        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p))
+        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-x[(dim1+1):(dim1+p)]+tol
-        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p))
+        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p), PACKAGE="mvMORPH")
         A<-U%*%diag(T)%*%t(V)
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
     },
     "svd+"={ # svd decomposition
         dim1<-p*(p-1)/2
-        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p))
+        U<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[1:dim1]), ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-exp(x[(dim1+1):(dim1+p)])
-        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p))
+        V<-.Call("givens_ortho", Q=diag(p), angle=as.numeric(x[(dim1+p+1):(p*p)]), ndim=as.integer(p), PACKAGE="mvMORPH")
         A<-U%*%diag(T)%*%t(V)
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
     },
     "eigen"={ # eigen decomposition with positive eigenvalues
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-x[(dim1+1):(dim1+p)]
         invQ<-t(Q)
         A<-Q%*%diag(T)%*%invQ
@@ -314,7 +314,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "eigen+"={ # eigen decomposition with positive eigenvalues
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-exp(x[(dim1+1):(dim1+p)])
         invQ<-t(Q)
         A<-Q%*%diag(T)%*%invQ
@@ -322,7 +322,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "qr"={ # QR decomposition (R diagonal values are forced to be positive)
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         R<-diag(x[(dim1+1):(dim1+p)],p)
         R[upper.tri(R)]<-x[(dim1+p+1):(p*p)]
         A<-Q%*%R
@@ -331,7 +331,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "qr+"={ # QR decomposition (R diagonal values are forced to be positive)
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         R<-diag(exp(x[(dim1+1):(dim1+p)]),p)
         R[upper.tri(R)]<-x[(dim1+p+1):(p*p)]
         A<-Q%*%R
@@ -340,7 +340,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "spherical"={ # Spherical parameterization
         dim1<-p*(p-1)/2
-        A <- .Call("spherical", param=x[1:dim1], variance=x[(dim1+1):(dim1+p)], dim=as.integer(p))
+        A <- .Call("spherical", param=x[1:dim1], variance=x[(dim1+1):(dim1+p)], dim=as.integer(p), PACKAGE="mvMORPH")
         eigval<-eigen(A)
         Adecomp<-list(vectors=eigval$vectors, values=eigval$values, A=A, invectors=solve(eigval$vectors))
     },
@@ -353,7 +353,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "schur"={ # Schur decomposition
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-diag(x[(dim1+1):(dim1+p)],p)
         T[upper.tri(T)]<-x[(dim1+p+1):(p*p)]
         A<-Q%*%T%*%t(Q)
@@ -362,7 +362,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
     },
     "schur+"={ # Schur decomposition with positive eigenvalues
         dim1<-p*(p-1)/2
-        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p))
+        Q<-.Call("givens_ortho", Q=diag(p), angle=x[1:dim1], ndim=as.integer(p), PACKAGE="mvMORPH")
         T<-diag(exp(x[(dim1+1):(dim1+p)]),p) # exp to force positive eigenvalues
         T[upper.tri(T)]<-x[(dim1+p+1):(p*p)]
         A<-Q%*%T%*%t(Q)
@@ -390,7 +390,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
         # with the Adams parameterization I always obtain problems with more than 2 traits (even with the original code)
         if(p>2){
             dim1<-p*(p-1)/2
-            sigma <- .Call("spherical", param=x[1:dim1], variance=rep(x[(dim1+1)],p), dim=as.integer(p))
+            sigma <- .Call("spherical", param=x[1:dim1], variance=rep(x[(dim1+1)],p), dim=as.integer(p), PACKAGE="mvMORPH")
         }
     },
     "lower"={
@@ -560,7 +560,7 @@ varBM<-function(tree,data,n,k){
     rate<-rep(0,k)
     tree<-reorder.phylo(tree,"postorder")
     value<-list(tree$edge.length)
-    res<-.Call("PIC_gen", x=as.vector(as.matrix(data)), n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(13), mu=1, sigma=1)
+    res<-.Call("PIC_gen", x=as.vector(as.matrix(data)), n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(13), mu=1, sigma=1, PACKAGE="mvMORPH")
     return(res[[2]])
 }
 
@@ -676,7 +676,7 @@ prepWOU <- function(tree, n, p, k, model="OUM", root=FALSE){
     # Compute root to tip nodes paths
     ntip = Ntip(tree)
     nnode = tree$Nnode
-    root2tip <- .Call("seq_root2tipM", tree$edge, ntip, nnode)
+    root2tip <- .Call("seq_root2tipM", tree$edge, ntip, nnode, PACKAGE="mvMORPH")
 
     # parameters
     root_node = ntip+1
@@ -847,11 +847,11 @@ switch(method,
    
     
     if(theta_mle==TRUE){
-       cholres<-.Call("Chol_RPF",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
+       cholres<-.Call("Chol_RPF",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms), PACKAGE="mvMORPH")
        theta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
     }else{
         # We avoid the transformation of D and data by the Cholesky factor
-       cholres<-.Call("Chol_RPF_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms))
+       cholres<-.Call("Chol_RPF_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms), PACKAGE="mvMORPH")
     }
         det<-cholres[[2]]
         
@@ -860,7 +860,7 @@ switch(method,
     }else{
         residus=(D%*%theta+trend)-data
     }
-    quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(size))
+    quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(size), PACKAGE="mvMORPH")
     logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=theta)
 },
@@ -871,10 +871,10 @@ switch(method,
     
 
    if(theta_mle==TRUE){
-       cholres<-.Call("Chol_RPF_univ",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms))
+       cholres<-.Call("Chol_RPF_univ",V,D,data,as.integer(sizeD),as.integer(size),mserr=error,ismserr=as.integer(ms), PACKAGE="mvMORPH")
        theta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
    }else{
-       cholres<-.Call("Chol_RPF_univ_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms))
+       cholres<-.Call("Chol_RPF_univ_only",V,as.integer(size),mserr=error,ismserr=as.integer(ms), PACKAGE="mvMORPH")
    }
  
     det<-cholres[[2]]
@@ -885,7 +885,7 @@ switch(method,
         residus=(D%*%theta+trend)-data
     }
     
-    quad<-.Call("Chol_RPF_quadprod_column", cholres[[1]], residus, as.integer(size))
+    quad<-.Call("Chol_RPF_quadprod_column", cholres[[1]], residus, as.integer(size), PACKAGE="mvMORPH")
     logl<--.5*quad-.5*as.numeric(det)-.5*(size*log(2*pi))
     results<-list(logl=logl,anc=theta)
 },

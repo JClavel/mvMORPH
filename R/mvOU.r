@@ -265,7 +265,7 @@ devianc <- function(alpha,sigma,dat,error=NULL,mt,theta_mle=TRUE,theta=NULL){
        mod<-10
         }
     
-        res <- .Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(mt$Nnode), nsp=as.integer(n), edge1=as.integer(mt$edge[,1]), edge2=as.integer(mt$edge[,2]),  edgelength=value, times=times, rate=alphaA, Tmax=tmax, Model=as.integer(mod), mu=theta, sigma=sigmA)
+        res <- .Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(mt$Nnode), nsp=as.integer(n), edge1=as.integer(mt$edge[,1]), edge2=as.integer(mt$edge[,2]),  edgelength=value, times=times, rate=alphaA, Tmax=tmax, Model=as.integer(mod), mu=theta, sigma=sigmA, PACKAGE="mvMORPH")
         logl <- -0.5 * ( n * k * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
         
         if(is.infinite(logl) || is.nan(logl)){
@@ -279,7 +279,7 @@ est.theta <- function(estimML){
     alphaA<-buildA(estimML[seq_len(nalpha)],p)$A
     sigmA<-sigmafun(estimML[nalpha+seq_len(nsigma)])
     
-    res <- .Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(mt$Nnode), nsp=as.integer(n), edge1=as.integer(mt$edge[,1]), edge2=as.integer(mt$edge[,2]),  edgelength=value, times=times, rate=alphaA, Tmax=tmax, Model=as.integer(mod), mu=NULL, sigma=sigmA)
+    res <- .Call("PIC_gen", x=dat, n=as.integer(k), Nnode=as.integer(mt$Nnode), nsp=as.integer(n), edge1=as.integer(mt$edge[,1]), edge2=as.integer(mt$edge[,2]),  edgelength=value, times=times, rate=alphaA, Tmax=tmax, Model=as.integer(mod), mu=NULL, sigma=sigmA, PACKAGE="mvMORPH")
 
     return(list(theta=res[[7]]))
 }
@@ -290,51 +290,51 @@ est.theta <- function(estimML){
 switch(vcvtype,
 "randomRoot"={
     ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, S1=alphaA$invectors, sigmasq=sigmA)
-        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand))
+        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, S1=alphaA$invectors, sigmasq=sigmA, PACKAGE="mvMORPH")
+        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
         list(V=V, W=W)
     }
 },
 "sparse"={
      ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-         V<-.Call("mvmorph_covar_ou_sparse", A=as.double(precalcMat@entries), JA=as.integer(JAr), IA=as.integer(IAr), as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors)
-         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand))
+         V<-.Call("mvmorph_covar_ou_sparse", A=as.double(precalcMat@entries), JA=as.integer(JAr), IA=as.integer(IAr), as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors, PACKAGE="mvMORPH")
+         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
          list(V=V, W=W)
      }
 },
 "fixedRoot"={
      ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-         V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors)
-         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand))
+         V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors, PACKAGE="mvMORPH")
+         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=alphaA$vectors,S1=alphaA$invectors,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
          list(V=V, W=W)
      }
 },
 "univarFixed"={
      ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-         V<-.Call("mvmorph_covar_ou_fixed",A=bt,alpha=alphaA$values, sigma=sigmA)
-         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg,root=as.integer(mod_stand))
+         V<-.Call("mvmorph_covar_ou_fixed",A=bt,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
          list(V=V, W=W)
      }
 },
 "univarpfFixed"={
      ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-         V<-.Call("mvmorph_covar_ou_rpf_fixed",A=mt$mDist,alpha=alphaA$values, sigma=sigmA)
-         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg, root=as.integer(mod_stand))
+         V<-.Call("mvmorph_covar_ou_rpf_fixed",A=mt$mDist,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+         W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg, root=as.integer(mod_stand), PACKAGE="mvMORPH")
     # time gain only for very huge phylogeny
     list(V=V, W=W)
      }
 },
 "univarRandom"={
     ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-        V<-.Call("mvmorph_covar_ou_random",A=bt,alpha=alphaA$values, sigma=sigmA)
-        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg,root=as.integer(mod_stand))
+        V<-.Call("mvmorph_covar_ou_random",A=bt,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
         list(V=V, W=W)
     }
 },
 "univarpfRandom"={
     ou_fun_matrix<-function(bt,n,alphaA,sigmA,epochs,listReg,mod_stand){
-        V<-.Call("mvmorph_covar_ou_rpf_random",A=mt$mDist,alpha=alphaA$values, sigma=sigmA)
-        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg, root=as.integer(mod_stand))
+        V<-.Call("mvmorph_covar_ou_rpf_random",A=mt$mDist,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+        W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=alphaA$values,S=1,S1=1,beta=listReg, root=as.integer(mod_stand), PACKAGE="mvMORPH")
         # time gain only for very huge phylogeny
         list(V=V, W=W)
     }
@@ -403,7 +403,7 @@ if(method=="sparse"){
 ##-----------------------Precalculate regime indexation-----------------------##
 ## a mettre dans pre-calc aussi?
 # root to tip lineage indexation
-root2tip <- .Call("seq_root2tipM", tree$edge, n, tree$Nnode)
+root2tip <- .Call("seq_root2tipM", tree$edge, n, tree$Nnode, PACKAGE="mvMORPH")
 # Si OU1 sur un objet 'phylo'
 if(model=="OU1"){
 if(scale.height==TRUE){

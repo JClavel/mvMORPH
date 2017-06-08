@@ -283,28 +283,28 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     switch(method,
     "rpf"={
         bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
+            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
             loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
             return(loglik)
         }
     },
     "sparse"={
         bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-            V<-.Call("kroneckerSumSpar", R=list(sig), C=list(C), Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(1), IA=IAr, JA=JAr, A=precalcMat@entries)
+            V<-.Call("kroneckerSumSpar", R=list(sig), C=list(C), Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(1), IA=IAr, JA=JAr, A=precalcMat@entries, PACKAGE="mvMORPH")
             loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=FALSE,Indice_NA=NULL,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
             return(loglik)
         }
     },
     "pseudoinverse"={
         bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
+            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
             loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
             return(loglik)
         }
     },
     "inverse"={
         bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
+            V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
             loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
             return(loglik)
         }
