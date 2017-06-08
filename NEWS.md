@@ -7,3 +7,11 @@
 	+ Fix bug with matrix parametrization "equaldiagonal".
 	+ add the "svd" option for simulating traits in mvSIM.
 	+ Bug fix in "mvEB".
+## mvMORPH 1.0.8
+    + Allows estimating the missing cases (NA)
+    + Allows estimating trends
+    + User defined constrained models and parameterizations  
+    + Return the log-likelihood function
+    + Simulating traits on package vignette
+    + Multivariate models for time-series (TS)
+    + Partial implementation of a tests-suite
