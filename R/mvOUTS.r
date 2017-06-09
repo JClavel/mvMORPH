@@ -250,14 +250,14 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     "sparse"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-             V<-.Call("mvmorph_covar_ou_sparse", A=as.double(precalcMat@entries), JA=as.integer(JAr), IA=as.integer(IAr), as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors, PACKAGE="mvMORPH")
+             V<-.Call(mvmorph_covar_ou_sparse, A=as.double(precalcMat@entries), JA=as.integer(JAr), IA=as.integer(IAr), as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors)
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -266,15 +266,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     "randomRoot"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-            V<-.Call("simmap_covar", as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, S1=alphaA$invectors, sigmasq=sigmA, PACKAGE="mvMORPH")
+            V<-.Call(simmap_covar, as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, S1=alphaA$invectors, sigmasq=sigmA)
             
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -283,15 +283,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     "fixedRoot"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-            V<-.Call("mvmorph_covar_mat", as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors, PACKAGE="mvMORPH")
+            V<-.Call(mvmorph_covar_mat, as.integer(n), bt=as.numeric(vcv), lambda=alphaA$values, S=alphaA$vectors, sigmasq=sigmA, S1=alphaA$invectors)
             
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -299,15 +299,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     },"univarFixed"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-            V<-.Call("mvmorph_covar_ou_fixed",A=vcv,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+            V<-.Call(mvmorph_covar_ou_fixed,A=vcv,alpha=alphaA$values, sigma=sigmA)
             
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -315,15 +315,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     },"univarRandom"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-            V<-.Call("mvmorph_covar_ou_random",A=vcv,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+            V<-.Call(mvmorph_covar_ou_random,A=vcv,alpha=alphaA$values, sigma=sigmA)
             
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -331,15 +331,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     },"univarpfFixed"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-             V<-.Call("mvmorph_covar_ou_rpf_fixed",A=vcv,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+             V<-.Call(mvmorph_covar_ou_rpf_fixed,A=vcv,alpha=alphaA$values, sigma=sigmA)
              
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)
@@ -347,15 +347,15 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     },"univarpfRandom"={
         model_fun_matrix<-function(vcv,n,alphaA,sigmA,times,theta0=NULL,theta1=NULL,matdiag=NULL,theta_mle=TRUE){
             
-            V<-.Call("mvmorph_covar_ou_rpf_random",A=vcv,alpha=alphaA$values, sigma=sigmA, PACKAGE="mvMORPH")
+            V<-.Call(mvmorph_covar_ou_rpf_random,A=vcv,alpha=alphaA$values, sigma=sigmA)
             
             if(theta_mle==TRUE & root==TRUE){
-                W<-.Call("Weight_matrix", S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Weight_matrix, S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values, time=as.numeric(times), matdiag=as.numeric(matdiag))
                 
             }else if(theta_mle==TRUE & root==FALSE){
                 W<-design_matrix
             }else{
-                W<-.Call("Expect_matrix",S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+                W<-.Call(Expect_matrix,S1=alphaA$invectors, S=alphaA$vectors, lambda=alphaA$values,  time=as.numeric(times), theta0=theta0, theta1=theta1, matdiag=as.numeric(matdiag))
             }
             
             list(V=V, W=W)

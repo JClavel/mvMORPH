@@ -267,11 +267,11 @@ nsigma<-length(sigma)
 # ou-bm
 lik.shift_oubm<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
   if(p==1){
-  Vou<-.Call("mvmorph_covar_ou_fixed",A=vcvList[[before]],alpha=alpha$values, sigma=sigma, PACKAGE="mvMORPH")
+  Vou<-.Call(mvmorph_covar_ou_fixed,A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
   }else{
-  Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors, PACKAGE="mvMORPH")
+  Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
   }
-  V<-.Call("kronecker_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+  V<-.Call(kronecker_shift, R=sig, C=vcvList[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou)
   
   loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
 
@@ -281,11 +281,11 @@ lik.shift_oubm<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,thet
 # eb-ou
 lik.shift_ebou<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou_fixed",A=vcvList[[before]],alpha=alpha$values, sigma=sigma, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_ou_fixed,A=vcvList[[before]],alpha=alpha$values, sigma=sigma)
     }else{
-        Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
     }
-    V<-.Call("kronecker_shiftEB_OU", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_OU, R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou)
     
     loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
@@ -295,7 +295,7 @@ lik.shift_ebou<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_mle=TRUE
 # eb-bm
 lik.shift_ebbm<-function(beta,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
     # C2 is the EB matrix
-    V<-.Call("kronecker_shiftEB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n))
     
     loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
@@ -304,8 +304,8 @@ lik.shift_ebbm<-function(beta,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta
 
 # sparse matrix ou-bm
 lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
-    Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors, PACKAGE="mvMORPH")
-    V<-.Call("kroneckerSpar_shift", R=sig, C=vcvList[[after]], Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries), PACKAGE="mvMORPH")
+    Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
+    V<-.Call(kroneckerSpar_shift, R=sig, C=vcvList[[after]], Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
     loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse",ch=ch,precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     
@@ -325,8 +325,8 @@ lik.shift_oubm_sparse<-function(alpha,sigma,sig,dat,error,vcvList,p,theta_mle=TR
 
 # sparse matrix eb-ou
 lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
-    Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors, PACKAGE="mvMORPH")
-    V<-.Call("kroneckerSpar_shift_OU_EB", R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries), PACKAGE="mvMORPH")
+    Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=vcvList[[before]],lambda=alpha$values,S=alpha$vectors,sigmasq=sigma, S1=alpha$invectors)
+    V<-.Call(kroneckerSpar_shift_OU_EB, R=sig, C=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
 
     loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc,method="sparse", ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
 
@@ -335,7 +335,7 @@ lik.shift_ebou_sparse<-function(alpha,sigma,sig,beta,dat,error,vcvList,p,theta_m
 
 # sparse matrix eb-bm
 lik.shift_ebbm_sparse<-function(beta,sigma,sig,dat,error,vcvList,p,theta_mle=TRUE,theta=NULL){
-    V<-.Call("kroneckerSpar_shift_EB_BM", R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries), PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSpar_shift_EB_BM, R1=sig, R2=sigma, C1=vcvList[[before]], C2=vcvList[[after]], beta=matrix(beta,p,p), Rrows=as.integer(p),  Crows=as.integer(n), IA=as.integer(IAr), JA=as.integer(JAr), A=as.double(precalcMat@entries))
     
     loglik<-loglik_mvmorph(dat,V,W,n,p,error,precalc, method="sparse",ch=ch, precalcMat=precalcMat,sizeD=sizeD,NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta)
     

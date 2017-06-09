@@ -285,28 +285,28 @@ if(model=="BMM"){
 switch(method,
 "rpf"={
     bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kroneckerSum", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k), PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSum, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k))
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "sparse"={
     bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kroneckerSumSpar", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(k), IA=IAr, JA=JAr, A=precalcMat@entries, PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSumSpar, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(k), IA=IAr, JA=JAr, A=precalcMat@entries)
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=FALSE,Indice_NA=NULL,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "pseudoinverse"={
     bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kroneckerSum", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k), PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSum, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k))
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "inverse"={
     bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kroneckerSum", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k), PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSum, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k))
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
@@ -320,7 +320,7 @@ switch(method,
     # method for pic
     modpic <- ifelse(theta_mle==TRUE,7,8)
     # Compute the LLik
-    res<-.Call("PIC_gen", x=dat, n=as.integer(p), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=1, rate=rep(0,p), Tmax=1, Model=as.integer(modpic), mu=theta, sigma=1, PACKAGE="mvMORPH")
+    res<-.Call(PIC_gen, x=dat, n=as.integer(p), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=1, rate=rep(0,p), Tmax=1, Model=as.integer(modpic), mu=theta, sigma=1)
     logl<- -0.5 * ( n * p * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
     # return the theta value provided instead of the MLE...
     if(theta_mle==TRUE){ theta<-res[[7]] }
@@ -333,28 +333,28 @@ switch(method,
 switch(method,
 "rpf"={
 bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_mvmorph, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "sparse"={
 bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kroneckerSumSpar", R=list(sig), C=list(C), Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(1), IA=IAr, JA=JAr, A=precalcMat@entries, PACKAGE="mvMORPH")
+    V<-.Call(kroneckerSumSpar, R=list(sig), C=list(C), Rrows=as.integer(p),  Crows=as.integer(n),  dimlist=as.integer(1), IA=IAr, JA=JAr, A=precalcMat@entries)
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=FALSE,Indice_NA=NULL,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "pseudoinverse"={
 bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_mvmorph, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
     }
 },
 "inverse"={
 bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
-    V<-.Call("kronecker_mvmorph", R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_mvmorph, R=sig, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     
     loglik<-loglik_mvmorph(dat,V,D,n,p,error=error,precalc=precalc,method=method,ch=ch,precalcMat=precalcMat,sizeD=ncol(D),NA_val=NA_val,Indice_NA=Indice_NA,theta_mle=theta_mle,theta=theta,istrend=istrend,trend=trend_val)
     return(loglik)
@@ -363,7 +363,7 @@ bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,
 "pic"={
 bm_fun_matrix<-function(C,sig,dat,D,precalcMat,n,p,error,method,theta_mle,theta,istrend,trend_val){
     modpic <- ifelse(theta_mle==TRUE,7,6)
-    res<-.Call("PIC_gen", x=dat, n=as.integer(p), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=1, rate=rep(0,k), Tmax=1, Model=as.integer(modpic), mu=theta, sigma=sig, PACKAGE="mvMORPH")
+    res<-.Call(PIC_gen, x=dat, n=as.integer(p), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=list(tree$edge.length), times=1, rate=rep(0,k), Tmax=1, Model=as.integer(modpic), mu=theta, sigma=sig)
     logl<- -0.5 * ( n * p * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
     # return the theta value provided instead of the MLE...
     if(theta_mle==TRUE){ theta<-res[[7]] }
@@ -417,7 +417,7 @@ buildSigma<-function(par,index.mat=NULL,sig=NULL,model,constraint){
             variance <- par[diagval]
             param<-par[-diagval]
             sig[] <- c(param)[index.mat]
-            sigma<-lapply(1:k,function(x){.Call("spherical", param=sig[x,], variance=variance, dim=as.integer(p))})
+            sigma<-lapply(1:k,function(x){.Call(spherical, param=sig[x,], variance=variance, dim=as.integer(p))})
         },
         "correlation"={
             # Comparisons between groups (ie not allowed for BM1) - shared correlations
@@ -425,7 +425,7 @@ buildSigma<-function(par,index.mat=NULL,sig=NULL,model,constraint){
             angle <- par[diagval]
             param<-par[-diagval]
             sig[] <- c(param)[index.mat]
-            sigma<-lapply(1:k,function(x){.Call("spherical", param=angle, variance=sig[x,], dim=as.integer(p))})
+            sigma<-lapply(1:k,function(x){.Call(spherical, param=angle, variance=sig[x,], dim=as.integer(p))})
         },
         "shared"={
             # Comparisons between groups (ie not allowed for BM1) - shared eigenvectors
@@ -433,7 +433,7 @@ buildSigma<-function(par,index.mat=NULL,sig=NULL,model,constraint){
             angle <- par[diagval]
             param<-par[-diagval]
             sig[] <- c(param)[index.mat]
-            Q<-.Call("givens_ortho", Q=diag(p), angle=angle, ndim=as.integer(p))
+            Q<-.Call(givens_ortho, Q=diag(p), angle=angle, ndim=as.integer(p))
             sigma<-lapply(1:k,function(x){ Q%*%diag(exp(sig[x,]))%*%t(Q) })
         },
         "proportional"={

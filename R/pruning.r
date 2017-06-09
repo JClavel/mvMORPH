@@ -9,8 +9,8 @@ pruning <- function(tree, inv=TRUE){
   invMat=1*inv
   mode(invMat)="integer"
   
-  prunRes <- .Call("squareRootM", as.integer(tree$edge[,1]), as.integer(tree$edge[,2]), 
-                   tree$edge.length, as.integer(Ntip(tree)), as.integer(invMat), PACKAGE="mvMORPH")
+  prunRes <- .Call(squareRootM, as.integer(tree$edge[,1]), as.integer(tree$edge[,2]), 
+                   tree$edge.length, as.integer(Ntip(tree)), as.integer(invMat))
   
   logdet <- sum(log(c(prunRes[[2]], prunRes[[3]]))) # log-determinant
   

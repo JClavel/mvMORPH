@@ -431,7 +431,7 @@ switch(model,
     # Compute the design matrix
     param$smean<-TRUE
     W<-multD(tree,p,n,smean=param$smean)
-    V<-.Call("kronecker_mvmorph", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_mvmorph, R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -448,7 +448,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    V<-.Call("kronecker_mvmorph", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_mvmorph, R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
@@ -463,7 +463,7 @@ switch(model,
 "BMM"={
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    V<-.Call("kroneckerSum", R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k), PACKAGE="mvMORPH") # Add measurment error?
+    V<-.Call(kroneckerSum, R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n), dimlist=as.integer(k)) # Add measurment error?
     if(is.null(error)==FALSE){
         diag(V)<-diag(V)+error
     }
@@ -485,12 +485,12 @@ switch(model,
     matdiag<-diag(p)
     
     if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
-        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec, PACKAGE="mvMORPH")
+        V<-.Call(mvmorph_covar_mat, as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
-        V<-.Call("simmap_covar", as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma, PACKAGE="mvMORPH")
+        V<-.Call(simmap_covar, as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
     if(root==TRUE){
-    W<-.Call("Weight_matrix", S1=svec, S=eig$vectors, lambda=eig$values, time=as.numeric(tree), matdiag=as.numeric(matdiag), PACKAGE="mvMORPH")
+    W<-.Call(Weight_matrix, S1=svec, S=eig$vectors, lambda=eig$values, time=as.numeric(tree), matdiag=as.numeric(matdiag))
     }else{
     W<-multD(NULL,p,n,smean=TRUE)
     }
@@ -514,12 +514,12 @@ switch(model,
     }
     
     if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
-        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec, PACKAGE="mvMORPH")
+        V<-.Call(mvmorph_covar_mat, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
-        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma, PACKAGE="mvMORPH")
+        V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
     
-    W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
+    W<-.Call(mvmorph_weights,nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
     if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
@@ -540,12 +540,12 @@ switch(model,
     }
     
     if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
-        V<-.Call("mvmorph_covar_mat", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec, PACKAGE="mvMORPH")
+        V<-.Call(mvmorph_covar_mat, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
-        V<-.Call("simmap_covar", as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma, PACKAGE="mvMORPH")
+        V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
     
-    W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand), PACKAGE="mvMORPH")
+    W<-.Call(mvmorph_weights,nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
     if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
@@ -557,7 +557,7 @@ switch(model,
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
-    V<-.Call("kroneckerEB",R=sigma,C=C, beta=beta, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kroneckerEB,R=sigma,C=C, beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
     if(ncol(W)!=length(mu)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
 
     # Add measurment error?
@@ -569,12 +569,12 @@ switch(model,
 "RR"={
     # Brownian and OU models with different rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_ou_fixed,A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
-        Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors), PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors))
     }
-    V<-.Call("kronecker_shift", R=sig, C=C[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shift, R=sig, C=C[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou)
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
@@ -588,12 +588,12 @@ switch(model,
 "ER"={
     # Brownian and OU models with the same rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_ou_fixed,A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
-        Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors), PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma, S1=solve(eig$vectors))
     }
-    V<-.Call("kronecker_shift", R=sig, C=C[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shift, R=sig, C=C[[after]], Rrows=as.integer(p), Crows=as.integer(n), V=Vou)
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
@@ -606,7 +606,7 @@ switch(model,
 },
 "CV"={
     # Brownian & ACDC models with the same rates
-    V<-.Call("kronecker_shiftEB_BM", R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n))
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
@@ -619,7 +619,7 @@ switch(model,
 },
 "CVG"={
     # Brownian & ACDC models with different rates
-    V<-.Call("kronecker_shiftEB_BM", R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n), PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n))
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
@@ -633,12 +633,12 @@ switch(model,
 "OV"={
     # OU & ACDC models with the same rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_ou_fixed,A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
-        Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors), PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors))
     }
-    V<-.Call("kronecker_shiftEB_OU", R=sig, C=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_OU, R=sig, C=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n), V=Vou)
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)
@@ -652,12 +652,12 @@ switch(model,
 "OVG"={
     # OU & ACDC models with independent rates
     if(p==1){
-        Vou<-.Call("mvmorph_covar_ou_fixed",A=C[[before]],alpha=alpha, sigma=sigma, PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_ou_fixed,A=C[[before]],alpha=alpha, sigma=sigma)
     }else{
         eig<-eigen(alpha)
-        Vou<-.Call("mvmorph_covar_mat",nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors), PACKAGE="mvMORPH")
+        Vou<-.Call(mvmorph_covar_mat,nterm=as.integer(n),bt=C[[before]],lambda=eig$values,S=eig$vectors,sigmasq=sigma,S1=solve(eig$vectors))
     }
-    V<-.Call("kronecker_shiftEB_OU", R=sig, C=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n), V=Vou, PACKAGE="mvMORPH")
+    V<-.Call(kronecker_shiftEB_OU, R=sig, C=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n), V=Vou)
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
     W<-multD(tree,p,n,smean=param$smean)

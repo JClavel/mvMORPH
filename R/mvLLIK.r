@@ -219,7 +219,7 @@ switch(method,
         
         rate<-rep(0,k)
         # Compute the LLik
-        res<-.Call("PIC_gen", x=data, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(mod), mu=param$mu, sigma=param$sigma, PACKAGE="mvMORPH")
+        res<-.Call(PIC_gen, x=data, n=as.integer(k), Nnode=as.integer(tree$Nnode), nsp=as.integer(n), edge1=as.integer(tree$edge[,1]), edge2=as.integer(tree$edge[,2]), edgelength=value, times=1, rate=rate, Tmax=1, Model=as.integer(mod), mu=param$mu, sigma=param$sigma)
         logl<- -0.5 * ( n * k * log( 2 * pi) +  res[[5]] + n * res[[6]]  + res[[4]] )
         
         if(param$estim==TRUE){
@@ -235,7 +235,7 @@ switch(method,
         if(is.null(error)!=TRUE){ ms<-1 }else{ ms<-0}
         k<-ncol(D)
         if(is.null(k)){k=1}
-    cholres<-.Call("Chol_RPF",V,D,data,as.integer(k),as.integer(ntot),mserr=error,ismserr=as.integer(ms), PACKAGE="mvMORPH")
+    cholres<-.Call(Chol_RPF,V,D,data,as.integer(k),as.integer(ntot),mserr=error,ismserr=as.integer(ms))
         
         if(param$estim==TRUE){
             beta<-pseudoinverse(cholres[[3]])%*%cholres[[4]]
@@ -244,7 +244,7 @@ switch(method,
         }
         det<-cholres[[2]]
         residus=D%*%beta-data
-        quad<-.Call("Chol_RPF_quadprod", cholres[[1]], residus, as.integer(ntot), PACKAGE="mvMORPH")
+        quad<-.Call(Chol_RPF_quadprod, cholres[[1]], residus, as.integer(ntot))
         logl<--.5*quad-.5*as.numeric(det)-.5*(ntot*log(2*pi))
         results<-list(logl=logl,theta=beta)
     },

@@ -132,7 +132,7 @@ mv.Precalc<-function(tree, nb.traits=1, scale.height=FALSE, param=list(pivot="MM
             k<-length(colnames(tree$mapped.edge))
         }
     # root to tip lineage indexation
-    root2tip <- .Call("seq_root2tipM", tree$edge, n, tree$Nnode)
+    root2tip <- .Call(seq_root2tipM, tree$edge, n, tree$Nnode)
     # Si OU1 sur un objet 'phylo'
     if(param$model=="OU1"){
 
