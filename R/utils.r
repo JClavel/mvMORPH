@@ -26,9 +26,9 @@ aicw <- function(x,...){
         
                 models_names <- sapply(1:length(x),function(i){
                     if(!is.null(x[[i]]$param[["constraint"]])){
-                        paste(x[[i]]$param$model,x[[i]]$param$constraint,i)
+                        paste(x[[i]]$param$model[length(x[[i]]$param$model)],x[[i]]$param$constraint,i)
                     }else{
-                        paste(x[[i]]$param$model,i)}
+                        paste(x[[i]]$param$model[length(x[[i]]$param$model)],i)}
                 })
         }else{
         aic_model <- unlist(x)
