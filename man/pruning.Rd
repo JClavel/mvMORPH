@@ -11,23 +11,26 @@ This function use the pruning algorithm (Felsenstein 1973) to efficiently comput
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-pruning(tree, inv=TRUE)
+pruning(tree, inv=TRUE, check=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{ 
 
- \item{tree}{
+\item{tree}{
 Phylogenetic tree (an object of class "phylo" or "simmap").
-%%     ~~Describe \code{model2} here~~
 }
-  \item{inv}{
-Return the matrix square root of either the covariance matrix (inv=FALSE) or it's inverse (inv=TRUE, the default)
-%%     ~~Describe \code{model1} here~~
+
+\item{inv}{
+Return the transpose of the matrix square root of either the covariance matrix (inv=FALSE) or it's inverse (inv=TRUE, the default).
+}
+
+\item{check}{
+Check if the input tree is dichotomous and in "postorder" (see ?is.binary.tree and ?reorder.phylo).
 }
 
 }
 \details{
-The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \emph{multi2di} and \emph{reorder.phylo} are used internally.
+The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \emph{multi2di} and \emph{reorder.phylo} are used internally when \emph{check=TRUE}. Note that the transpose of the square root is returned.
 
 %%  ~~ If necessary, more details than the description above ~~
 }
@@ -100,8 +103,8 @@ print(sum(log(diag(D)^2)))
 
 M <- pruning(tree, inv=TRUE)
 
-Xi <- M$sqrtMat\%*\%X
-Yi <- M$sqrtMat\%*\%Y
+Xi <- t(M$sqrtMat)\%*\%X
+Yi <- t(M$sqrtMat)\%*\%Y
 
 # GLS estimate
 print(pseudoinverse(Xi)\%*\%Yi)
