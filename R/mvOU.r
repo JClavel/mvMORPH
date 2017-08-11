@@ -22,6 +22,17 @@ method=method[1]
 # choose model
 model=model[1]
 
+# Check the order of the dataset and the phylogeny
+if(!is.null(rownames(data))) {
+        if(any(tree$tip.label==rownames(data))){
+            data<-data[tree$tip.label,]
+        }else if(echo==TRUE){
+                cat("row names of the data matrix must match tip names of your phylogeny!","\n")
+        }
+    }else if(echo==TRUE){
+                cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
+}
+    
 # Check if there is missing cases
 NA_val<-FALSE
 Indice_NA<-NULL
@@ -32,17 +43,6 @@ if(any(is.na(data))){
         stop("NA values are allowed only with the \"rpf\",\"inverse\" or \"pseudoinverse\" methods")
     }
     Indice_NA<-which(is.na(as.vector(data)))
-}
-
-# Check the order of the dataset and the phylogeny
-if(!is.null(rownames(data))) {
-        if(any(tree$tip.label==rownames(data))){
-            data<-data[tree$tip.label,]
-        }else if(echo==TRUE){
-                cat("row names of the data matrix must match tip names of your phylogeny!","\n")
-        }
-    }else if(echo==TRUE){
-                cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
 }
     
 # Check the tree
