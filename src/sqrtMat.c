@@ -7,7 +7,7 @@
 #include <R.h>
 #include <Rinternals.h>
 
-static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2, double *tempbl, double *F, double *D, double *var_prun, double *root_v, double *V, int *invMat){
+static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2, double *tempbl, double *F, double *D, double *var_prun, double *root_v, double *V, int *invMat, int *normIC){
     int i, j, k, l, f, anc, da, d1, d2, ntip, indice;
     double sumbl, tfinal, t1, t2;
     
@@ -38,7 +38,12 @@ static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2,
             for(f=0; f<ntip; f++){
             
                 // Square root
-                D[indice*ntip + f] = (F[d1*ntip + f]*t1 - F[d2*ntip + f]*t2)/sqrt(sumbl);
+                if(*normIC==1){
+                    D[indice*ntip + f] = (F[d1*ntip + f]*t1 - F[d2*ntip + f]*t2)/sqrt(sumbl);
+                }else{
+                    D[indice*ntip + f] = (F[d1*ntip + f]*t1 - F[d2*ntip + f]*t2);
+                }
+                
             
                 // update the matrix F;
                 F[da*ntip + f] = F[d1*ntip + f] + F[d2*ntip + f];
@@ -59,7 +64,11 @@ static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2,
         // The last column of the square root matrix
         tfinal = 1./(1./t1 + 1./t2);
         for(f=0; f<ntip; f++){
-            D[indice*ntip + f] = F[(1+indice)*ntip + f]*sqrt(tfinal);
+            if(*normIC==1){
+                D[indice*ntip + f] = F[(1+indice)*ntip + f]*sqrt(tfinal);
+            }else{
+                D[indice*ntip + f] = F[(1+indice)*ntip + f];
+            }
         }
         
     // Matrix square root of the inverse = chol(C^-1)
@@ -87,8 +96,11 @@ static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2,
             for(f=0; f<ntip; f++){
                 
                 // Square root inverse
-                D[indice*ntip + f] = (F[d1*ntip + f] - F[d2*ntip + f])/sqrt(sumbl);
-                
+                if(*normIC==1){
+                    D[indice*ntip + f] = (F[d1*ntip + f] - F[d2*ntip + f])/sqrt(sumbl);
+                }else{
+                    D[indice*ntip + f] = (F[d1*ntip + f] - F[d2*ntip + f]);
+                }
                 // update the matrix F; we can use it in the same loop as we are updating a column different from d1 and d2?
                 F[da*ntip + f] = (F[d1*ntip + f]*t2 + F[d2*ntip + f]*t1)/sumbl;
                 
@@ -108,7 +120,11 @@ static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2,
         // The last column of the square root matrix
         tfinal = 1./(1./t1 + 1./t2);
         for(f=0; f<ntip; f++){
-            D[indice*ntip + f] = F[(1+indice)*ntip + f]/sqrt(tfinal);
+            if(*normIC==1){
+                D[indice*ntip + f] = F[(1+indice)*ntip + f]/sqrt(tfinal);
+            }else{
+                D[indice*ntip + f] = F[(1+indice)*ntip + f];
+            }
         }
     }
     
@@ -131,7 +147,7 @@ static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2,
 
 /* Main function to compute the variance terms and matrix square root*/
 
-SEXP squareRootM(SEXP edge1, SEXP edge2, SEXP edgelength, SEXP nsp, SEXP inverse){
+SEXP squareRootM(SEXP edge1, SEXP edge2, SEXP edgelength, SEXP nsp, SEXP inverse, SEXP normalized){
     int ntip, i, dim2;
 
     ntip = INTEGER(nsp)[0];
@@ -158,7 +174,7 @@ SEXP squareRootM(SEXP edge1, SEXP edge2, SEXP edgelength, SEXP nsp, SEXP inverse
     for(i=0; i<ntip; i++) ident[i*ntip + i] = 1;
     
     // Compute the square root
-      phylo_squareRoot(&ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(F), REAL(D), REAL(V1), REAL(root_v), REAL(V0), INTEGER(inverse));
+      phylo_squareRoot(&ntip, INTEGER(edge1), INTEGER(edge2), REAL(tempblength), REAL(F), REAL(D), REAL(V1), REAL(root_v), REAL(V0), INTEGER(inverse), INTEGER(normalized));
     
     // resultats
     SEXP result = PROTECT(allocVector(VECSXP, 3));

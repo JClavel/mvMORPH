@@ -35,7 +35,7 @@ extern SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2
 extern SEXP seq_root2tipM(SEXP edge, SEXP nbtip, SEXP nbnode);
 extern SEXP simmap_covar (SEXP nterm, SEXP bt, SEXP lambda, SEXP S, SEXP S1, SEXP sigmasq);
 extern SEXP spherical(SEXP param, SEXP variance, SEXP dim);
-extern SEXP squareRootM(SEXP edge1, SEXP edge2, SEXP edgelength, SEXP nsp, SEXP inverse);
+extern SEXP squareRootM(SEXP edge1, SEXP edge2, SEXP edgelength, SEXP nsp, SEXP inverse, SEXP normalized);
 extern SEXP times_root(SEXP brlength, SEXP edge1, SEXP edge2, SEXP ntip, SEXP Nnode);
 extern SEXP Weight_matrix(SEXP S1, SEXP S, SEXP lambda, SEXP time, SEXP matdiag);
 
@@ -70,7 +70,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"seq_root2tipM",               (DL_FUNC) &seq_root2tipM,                3},
     {"simmap_covar",                (DL_FUNC) &simmap_covar,                 6},
     {"spherical",                   (DL_FUNC) &spherical,                    3},
-    {"squareRootM",                 (DL_FUNC) &squareRootM,                  5},
+    {"squareRootM",                 (DL_FUNC) &squareRootM,                  6},
     {"times_root",                  (DL_FUNC) &times_root,                   5},
     {"Weight_matrix",               (DL_FUNC) &Weight_matrix,                5},
     {NULL, NULL, 0}
