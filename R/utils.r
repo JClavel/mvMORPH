@@ -39,9 +39,9 @@ aicw <- function(x,...){
         
     }else{
         if(is.null(names(x))){
-            models_names <- names(x)
-        }else{
             models_names <- 1:length(x)
+        }else{
+            models_names <- names(x)
         }
         aics <- data.frame(models=models_names, AIC=x, diff=x)
         row.names(aics) <- as.character(models_names)
