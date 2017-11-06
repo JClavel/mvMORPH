@@ -23,7 +23,7 @@ static void weight_matrix_complex (int *nchar, int *neps, double *epochs, Rcompl
         for (j = 0; j < n; j++){
             // complex exponential
             ind1=i+np*j;
-            cexpti(lambda, elt, t, &ind1, &k);
+            cexpti(lambda, elt, t, &ind1, &j);
             // elt[i+np*j] = cexp(-comp(lambda[j])*t);
         }
     }
