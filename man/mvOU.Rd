@@ -199,15 +199,15 @@ data<-mvSIM(tree, param=list(sigma=sigma, alpha=alpha, ntraits=2, theta=theta,
  mvOU(tree, data, model="OU1", method="sparse")
 
 # various options
- mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-    param=list(decomp="nsymmetric", root="stationary"))
- mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-    param=list(decomp="nsymmetric", root=TRUE))
- mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
-    param=list(decomp="symmetricPositive", root=TRUE))
+mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="svd", root="stationary"))# non-symmetric alpha
+mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="qr", root=TRUE)) # non-symmetric alpha
+mvOU(tree, data, model="OUM", method="sparse", scale.height=FALSE,
+    param=list(decomp="cholesky", root=TRUE)) # symmetric-positive
 # OUCH setting
- mvOU(tree, data, model="OUM", method="rpf", scale.height=FALSE,
-    param=list(decomp="symmetricPositive", root=FALSE, vcv="ouch"))
+mvOU(tree, data, model="OUM", method="rpf", scale.height=FALSE,
+    param=list(decomp="cholesky", root=FALSE, vcv="ouch"))
 
 ## Univariate case - FAST with RPF
  set.seed(14)

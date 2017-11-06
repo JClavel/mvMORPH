@@ -191,7 +191,7 @@ mvBM(tree, data)
 fit1<-mvBM(tree, data, model="BM1", method="pic")
 
 # BM1 constrained
-fit2<-mvBM(tree, data, model="BM1", method="pic", param=list(constraint=TRUE))
+fit2<-mvBM(tree, data, model="BM1", method="pic", param=list(constraint="equal"))
 
 # Comparison with LRT test
 LRT(fit1,fit2)
