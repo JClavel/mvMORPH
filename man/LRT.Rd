@@ -10,7 +10,7 @@ This function compares the fit of two nested models of trait evolution with a lo
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-LRT(model1, model2, echo = TRUE)
+LRT(model1, model2, echo = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,9 +26,15 @@ The second model under comparison (fitted object).
 Whether to return the result or not.
 %%     ~~Describe \code{echo} here~~
 }
+
+\item{...}{
+Options to be passed through. (Not yet available)
+%%     ~~Describe \code{echo} here~~
+}
 }
 \details{
 The LRT function extracts the log-likelihood of two nested models to compute the loglikelihood-ratio statistic which is compared to a Chi-square distribution. Note that if the models are not nested, the LRT is not an appropriate test and you should rely instead on Information criteria, evidence ratios, or simulated distributions (e.g., Lewis et al. 2011).
+This can be achieved using the \code{simulate} function (see examples below).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{
@@ -56,6 +62,8 @@ Julien Clavel
 %%  ~~who you are~~
 }
 
+\note{
+When comparing BM models to OU models, the LRT test might not be at it's nominal level. You should prefer a simulations based test.}
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -97,6 +105,25 @@ mod2<-mvBM(tree,traits,model="BM1")
 
 # comparing the fit using LRT...
 LRT(mod1,mod2)
+
+
+\donttest{
+# Simulation based test
+nsim = 500
+boot <- simulate(mod2, tree=tree, nsim=nsim)
+simulations <- sapply(1:nsim, function(i){
+  mod1boot<-mvBM(tree, boot[[i]], model="BMM", diagnostic=F, echo=F)
+  mod2boot<-mvBM(tree, boot[[i]], model="BM1", diagnostic=F, echo=F, method="pic")
+  2*(mod1boot$LogLik-mod2boot$LogLik)
+})
+
+# Compute the p-value
+LRT_stat<-(2*((mod1$LogLik-mod2$LogLik)))
+mean(simulations>=LRT_stat)
+
+plot(density(simulations), main="Non-parametric LRT");
+abline(v=LRT_stat, col="red")
+}
 
 }
 

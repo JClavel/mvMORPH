@@ -8,10 +8,15 @@
 ##                                                                            ##
 ################################################################################
 
-LRT<-function(model1,model2,echo=TRUE){
+LRT<-function(model1, model2, echo=TRUE, ...){
+
+## Options (TODO)
+args <- list(...)
+if(is.true(args[["simulations"]])){ simulations <- TRUE }else{ simulations <- FALSE}
+
 ##-------------------LRT comparison of the models-----------------------------##
 
-if(any(class(model1)[2]!=class(model2)[2])){warning("You are using an LRT test on non-nested models!! Use AIC comparison instead")}
+if(any(class(model1)[2]!=class(model2)[2])){warning("You are using an LR test which is probably not at its nominal level!! You should use simulations-based LRT instead")}
 
 if(model1$param$nparam<=model2$param$nparam){
     mod1<-model1;mod2<-model2
@@ -24,7 +29,7 @@ L1<-model1$LogLik
 L2<-model2$LogLik
 }
 # Set names
-if(class(model1)[2]=="mvmorph.bm" | class(model2)[2]=="mvmorph.bm"){
+if(class(model1)[2]=="mvmorph.bm"){
     model1$param$model<-if(model1$param$constraint=="equal"){
         paste(model1$param$model," equal variance/rates")
     }else if(model1$param$constraint=="shared"){
@@ -40,7 +45,9 @@ if(class(model1)[2]=="mvmorph.bm" | class(model2)[2]=="mvmorph.bm"){
     }else if(model1$param$constraint=="equaldiagonal"){
         paste(model1$param$model," equal diagonal")
     }else{model1$param$model}
+}
 
+if(class(model2)[2]=="mvmorph.bm"){
     model2$param$model<-if(model2$param$constraint=="equal"){
         paste(model2$param$model," equal variance/rates")
     }else if(model2$param$constraint=="shared"){
@@ -58,7 +65,7 @@ if(class(model1)[2]=="mvmorph.bm" | class(model2)[2]=="mvmorph.bm"){
     }else{model2$param$model}
 }
 
-if(class(model1)[2]=="mvmorph.ou" | class(model2)[2]=="mvmorph.ou"){
+if(class(model1)[2]=="mvmorph.ou"){
     model1$param$model<-if(model1$param$decomp=="diagonal"){
         paste(model1$param$model," diagonal")
     }else if(model1$param$decomp=="equal"){
@@ -76,7 +83,9 @@ if(class(model1)[2]=="mvmorph.ou" | class(model2)[2]=="mvmorph.ou"){
     }else if(model1$param$decomp=="qr+" | model1$param$decomp=="svd+" | model1$param$decomp=="schur+"){
         paste(model1$param$model," non-symmetric positive")
     }else{model1$param$model}
-    
+}
+
+if(class(model2)[2]=="mvmorph.ou"){
     model2$param$model<-if(model2$param$decomp=="diagonal"){
         paste(model2$param$model," diagonal")
     }else if(model2$param$decomp=="equal"){
@@ -101,7 +110,9 @@ if(class(model1)[2]=="mvmorph.ou" | class(model2)[2]=="mvmorph.ou"){
 LRT<-(2*((L1-L2)))
 #difference in degrees of freedom
 ddf<-model1$param$nparam-model2$param$nparam
+
 LRT.prob<-pchisq(LRT,ddf,lower.tail=FALSE)
+
 if(echo==TRUE){
     if(LRT.prob<0.001){signif<-c("***")}else if(LRT.prob<0.01){
         signif<-c("**") }else if(LRT.prob<0.05){signif<-c("*")}else if(LRT.prob<0.1){signif<-c(".")}else{signif<-""}

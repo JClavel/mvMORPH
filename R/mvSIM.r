@@ -683,7 +683,7 @@ if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- para
     }else{
         traits<-matrix(rmvnorm_simul(n=nsim,as.numeric(W%*%as.numeric(mu)),V,methodSim),ncol=nsim)
         rownames(traits)<-names_rows
-        colnames(traits)<-names_traits
+        #colnames(traits)<-names_traits
     }
     return(traits)
 }

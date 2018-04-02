@@ -792,7 +792,7 @@ Stationary_to_scatter <- function(alpha,stationary){
     return(alpha%*%stationary + stationary%*%t(alpha))
 }
 
-# Compute the stationary multivariate normal distribution for the multivariate Ornstein-Uhlenbeck (Bartoszek et al. 2012 - B.8)
+# Compute the stationary multivariate normal distribution for the multivariate Ornstein-Uhlenbeck (Bartoszek et al. 2012 - B.8) - to modify to add the time
 StationaryVariance <- function(alpha,sigma){
     sigma <- sigma
     eig <- eigen(alpha)
