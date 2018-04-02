@@ -12,7 +12,7 @@ LRT<-function(model1, model2, echo=TRUE, ...){
 
 ## Options (TODO)
 args <- list(...)
-if(is.true(args[["simulations"]])){ simulations <- TRUE }else{ simulations <- FALSE}
+if(is.null(args[["simulations"]])){ simulations <- TRUE }else{ simulations <- FALSE}
 
 ##-------------------LRT comparison of the models-----------------------------##
 
