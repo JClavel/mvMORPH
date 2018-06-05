@@ -484,7 +484,7 @@ switch(model,
     }
     matdiag<-diag(p)
     
-    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed" | vcv=="sparse"){
         V<-.Call(mvmorph_covar_mat, as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
         V<-.Call(simmap_covar, as.integer(n), bt=C, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
@@ -513,7 +513,7 @@ switch(model,
         svec<- pseudoinverse(eig$vectors)
     }
     
-    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed" | vcv=="sparse"){
         V<-.Call(mvmorph_covar_mat, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
         V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
@@ -539,7 +539,7 @@ switch(model,
         svec<- pseudoinverse(eig$vectors)
     }
     
-    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed"){
+    if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed" | vcv=="sparse"){
         V<-.Call(mvmorph_covar_mat, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, sigmasq=sigma, S1=svec)
     }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
         V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
