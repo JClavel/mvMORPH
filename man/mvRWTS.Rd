@@ -72,12 +72,21 @@ The "method" argument allows the user to try different algorithms for computing 
 
 Arguments in the \bold{ "param"} \emph{list} are:
 
-\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each trait using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
+\bold{ "constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\code{ constraint="diagonal"}, or \code{ constraint="equaldiagonal"}). If \code{ constraint="equal"}, the sigma values are constrained to be the same for each trait using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
 
-User-defined constraints can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
-Difference between two nested fitted models can be assessed using the "LRT" function. See example below and ?LRT.
+User-defined constraints can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. 
 
-\bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure its positive definiteness (Pinheiro and Bates, 1996). These methods are the "cholesky", "eigen+", and "spherical" parameterizations.
+For instance, for three traits:
+
+\code{constraint=matrix(c(1, 3, 3, 3, 2, 3, 3, 3, 2), 3)}. 
+
+Covariances constrained to be zero are introduced by NA values, e.g., 
+
+\code{constraint=matrix(c(1, 4, 4, 4, 2, NA, 4, NA, 3), 3)}. 
+
+Difference between two nested fitted models can be assessed using the "\code{LRT}" function. See example below and ?\code{LRT}.
+
+\bold{ "decomp"} - For the general case (unconstrained models), the sigma matrix is parameterized by various methods to ensure its positive definiteness (Pinheiro and Bates, 1996). These methods are the \code{"cholesky"}, \code{"eigen+"}, and \code{"spherical"} parameterizations.
 
 \bold{ "trend"} - Default set to FALSE. If TRUE, the ancestral state is allowed to drift leading to a directional random walk. Note that it is possible to provide a vector of integer indices to constraint the estimated trends when p>1 (see the vignettes).
 

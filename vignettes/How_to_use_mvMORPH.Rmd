@@ -183,11 +183,44 @@ error                          -                    X                   X       
 Notes: the "sparse" method can be used only with the "fixedRoot" vcv for the "OU1" and "OUM" models. This is because the "randomRoot" vcv is not sparse. This is also the case for the time-serie models.
 U = method currently implemented for the univariate case.
 
+# Multivariate GLS models and High-Dimensional datasets
+
+The function _mvgls_ allows estimating multivariate linear models with a time-serie or phylogenetic structure by Generalized Least Square (GLS). This is the multivariate counterpart to the _gls_ function in **nlme** package and the _phylolm_ function in **phylolm** when using _method="LL"_. For the High-dimensional case (where the number of variables/traits _p_ is approaching or is larger than the number of observations/species _n_) a regularization approach by penalized likelihood is used. Several penalties (option _penalty_: "RidgeArch", "RidgeAlt" and "LASSO") can be used to estimate the model parameters by maximizing a cross-validated log-likelihood (option _method_: "LOOCV", "H&L" and "Mahalanobis"). The default method is "LOOCV", the "H&L" and "Mahalanobis" are efficient and approximate methods that can be used to speed up the computations in very high-dimensional cases (but must be used for intercept models only as their performances are decreasing with multiple predictors). As for the _lm_ function, the extractors functions _residuals_, _coef_, _fitted_ and _vcov_ can be used on objects of class "mvgls".
+
+
+```{r,comment=">"}
+set.seed(1)
+n <- 32 # number of species
+p <- 50 # number of traits (p>n)
+
+tree <- pbtree(n=n, scale=1) # phylogenetic tree
+R <- crossprod(matrix(rnorm(p*p), ncol=p)) # a random symmetric matrix (covariance)
+# simulate a dataset
+Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p))) # a BM dataset
+data=list(Y=Y)
+
+# High dimensional model fit
+fit1 <- mvgls(Y~1, data=data, tree, model="BM", penalty="RidgeArch")
+fit2 <- mvgls(Y~1, data=data, tree, model="OU", penalty="RidgeArch")
+fit3 <- mvgls(Y~1, data=data, tree, model="EB", penalty="RidgeArch")
+
+GIC(fit1); GIC(fit2); GIC(fit3) # BM have the lowest GIC value (see # Model comparison)
+
+# We can also use the model fit to perform a phylogenetic PCA
+# mvgls.pca(fit1)
+
+# Regression model with Pagel's lambda estimation
+data=list(Y=Y, X=rnorm(n))
+mvgls(Y~X, data=data, tree, model="lambda", penalty="RidgeArch")
+```
+
+
+Note: for the "RidgeArch" and "RidgeAlt" penalizations, various target matrices for the covariance matrix can be specified through the _target_ argument (e.g. target="unitVariance", target="Variance" or target="null" (for RidgeAlt only)). The "Variance" target matrix and the LASSO penalty are not rotation-invariant (and should not be used with geometric morphometric data for instance). See also the _fit_t_pl_ function in **RPANDA** package.
 
 
 # Model comparison
 
-Models can be compared using Akaike criterions (AIC) and Akaike weights or likelihood ratio test (LRT) when they are nested. Several functions are available on **mvMORPH**: _LRT_, _AIC_, _logLik_, and _aicw_.
+Models can be compared using Akaike criterions (AIC) and Akaike weights or likelihood ratio test (LRT) when they are nested. Several functions are available on **mvMORPH**: _LRT_, _AIC_, _logLik_, and _aicw_. For models estimated by penalized likelihood (function _mvgls_), a Generalized Information Criterion is computed using the function _GIC_ (see above). Note this criterion has not been tested for comparing models with varying number of fixed effects.
 
 ```{r, comment=">", results="hide"}
 set.seed(1)
@@ -360,7 +393,7 @@ matplot(data, type="o", pch=1, xlab="Time (relative)")
 # model fit
 fit1 <- mvRWTS(timeseries , data, error)
 fit2 <- mvRWTS(timeseries , data, error, param=list(trend=c(1,1)))
-```{r,comment=">"}
+```{r, comment=">"}
 LRT(fit2,fit1)
 ```
 
@@ -435,12 +468,12 @@ The "param" _list_ argument allows specifying multiple options in **mvMORPH** fu
 
 ## The "decomp" and "decompSigma" options
 
-These options allow specifying the matrix parameterization used for the alpha (A) and sigma ($\Sigma$) matrices of parameters for the Ornstein-Uhlenbeck process:
+These options allow specifying the matrix parameterization used for the alpha (A) and dispersion (R) ($R=\Sigma^T\Sigma$) matrices of parameters for the Ornstein-Uhlenbeck process:
 $$dX(t)=A(\theta(t) - X(t))dt + \Sigma dW(t)$$
 and Brownian motion:
 $$ dX(t)=\Sigma dW(t) $$
 
-For symmetric matrices (e.g., the variance-covariance matrix of Brownian rates $\Sigma$), **mvMORPH** uses various parameterizations to ensure the positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterizes a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g., _decompSigma="cholesky"_. 
+For symmetric matrices (e.g., the variance-covariance matrix of the multivariate Brownian motion $R =\Sigma^T\Sigma$), **mvMORPH** uses various parameterizations to ensure the positive definiteness such as _decomp="cholesky"_, _decomp="spherical"_ or _decomp="eigen+"_. The _decomp="eigen"_ option parameterizes a symmetric matrix. For the _mvOU_ function, the sigma matrix parameterization is controlled by the _decompSigma_ argument; e.g., _decompSigma="cholesky"_. 
 
 Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The first _p(p-1)/2_ parameters are used to compute the cholesky factors of spherical angles, or the orthogonal matrices; the next _p_ parameters are the eigenvalues (in "eigen") or the standard deviations (in "spherical"). The bivariate case is illustrated here:
 
@@ -448,14 +481,14 @@ Symmetric matrices are parameterized by _p(p+1)/2_ parameters. The first _p(p-1)
 
 **Cholesky decomposition**: _decomp="cholesky"_
 $$
-\Sigma/A=
+R/A=
 \begin{bmatrix} l_{11} &  0 \\  l_{21} &  l_{22} \end{bmatrix}
 \begin{bmatrix} l_{11} &  0 \\  l_{21} & l_{22} \end{bmatrix}^T
 $$
 
 **Separation strategy**: _decomp="spherical"_ 
 $$
-\Sigma/A=
+R/A=
 \begin{bmatrix} \sqrt{\nu_1} &  0 \\  0 &  \sqrt{\nu_2} \end{bmatrix}
 \begin{pmatrix}
 \begin{bmatrix} 1 & \cos(\theta_1) \\ 0 &  \sin(\theta_1) \end{bmatrix}^T
@@ -466,7 +499,7 @@ $$
 
 **Eigen decomposition**: _decomp="eigen"_
 $$
-\Sigma/A=
+R/A=
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\  \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}
 \begin{bmatrix} \lambda_1  & 0 \\  0 &  \lambda_2 \end{bmatrix}
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\ \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}^T
@@ -475,7 +508,7 @@ $$
 or to force the eigenvalues to be positive (mandatory for the sigma matrix):
 
 $$
-\Sigma/A=
+R/A=
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\  \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}
 \begin{bmatrix} \log{(\lambda_1)}  & 0 \\  0 &  \log{(\lambda_2)} \end{bmatrix}
 \begin{bmatrix} \cos(\theta_1) &  -\sin(\theta_1) \\ \sin(\theta_1) &  \cos(\theta_1) \end{bmatrix}^T
@@ -515,7 +548,7 @@ Finally, the alpha matrix can be diagonal (independent effects) or triangular. T
 
 **Diagonal**: _decomp="diagonal"_
 $$
-\Sigma/A=
+R/A=
 \begin{bmatrix} \sqrt{d_{11}} &  0 \\  0 & \sqrt{d_{22}} \end{bmatrix}
 \begin{bmatrix} \sqrt{d_{11}} &  0 \\  0 & \sqrt{d_{22}} \end{bmatrix}^T
 $$
@@ -627,7 +660,7 @@ trait <- mvSIM(tree, nsim=1, model="OU1",
 fit_3 <- mvOU(tree, trait, model="OU1", param=list(vcv="randomRoot"))
 fit_4 <- mvOU(tree, trait, model="OU1", param=list(vcv="fixedRoot"))
 
-```{r,comment=">"}
+```{r, comment=">"}
 # compare the log-likelihood
 abs(logLik(fit_1))-abs(logLik(fit_2)) # large half-life
 abs(logLik(fit_3))-abs(logLik(fit_4)) # small half-life
@@ -740,7 +773,7 @@ data[25,1]<-NA
 
 # Fit of model 1
 fit_1<-mvBM(tree,data,model="BM1")
-```{r,comment=">"}
+```{r, comment=">"}
 # Estimate the missing cases
 imp<-estim(tree, data, fit_1, asr=FALSE)
 

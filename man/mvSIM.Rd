@@ -87,6 +87,7 @@ As this method uses Multivariate Normal distribution (MVN) for simulating the tr
 
 \seealso{
 \code{\link{mvMORPH}}
+\code{\link{mvgls}}
 \code{\link{mvOU}}
 \code{\link{mvEB}}
 \code{\link{mvBM}}

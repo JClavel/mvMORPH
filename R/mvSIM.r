@@ -424,6 +424,9 @@ if(!is.null(error)){
     error[is.na(error)] <- 0
 }
 
+# Select the method for drawing values from the multivariate normal distribution; default is "cholesky"
+if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
+
 # Compute the VCV and Design matrix for each models
 
 switch(model,
@@ -447,6 +450,32 @@ switch(model,
 "BM1"={
     # Compute the design matrix
     if(is.null(param[["smean"]])==TRUE){ param$smean<-TRUE }
+    
+    # If there is no trends/errors/multiple means. We can simplify the computation of BM1 (for large dimensions...)
+    if(istrend==FALSE & is.null(error) & p!=1 & param$smean){
+        
+        Croot <- chol(C); # the cholesky factor to correlate the data
+        W<-matrix(1,nrow=n,ncol=1) # multiple mean? To be improved later
+        
+        if(nsim==1 & p!=1){
+            X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+            deviates <- t(X%*%Croot)
+            traits <- matrix(W%*%as.numeric(mu),ncol=p) + deviates
+            rownames(traits)<-names_rows
+            colnames(traits)<-names_traits
+             return(traits) # if we return we exit the function.
+        }else if(nsim>1 & p!=1){
+            traits<-lapply(1:nsim,function(x){
+                X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+                deviates<-t(X%*%Croot);
+                traits <- matrix(W%*%as.numeric(mu),ncol=p) + deviates;
+                rownames(traits)<-names_rows; colnames(traits)<-names_traits;
+                traits})
+             return(traits) # if we return we exit the function.
+        }
+    
+    } # else we use the full kronecker matrix...
+    
     W<-multD(tree,p,n,smean=param$smean)
     V<-.Call(kronecker_mvmorph, R=sigma, C=C, Rrows=as.integer(p),  Crows=as.integer(n))
     # Add measurment error?
@@ -669,8 +698,6 @@ switch(model,
     }
 })
 
-# Select the method for drawing values from the multivariate normal distribution; default is "cholesky"
-if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
 
 ## Simulate the traits from a multivariate normal distribution
 
@@ -687,5 +714,4 @@ if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- para
     }
     return(traits)
 }
-
 

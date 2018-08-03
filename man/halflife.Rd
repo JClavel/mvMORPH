@@ -22,7 +22,7 @@ Object fitted with the "mvOU" function.
  
 \details{
 The phylogenetic half-life describes the time to move halfway from the ancestral state to the primary optimum (Hansen, 1997).
-The multivariate counterpart is computed on the eigenvalues of the "selection" matrix (Bartoszeck et al. 2012).
+The multivariate counterpart is computed on the eigenvalues of the "selection" matrix (Bartoszek et al. 2012).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{

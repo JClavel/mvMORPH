@@ -70,17 +70,23 @@ Whether the results must be returned or not.
 \details{
 The mvBM function fits a multivariate Brownian Motion (BM) process, with unique or multiple BM rates (see O'Meara et al., 2006; Revell and Collar, 2009). Note that the function uses the non-censored approach of O'Meara et al. (2006) by default (i.e., a common ancestral state is assumed for the different regimes), but it is possible to specify multiple ancestral states (i.e., one for each regimes) through the "smean" parameter (smean=FALSE) in the "param" list.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \emph{"rpf"} and \emph{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The \emph{"inverse"} approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \emph{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. The \emph{"pic"} method uses a very fast algorithm based on independent contrasts. It should be used with strictly dichotomic trees (i.e., no polytomies) and is currently not available for the multivariate "BMM" model. See ?mvLL for more details on these computational methods.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \code{"rpf"} and \code{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The \code{"inverse"} approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \code{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. The \code{"pic"} method uses a very fast algorithm based on independent contrasts. It should be used with strictly dichotomic trees (i.e., no polytomies) and is currently not available for the multivariate "BMM" model. See ?mvLL for more details on these computational methods.
 
 
-The \bold{"param"} \emph{list} arguments:
+The \bold{"param"} \code{list} arguments:
 
 
-\bold{"constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each studied trait  using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization when p>2 (Clavel et al. 2015).
+\bold{"constraint"} - The "constraint" argument in the "param" list allows the user to compute the joint likelihood for each trait by assuming they evolved independently (\bold{ constraint="diagonal"}, or \bold{ constraint="equaldiagonal"}). If \bold{ constraint="equal"}, the sigma values are constrained to be the same for each studied trait using the constrained Cholesky decomposition proposed by Adams (2013) or a separation strategy based on spherical parameterization (when p>2) because of an unstable behavior observed for the constrained Cholesky (Clavel et al. 2015).
 
-This approach is extended here to the multi-rate case by specifying that the rates must be the same in different parts of the tree (common selective regime). It's also possible to constraint the rate matrices in the "BMM" model to share the same eigen-vectors (\emph{constraint="shared"}); the same variance but different covariances (\emph{ constraint="variance"}); the same correlation but different variances (\emph{ constraint="correlation"}); or to fit a model with different but proportional rates matrices (\emph{constraint="proportional"}).
+This approach is extended here to the multi-rate case by specifying that the rates must be the same in different parts of the tree (common selective regime). It's also possible to constraint the rate matrices in the "BMM" model to share the same eigen-vectors (\code{constraint="shared"}); the same variance but different covariances (\code{ constraint="variance"}); the same correlation but different variances (\code{ constraint="correlation"}); or to fit a model with different but proportional rates matrices (\code{constraint="proportional"}).
 
-Finally, user-defined constrained models can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits: constraint=matrix(c(1,3,3,3,2,3,3,3,2),3). Covariances constrained to be zero are introduced by NA values, e.g., constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3).
+Finally, user-defined constrained models can be specified through a numeric matrix (square and symmetric) with integer values taken as indices of the parameters. For instance, for three traits:
+
+\code{constraint=matrix(c(1,3,3,3,2,3,3,3,2),3)}. 
+
+Covariances constrained to be zero are introduced by NA values, e.g., 
+
+\code{constraint=matrix(c(1,4,4,4,2,NA,4,NA,3),3)}.
 
 Difference between two nested fitted models can be assessed using the "LRT" function. See example below and ?LRT.
 
@@ -146,6 +152,7 @@ The "pic" method is not yet implemented for the multivariate "BMM" model.
 
 \seealso{
 \code{\link{mvMORPH}}
+\code{\link{mvgls}}
 \code{\link{mvOU}}
 \code{\link{mvEB}}
 \code{\link{mvSHIFT}}

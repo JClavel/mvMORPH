@@ -114,6 +114,7 @@ The derivative-free "Nelder-Mead" optimization method is used as default setting
 
 \seealso{
 \code{\link{mvMORPH}}
+\code{\link{mvgls}}
 \code{\link{mvOU}}
 \code{\link{mvBM}}
 \code{\link{mvSHIFT}}
