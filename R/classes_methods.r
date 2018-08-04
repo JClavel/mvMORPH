@@ -174,11 +174,8 @@ vcov.mvgls <- function(object, ...){
         XtX <- solve(crossprod(object$corrSt$X))
         isIntercept <- attr(terms(formula(object)),"intercept")
         covBeta <- kronecker(object$sigma$Pinv, XtX)
-        if(isIntercept){
-            rownames(covBeta) <- colnames(covBeta) <- rep(c("(Intercept)",attr(terms(formula(object)),"term.labels")), object$dims$p)
-        }else{
-            rownames(covBeta) <- colnames(covBeta) <- rep(attr(terms(formula(object)),"term.labels"), object$dims$p)
-        }
+        rownames(covBeta) <- colnames(covBeta) <- rep(attr(object$variables$X,"dimnames")[[2]], object$dims$p)
+       
         return(covBeta)})
 }
 
@@ -190,13 +187,7 @@ vcov.mvgls <- function(object, ...){
 coef.mvgls <- function(object, ...){
     
     coeffs <- object$coefficients
-    isIntercept <- attr(terms(formula(object)),"intercept")
-    
-    if(isIntercept){
-        rownames(coeffs) <- c("(Intercept)",attr(terms(formula(object)),"term.labels"))
-    }else{
-        rownames(coeffs) <- attr(terms(formula(object)),"term.labels")
-    }
+    rownames(coeffs) <- attr(object$variables$X,"dimnames")[[2]]
     
     return(coeffs)
 }
