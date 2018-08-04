@@ -398,19 +398,24 @@
     "lambda"={
         # Pagel's lambda tree transformation
         if(param!=1) {
-            root2tipDist <- node.depth.edgelength(phy)[1:n] # for non-ultrametric trees
+            root2tipDist <- node.depth.edgelength(phy)[1:n] # for non-ultrametric trees. The 'up' limit should be exactly 1 to avoid singularity issues
             phy$edge.length <- phy$edge.length * param
             phy$edge.length[extern] <- phy$edge.length[extern] + (root2tipDist * (1-param))
         }
-    },"OUvcv"={
-        
+    },
+    "OUvcv"={
         V<-.Call("mvmorph_covar_ou_fixed", A=vcv.phylo(phy), alpha=param, sigma=1, PACKAGE="mvMORPH")
         C<-list(sqrtM=t(chol(solve(V))), det=determinant(V)$modulus)
-    }
-    )
+    },
+    "OUTS"={
+       stop("Not yet implemented. The time-series models are coming soon, please be patient")
+    },
+    "RWTS"={
+       stop("Not yet implemented. The time-series models are coming soon, please be patient")
+    })
     
     # Add measurment error
-    if(!is.null(mserr)) phy$edge.length[extern] = phy$edge.length[extern] + mserr
+    if(is.numeric(mserr)) phy$edge.length[extern] = phy$edge.length[extern] + mserr
     
     # Compute the independent contrasts scores
     if(model!="OUvcv") C <- pruning(phy, trans=FALSE)
@@ -421,7 +426,7 @@
     if(REML) deterM <- C$det + determinant(crossprod(X))$modulus else deterM <- C$det
     
     # Return the score, variances, and scaled tree
-    return(list(phy = phy, diagWeight = diagWeight, X=X, Y=Y, det=deterM))
+    return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM))
 }
 
 # Vec operator
@@ -545,18 +550,19 @@
         }else{
             range_val <- log(c(1e-6, 0.01, 0.1, 1, 10, 100, 1000))
         }
+        mod_val <- NULL
     }else{
         range_val <- NULL
+        mod_val <- 1
     }
     
     # Models starting guesses
     switch(corrModel$model,
-    "OU"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
-    "OUvcv"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
-    "lambda"={mod_val <- c(0.2,0.5,0.8)},
-    "EB"={mod_val <- -log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
-    "BM"={ mod_val <- 1},
-    mod_val <- NULL)
+        "OU"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
+        "OUvcv"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
+        "lambda"={mod_val <- c(0.2,0.5,0.8)},
+        "EB"={mod_val <- -log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))}
+    )
     
     # prepare the list
     list_param <- list()

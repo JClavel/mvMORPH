@@ -40,8 +40,14 @@ GIC.mvgls <- function(object, ...){
     
     if(eigSqm){ # to follow the scheme in RPANDA
         sqM1 <- .sqM1(object$corrSt$phy)
-        X <- crossprod(sqM1, object$variables$X)
-        Y <- crossprod(sqM1, object$variables$Y)
+        if(!is.null(object$corrSt$diagWeight)){
+            w <- 1/object$corrSt$diagWeight
+            Y <- crossprod(sqM1, matrix(w*object$variables$Y, nrow=n))
+            X <- crossprod(sqM1, matrix(w*object$variables$X, nrow=n))
+        }else{
+            X <- crossprod(sqM1, object$variables$X)
+            Y <- crossprod(sqM1, object$variables$Y)
+        }
         residuals <- Y - X%*%beta
     }else{
         residuals <- residuals(object, type="normalized")
@@ -50,7 +56,7 @@ GIC.mvgls <- function(object, ...){
     }
     
     if(object$model=="BM") mod.par=0 else mod.par=1
-    if(!is.na(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
+    if(is.numeric(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
     if(object$REML) ndimCov = n - m else ndimCov = n
     # Nominal loocv
     XtX <- solve(crossprod(X))
@@ -312,7 +318,7 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
     }
     
     # Error parameter
-    if(!is.na(x$mserr)){
+    if(is.numeric(x$mserr)){
         cat("Nuisance parameter (error variance):", round(x$mserr, digits=digits), "\n\n")
     }
     
@@ -370,7 +376,6 @@ summary.mvgls <- function(object, ...){
     class(object) <- c("summary.mvgls","mvgls")
     object
 }
-
 
 
 # GIC printing options

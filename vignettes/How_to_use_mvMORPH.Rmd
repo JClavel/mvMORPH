@@ -185,7 +185,7 @@ U = method currently implemented for the univariate case.
 
 # Multivariate GLS models and High-Dimensional datasets
 
-The function _mvgls_ allows estimating multivariate linear models with a time-serie or phylogenetic structure by Generalized Least Square (GLS). This is the multivariate counterpart to the _gls_ function in **nlme** package and the _phylolm_ function in **phylolm** when using _method="LL"_. For the High-dimensional case (where the number of variables/traits _p_ is approaching or is larger than the number of observations/species _n_) a regularization approach by penalized likelihood is used. Several penalties (option _penalty_: "RidgeArch", "RidgeAlt" and "LASSO") can be used to estimate the model parameters by maximizing a cross-validated log-likelihood (option _method_: "LOOCV", "H&L" and "Mahalanobis"). The default method is "LOOCV", the "H&L" and "Mahalanobis" are efficient and approximate methods that can be used to speed up the computations in very high-dimensional cases (but must be used for intercept models only as their performances are decreasing with multiple predictors). As for the _lm_ function, the extractors functions _residuals_, _coef_, _fitted_ and _vcov_ can be used on objects of class "mvgls".
+The function _mvgls_ allows estimating multivariate linear models with a time-series or a phylogenetic structure by Generalized Least Squares (GLS). This is the multivariate counterpart to the _gls_ function in **nlme** package and the _phylolm_ function in **phylolm** when using _method="LL"_. For the high-dimensional case (where the number of variables/traits _p_ is approaching or is larger than the number of observations/species _n_) a regularization approach by penalized likelihood is used. Several penalties (option _penalty_: "RidgeArch", "RidgeAlt" and "LASSO") can be used to estimate the model parameters by maximizing a cross-validated log-likelihood (option _method_: "LOOCV", "H&L" and "Mahalanobis"). The default method is "LOOCV", the "H&L" and "Mahalanobis" are efficient and approximate methods that can be used to speed up the computations in very high-dimensional cases (but must be used for intercepts models only as their performances are decreasing with multiple predictors). As for the _lm_ function, the extractors functions _residuals_, _coef_, _fitted_ and _vcov_ can be used on objects of class 'mvgls'.
 
 
 ```{r,comment=">"}
@@ -195,8 +195,8 @@ p <- 50 # number of traits (p>n)
 
 tree <- pbtree(n=n, scale=1) # phylogenetic tree
 R <- crossprod(matrix(rnorm(p*p), ncol=p)) # a random symmetric matrix (covariance)
-# simulate a dataset
-Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p))) # a BM dataset
+# simulate a BM dataset
+Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p)))
 data=list(Y=Y)
 
 # High dimensional model fit

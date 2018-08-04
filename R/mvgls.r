@@ -42,8 +42,13 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
     if(!penalty%in%c("RidgeArch","RidgeAlt","LASSO")) stop("The penalization method must be \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"");
     if(!target%in%c("unitVariance","Variance","null")) warning("Default target are \"unitVariance\", \"null\" or \"Variance\". Check the target matrix provided");
-    if(is.null(rownames(model_fr))) warning("the data has no names, order assumed to be the same as tip labels in the tree.\n") # to reorder automatically?
     if(nrow(model_fr)!=length(tree$tip.label)) stop("number of rows in the data does not match the number of tips in the tree.")
+    if (all(rownames(model_fr) %in% tree$tip.label)){ # to be changed for TS
+        Y <- Y[tree$tip.label,,drop=FALSE]
+        X <- X[tree$tip.label,,drop=FALSE]
+    }else{
+        warning("the data has no names, order assumed to be the same as tip labels in the tree.\n")
+    }
     if(!inherits(tree, "phylo")) stop("object \"tree\" is needed if no custom correlation structure provided.")
     if(method%in%c("H&L","Mahalanobis") & penalty%in%c("RidgeAlt","LASSO")) stop("\"H&L\" and \"Mahalanobis\" works only with \"RidgeArch\" penalization")
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
@@ -63,8 +68,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     # CorrStruct object (include data, model, covariance...)
     if(scale.height) tree <- .scaleStruct(tree)
     corrModel <- list(Y=Y, X=X, REML=REML, mserr=mserr,
-    model=model, structure=tree, p=p, nobs=nobs,
-    nloo=nloo, bounds=bounds)
+                    model=model, structure=tree, p=p, nobs=nobs,
+                    nloo=nloo, bounds=bounds)
     
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
@@ -93,8 +98,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     # Estimates
     tuning <- bounds$trTun(estimModel$par)
     mod_par <- bounds$trPar(estimModel$par)
-    mserr_par <- ifelse(is.null(mserr), NA, bounds$trSE(estimModel$par))
+    if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- estimModel$value # either the loocv or the regular likelihood
+    
     
     # List of results to return
     corrSt = .corrStr(mod_par, corrModel);
@@ -117,26 +123,26 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     
     # Return the results
     results = list(formula=formula,
-    call = match.call(),
-    coefficients=coefficients,
-    variables=list(Y=Y, X=X),
-    dims=ndims,
-    fitted=fitted.values,
-    logLik=ll_value,
-    method=method,
-    model=model,
-    numIter=numIter,
-    residuals=residuals_raw,
-    sigma=R,
-    tuning=ifelse(method=="LL", NA, tuning),
-    param=ifelse(model=="BM", NA, mod_par),
-    mserr=mserr_par,
-    start_values=start,
-    corrSt=corrSt,
-    penalty=ifelse(method=="LL", "LL", penalty),
-    target=ifelse(method=="LL", "LL", target),
-    REML=REML,
-    opt=estimModel)
+        call = match.call(),
+        coefficients=coefficients,
+        variables=list(Y=Y, X=X, tree=tree),
+        dims=ndims,
+        fitted=fitted.values,
+        logLik=ll_value,
+        method=method,
+        model=model,
+        numIter=numIter,
+        residuals=residuals_raw,
+        sigma=R,
+        tuning=ifelse(method=="LL", NA, tuning),
+        param=ifelse(model=="BM", NA, mod_par),
+        mserr=mserr_par,
+        start_values=start,
+        corrSt=corrSt,
+        penalty=ifelse(method=="LL", "LL", penalty),
+        target=ifelse(method=="LL", "LL", target),
+        REML=REML,
+        opt=estimModel)
     
     class(results) <- "mvgls"
     return(results)
