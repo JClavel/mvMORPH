@@ -172,7 +172,6 @@ vcov.mvgls <- function(object, ...){
     "precision"={return(object$sigma$P)},     # precision matrix
     "coef"={
         XtX <- solve(crossprod(object$corrSt$X))
-        isIntercept <- attr(terms(formula(object)),"intercept")
         covBeta <- kronecker(object$sigma$Pinv, XtX)
         rownames(covBeta) <- colnames(covBeta) <- rep(attr(object$variables$X,"dimnames")[[2]], object$dims$p)
        

@@ -51,7 +51,9 @@ aicw <- function(x,...){
     for(i in 1:length(x)){aics$diff[i] <- aics$AIC[i]-min(aics$AIC)}
     aics$wi <- exp(-0.5*aics$diff)
     aics$aicweights <- aics$wi/sum(aics$wi)
-    aics <- aics[sort(row.names(aics), decreasing=FALSE),]
+    # to avoid problems of ranking with numbers transformed to characters
+    if(is.null(names(x))) to_sort <- as.numeric(row.names(aics)) else to_sort <- row.names(aics)
+    aics <- aics[sort(to_sort, decreasing=FALSE),]
     
     class(aics) <- c("mvmorph.aicw")
    return(aics)

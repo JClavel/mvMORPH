@@ -20,7 +20,9 @@ mvgls.pca <- function(object, plot=TRUE, ...){
     if(is.null(args[["pch"]])) pch <- 19 else pch <- args$pch
     if(is.null(args[["cex"]])) cex <- 0.7 else cex <- args$cex
     if(is.null(args[["las"]])) las <- 1 else las <- args$las
-    if(is.null(args[["main"]])) main <- "Regularized Phylogenetic PCA" else main <- args$main
+    if(is.null(args[["main"]])) {
+      if(object$method=="LL")  main <- "Phylogenetic PCA" else  main <- "Regularized Phylogenetic PCA"
+    }else{ main <- args$main }
     if(is.null(args[["mode"]])) mode <- "cov" else mode <- args$mode
     
     # if correlation matrix?
