@@ -60,7 +60,7 @@ n <- 32 # number of species
 p <- 30 # number of traits
 
 tree <- pbtree(n=n) # phylogenetic tree
-R <- crossprod(matrix(runif(p*p),p))  # a random symmetric matrix (covariance)
+R <- crossprod(matrix(rnorm(p*p),p))  # a random symmetric matrix (covariance)
 
 # simulate a dataset
 Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R))
