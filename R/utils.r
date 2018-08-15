@@ -18,7 +18,6 @@ aicw <- function(x,...){
     
     if(class(x)=="list"){
         if(inherits(x[[1]],"mvmorph")){
-            
             if(args$aicc==TRUE){
                 aic_model <- sapply(1:length(x),function(i) x[[i]]$AICc)
             }else{
@@ -31,26 +30,19 @@ aicw <- function(x,...){
                     }else{
                         paste(x[[i]]$param$model[length(x[[i]]$param$model)],i)}
                 })
-                IS_NAMES_GIVEN <- FALSE
         }else{
-                aic_model <- unlist(x)
-                models_names <- 1:length(aic_model)
-                IS_NAMES_GIVEN <- TRUE
+        aic_model <- unlist(x)
+        models_names <- 1:length(aic_model)
         }
-        
         aics <- data.frame(models=models_names, AIC=aic_model, diff=aic_model)
         row.names(aics) <- as.character(models_names)
         
     }else{
         if(is.null(names(x))){
             models_names <- 1:length(x)
-            IS_NAMES_GIVEN <- TRUE
-            
         }else{
             models_names <- names(x)
-            IS_NAMES_GIVEN <- FALSE
         }
-        
         aics <- data.frame(models=models_names, AIC=x, diff=x)
         row.names(aics) <- as.character(models_names)
     }
@@ -60,7 +52,7 @@ aicw <- function(x,...){
     aics$wi <- exp(-0.5*aics$diff)
     aics$aicweights <- aics$wi/sum(aics$wi)
     # to avoid problems of ranking with numbers transformed to characters
-    if(IS_NAMES_GIVEN) to_sort <- as.numeric(row.names(aics)) else to_sort <- row.names(aics)
+    if(is.null(names(x))) to_sort <- as.numeric(row.names(aics)) else to_sort <- row.names(aics)
     aics <- aics[sort(to_sort, decreasing=FALSE),]
     
     class(aics) <- c("mvmorph.aicw")
