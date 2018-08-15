@@ -18,6 +18,7 @@ aicw <- function(x,...){
     
     if(class(x)=="list"){
         if(inherits(x[[1]],"mvmorph")){
+            
             if(args$aicc==TRUE){
                 aic_model <- sapply(1:length(x),function(i) x[[i]]$AICc)
             }else{
@@ -31,18 +32,20 @@ aicw <- function(x,...){
                         paste(x[[i]]$param$model[length(x[[i]]$param$model)],i)}
                 })
         }else{
-        aic_model <- unlist(x)
-        models_names <- 1:length(aic_model)
+                aic_model <- unlist(x)
+                models_names <- as.character(1:length(aic_model))
         }
+        
         aics <- data.frame(models=models_names, AIC=aic_model, diff=aic_model)
         row.names(aics) <- as.character(models_names)
         
     }else{
         if(is.null(names(x))){
-            models_names <- 1:length(x)
+            models_names <- as.character(1:length(x))
         }else{
             models_names <- names(x)
         }
+        
         aics <- data.frame(models=models_names, AIC=x, diff=x)
         row.names(aics) <- as.character(models_names)
     }
@@ -51,7 +54,8 @@ aicw <- function(x,...){
     for(i in 1:length(x)){aics$diff[i] <- aics$AIC[i]-min(aics$AIC)}
     aics$wi <- exp(-0.5*aics$diff)
     aics$aicweights <- aics$wi/sum(aics$wi)
-    aics <- aics[sort(row.names(aics), decreasing=FALSE),]
+    aics <- aics[models_names,] # reorder the results to the original order
+
     
     class(aics) <- c("mvmorph.aicw")
    return(aics)

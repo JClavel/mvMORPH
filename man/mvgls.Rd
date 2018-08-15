@@ -145,7 +145,7 @@ n <- 32 # number of species
 p <- 50 # number of traits (p>n)
 
 tree <- pbtree(n=n, scale=1) # phylogenetic tree
-R <- crossprod(matrix(rnorm(p*p), ncol=p)) # a random covariance matrix
+R <- crossprod(matrix(runif(p*p), ncol=p)) # a random covariance matrix
 # simulate a BM dataset
 Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p))) 
 data=list(Y=Y)
@@ -156,12 +156,15 @@ fit3 <- mvgls(Y~1, data=data, tree, model="EB", penalty="RidgeArch")
 
 GIC(fit1); GIC(fit2); GIC(fit3) # BM have the lowest GIC value
 
+# Testing for phylogenetic signal with model fit
+signal <- mvgls(Y~1, data=data, tree, model="lambda", penalty="RidgeArch")
+summary(signal)
 
 
 # A High-dimensional dataset
 p <- 200 # number of traits (p>n)
 
-R <- crossprod(matrix(rnorm(p*p), ncol=p)) # a random symmetric matrix (covariance)
+R <- crossprod(matrix(runif(p*p), ncol=p)) # a random symmetric matrix (covariance)
 # simulate a BM dataset
 Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p))) 
 data=list(Y=Y)
