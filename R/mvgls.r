@@ -37,8 +37,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     # Warnings & checks
     method <- match.arg(method)[1]
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
+    if(!inherits(tree, "simmap") & model=="BMM") stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" model")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
-    if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", or \"lambda\" ")
+    if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"BMM\", \"OU\", \"EB\", or \"lambda\" ")
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
     if(!penalty%in%c("RidgeArch","RidgeAlt","LASSO")) stop("The penalization method must be \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"");
     if(!target%in%c("unitVariance","Variance","null")) warning("Default target are \"unitVariance\", \"null\" or \"Variance\". Check the target matrix provided");
@@ -59,11 +60,12 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     m = ncol(X) # dim of predictors
     nloo = 1:n
     if(REML) ndimCov = n - m else ndimCov = n
+    if(inherits(tree, "simmap")) k <- ncol(tree$mapped.edge) else k <- NULL
     if(method=="LL") penalized=FALSE else penalized=TRUE
     if(n<p & method=="LL") stop("There are more variables than observations. Please try instead the penalized methods \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"")
     
     # Set bounds for parameter search
-    bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized)
+    bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized, k=k)
     
     # CorrStruct object (include data, model, covariance...)
     if(scale.height) tree <- .scaleStruct(tree)
@@ -74,10 +76,15 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
       
-        start <- .startGuess(corrModel, cvmethod=method, mserr=mserr, target=target, penalty=penalty, echo=echo, penalized)
+        start <- .startGuess(corrModel, cvmethod=method, mserr=mserr, target=target, penalty=penalty, echo=echo, penalized=penalized)
         
     }else if(is.null(start)){
-        if(method=="LL" | model=="BM") start <- 0.5 else start <- c(0.5,0.5)
+        if(method=="LL" | model=="BM"){ ## TO MODIFY FOR BMM
+            start <- 0.5
+        }else{
+            start <- c(0.5,0.5)
+            
+        }
         if(!is.null(mserr)) start <- c(start,1e-4)
     }
     
@@ -98,6 +105,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     # Estimates
     tuning <- bounds$trTun(estimModel$par)
     mod_par <- bounds$trPar(estimModel$par)
+    if(inherits(tree, "simmap") && model=="BMM") names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
@@ -134,13 +142,13 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
         numIter=numIter,
         residuals=residuals_raw,
         sigma=R,
-        tuning=ifelse(method=="LL", NA, tuning),
-        param=ifelse(model=="BM", NA, mod_par),
+        tuning=if(method=="LL") NA else tuning,
+        param=if(model=="BM") NA else mod_par,
         mserr=mserr_par,
         start_values=start,
         corrSt=corrSt,
-        penalty=ifelse(method=="LL", "LL", penalty),
-        target=ifelse(method=="LL", "LL", target),
+        penalty=if(method=="LL") "LL" else penalty,
+        target=if(method=="LL") "LL" else target,
         REML=REML,
         opt=estimModel)
     

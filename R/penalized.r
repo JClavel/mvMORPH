@@ -183,11 +183,11 @@
 # ------------------------------------------------------------------------- #
 .corrStr <- function(par, timeObject){
     
-    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv")){
+    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM")){
         # Tree transformation
         struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr, Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML)
     }else{
-        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\" and \"lambda\"  only...")
+        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\", \"BMM\" and \"lambda\"  only...")
     }
     return(struct)
 }
@@ -342,10 +342,12 @@
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE){
+.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "BMM"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE){
     
     # pre-compute and checks
+    if(inherits(tree, "simmap") & attr(phy,"order")!="cladewise") phy <- reorderSimmap(phy, order="cladewise")
     if(attr(phy,"order")!="cladewise") phy <- reorder.phylo(phy, "cladewise")
+    
     n <- Ntip(phy)
     parent <- phy$edge[,1]
     descendent <- phy$edge[,2]
@@ -412,6 +414,10 @@
     },
     "RWTS"={
        stop("Not yet implemented. The time-series models are coming soon, please be patient")
+    },
+    "BMM"={
+        # multirates model
+        phy$edge.length <- phy$mapped.edge%*%param
     })
     
     # Add measurment error
@@ -435,11 +441,11 @@
 
 # ------------------------------------------------------------------------- #
 # .setBounds                                                                #
-# options: penalty, model, lower, upper, tol, mserr=NULL, penalized         #
+# options: penalty, model, lower, upper, tol, mserr=NULL, penalized, k      #
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-.setBounds <- function(penalty, model, lower, upper, tol=1e-10, mserr=NULL, penalized=TRUE){
+.setBounds <- function(penalty, model, lower, upper, tol=1e-10, mserr=NULL, penalized=TRUE, k=NULL){
     
     if(is.null(upper)){
         switch(model,
@@ -447,6 +453,7 @@
         "OU"={up <- 10},
         "lambda"={up <- 1},
         "BM"={up <- Inf},
+        "BMM"={up <- rep(Inf,k)},
         up <- Inf)
     }else{
         up <- upper
@@ -458,6 +465,7 @@
         "OU"={low <- 1e-10},
         "lambda"={low <- 1e-8},
         "BM"={low <- -Inf},
+        "BMM"={low <- rep(-Inf,k)},
         low <- -Inf)
     }else{
         low <- lower
@@ -483,10 +491,12 @@
         }
         
         # parameters
-        if(model!="BM"){
-            id1 <- 1; id2 <- 2; id3 <- 3
-        }else{
+        if(model=="BMM"){
+            id1 <- 1; id2 <- 2:(k+1); id3 <- k+2
+        }else if(model=="BM"){
             id1 <- id2 <- 1; id3 <- 2
+        }else{
+            id1 <- 1; id2 <- 2; id3 <- 3
         }
         
         
@@ -495,11 +505,14 @@
         lowerBound <- low
         
         # parameters
-        if(model!="BM"){
-            id1 <- 1; id2 <- 1; id3 <- 2
-        }else{
+        if(model=="BMM"){
+            id1 <- 1; id2 <- 1:k; id3 <- k+1
+        }else if(model=="BM"){
             id1 <- id2 <- id3 <- 1
+        }else{
+            id1 <- id2 <- 1; id3 <- 2
         }
+        
     }
     
     # Bounds for error
@@ -522,6 +535,7 @@
     "BM" ={ transformPar <- function(x) (x[id2])},
     "EB" ={ transformPar <- function(x) (x[id2])},
     "lambda" ={ transformPar <- function(x) (x[id2])},
+    "BMM"={ transformPar <- function(x) (x[id2]*x[id2]) },
     transformPar <- function(x) (x[id2])
     )
     
@@ -556,22 +570,32 @@
         mod_val <- 1
     }
     
-    # Models starting guesses
+    # Models starting guesses & prepare the list
     switch(corrModel$model,
-        "OU"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
-        "OUvcv"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
-        "lambda"={mod_val <- c(0.2,0.5,0.8)},
-        "EB"={mod_val <- -log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))}
+        "OU"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))
+            list_param <- list(range_val, mod_val)
+        },
+        "OUvcv"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))
+            list_param <- list(range_val, mod_val)
+        },
+        "lambda"={mod_val <- c(0.2,0.5,0.8)
+            list_param <- list(range_val, mod_val)
+        },
+        "EB"={mod_val <- -log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))
+            list_param <- list(range_val, mod_val)
+        },
+        "BMM"={mod_val <- 1
+            list_param <- c(list(range_val), as.list(rep(mod_val, ncol(corrModel$structure$mapped.edge))))
+        },
+        list_param <- list(range_val, mod_val)
     )
     
-    # prepare the list
-    list_param <- list()
-    list_param[[1]] <- range_val
-    list_param[[2]] <- mod_val
+    # identify the entries of the list
+    n.param <- length(list_param)
     
     # Prepare the grid search
     if(!is.null(corrModel$mserr)){
-        list_param[[3]] <- c(0.001,0.01,0.1,1,10)
+        list_param[[n.param+1]] <- c(0.001,0.01,0.1,1,10)
         list_param[sapply(list_param, is.null)] <- NULL
         brute_force <- expand.grid(list_param)
     }else{
@@ -581,12 +605,12 @@
     
     
     start <- brute_force[which.min(apply(brute_force, 1, .loocvPhylo,
-    cvmethod=cvmethod, # options
-    targM=target,
-    corrStr=corrModel,
-    penalty=penalty,
-    error=mserr,
-    nobs=corrModel$nobs )),]
+                            cvmethod=cvmethod, # options
+                            targM=target,
+                            corrStr=corrModel,
+                            penalty=penalty,
+                            error=mserr,
+                            nobs=corrModel$nobs )),]
     
     if(echo==TRUE & penalized==TRUE)  cat("Best starting for the tuning: ",as.numeric(corrModel$bounds$trTun(start[1])))
     return(start)

@@ -55,7 +55,13 @@ GIC.mvgls <- function(object, ...){
         Y <- object$corrSt$Y
     }
     
-    if(object$model=="BM") mod.par=0 else mod.par=1
+    if(object$model=="BM"){
+      mod.par=0
+    }else if(object$model=="BMM"){
+      mod.par=ncol(object$corrSt$phy$mapped.edge)
+    }else{
+      mod.par=1
+    }
     if(is.numeric(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
     if(object$REML) ndimCov = n - m else ndimCov = n
     # Nominal loocv
@@ -238,11 +244,13 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        #"BMM"={cat(names(x$param),"\n",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
@@ -293,11 +301,13 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        #"BMM"={cat(names(x$param),"\n",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
