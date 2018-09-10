@@ -225,13 +225,13 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     meth <- ifelse(x$REML, "REML", "ML")
     if(x$method=="LL"){
         cat("\nGeneralized least squares fit by",meth,"\n")
-        if(x$REML) cat("Log-restricted-likelihood:",round(-x$logLik, digits=digits), "\n\n") else cat("Log-likelihood:",round(-x$logLik, digits=digits), "\n\n")
+        if(x$REML) cat("Log-restricted-likelihood:",round(x$logLik, digits=digits), "\n\n") else cat("Log-likelihood:",round(x$logLik, digits=digits), "\n\n")
     }else{
         cat("\nGeneralized least squares fit by penalized",meth,"\n")
         if(x$REML){
-            cat("LOOCV of the log-restricted-likelihood:",round(-x$logLik, digits=digits), "\n\n")
+            cat("LOOCV of the log-restricted-likelihood:",round(x$logLik, digits=digits), "\n\n")
         }else{
-            cat("LOOCV of the log-likelihood:",round(-x$logLik, digits=digits), "\n\n")
+            cat("LOOCV of the log-likelihood:",round(x$logLik, digits=digits), "\n\n")
         }
     }
     
@@ -342,7 +342,7 @@ summary.mvgls <- function(object, ...){
     meth <- ifelse(object$REML, "REML", "ML")
     
     if(object$method=="LL"){
-        LL = -object$logLik
+        LL = object$logLik
         nparam = length(object$start_values) + p + p*(p + 1)/2
         # AIC
         AIC = -2*LL+2*nparam

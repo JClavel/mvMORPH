@@ -99,7 +99,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     tuning <- bounds$trTun(estimModel$par)
     mod_par <- bounds$trPar(estimModel$par)
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
-    ll_value <- estimModel$value # either the loocv or the regular likelihood
+    ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
     
     # List of results to return
