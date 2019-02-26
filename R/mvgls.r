@@ -17,7 +17,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     model_fr = model.frame(formula=formula, data=data)
     X = model.matrix(attr(model_fr, "terms"), data=model_fr)
     Y = model.response(model_fr)
-    method = match.arg(method)
+    method = match.arg(method)[1]
     
     # Recover options
     args <- list(...)
@@ -35,7 +35,6 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
     
     # Warnings & checks
-    method <- match.arg(method)[1]
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
     if(!inherits(tree, "simmap") & model=="BMM") stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" model")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
@@ -120,7 +119,6 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     call <- formula
     model.frame <- model_fr
     glsStruct <- corrSt
-    method <- method
     numIter <- estimModel$count[1]
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
