@@ -497,7 +497,7 @@ summary.mvgls <- function(object, ...){
     
     if(object$method=="LL"){
         LL = object$logLik
-        nparam = length(object$start_values) + p + p*(p + 1)/2
+        nparam = sum(!is.na(object$param)) + p + p*(p + 1)/2
         # AIC
         AIC = -2*LL+2*nparam
         # GIC
