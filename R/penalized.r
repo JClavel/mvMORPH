@@ -433,7 +433,7 @@
     if(REML) deterM <- C$det + determinant(crossprod(X))$modulus else deterM <- C$det
     
     # Return the score, variances, and scaled tree
-    return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM, sqrtM=C$sqrtM))
+    return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM))
 }
 
 # Vec operator

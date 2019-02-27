@@ -239,8 +239,9 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         
         # Y|param*
         if(!restricted) {
-            residualsBoot <- try(crossprod(objectBoot$corrSt$sqrtM, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
-             if(inherits(residualsBoot, 'try-error')) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients # TO PREVENT FROM CRASHING
+            sqM_temp <- pruning(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
+            residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
+             
         }else{ residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients}
         
         #if(!restricted) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectBoot$coefficients
