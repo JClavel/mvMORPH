@@ -142,13 +142,12 @@ GIC.mvgls <- function(object, ...){
 }
 
 # ------------------------------------------------------------------------- #
-# EIC.mvgls see Kitagawa & Konishi 2010 Ann. Int. Stat. Mat.                #
+# EIC.mvgls                                                                 #
 # options: object, nboot, nbcores, ...                                      #
 # S3 method - Extended/Efron Information Criterion                          #
 # ------------------------------------------------------------------------- #
 
 EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
-    
     
     # retrieve arguments
     args <- list(...)
@@ -181,6 +180,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     target <- object$target
     penalty <- object$penalty
     Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
+    DsqrtInv <- pruning(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
@@ -206,7 +206,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     }, mc.cores = getOption("mc.cores", nbcores))
     
     # Estimate the bias term
-    D1 <- function(objectBoot, objectFit, ndimCov, p){ # LL(Y*|param*) - LL(Y*| param)
+    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
         
         # Y*|param*
         residualsBoot <- residuals(objectBoot, type="normalized")
@@ -220,7 +220,8 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         llik1 <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov1 + ndimCov*detValue + quadprod)
         
         # Y*|param
-        if(!restricted) residualsBoot <- objectBoot$corrSt$Y - objectBoot$corrSt$X%*%objectFit$coefficients
+        #if(!restricted) residualsBoot <- objectBoot$corrSt$Y - objectBoot$corrSt$X%*%objectFit$coefficients
+        if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
         
         # For boot "i" LL2(Y*|param)
         Ccov2 <- as.numeric(objectFit$corrSt$det)
@@ -237,8 +238,12 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     D3 <- function(objectBoot, objectFit, loglik, ndimCov, p){ # LL(Y|param) - LL(Y| param*)
         
         # Y|param*
-        if(!restricted) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectBoot$coefficients
-        else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
+        if(!restricted) {
+            residualsBoot <- crossprod(objectBoot$corrSt$sqrtM, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients)
+        }else{ residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients}
+        
+        #if(!restricted) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectBoot$coefficients
+        #else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
         
         # For boot "i" LL2(Y|param*)
         Ccov1 <- as.numeric(objectBoot$corrSt$det)
@@ -247,7 +252,6 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
         detValue <- sum(2*log(diag(Gi1)))
         llik2 <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov1 + ndimCov*detValue + quadprod)
-        
         
         # Return the difference in LL for D1
         return(loglik - llik2)
@@ -264,7 +268,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     llik <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov + ndimCov*detValue + quadprod)
     
     # Estimate the bias term (variance reduction method)
-    D1_simul <- sapply(estimPar, function(x) D1(objectBoot=x, objectFit=object, ndimCov=ndimCov, p=p) )
+    D1_simul <- sapply(estimPar, function(x) D1(objectBoot=x, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv) )
     D3_simul <- sapply(estimPar, function(x) D3(objectBoot=x, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p) )
     
     # combine the values for D1 and D3
