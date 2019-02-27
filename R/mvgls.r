@@ -17,6 +17,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     model_fr = model.frame(formula=formula, data=data)
     X = model.matrix(attr(model_fr, "terms"), data=model_fr)
     Y = model.response(model_fr)
+    assign <- attr(X, "assign")
     method = match.arg(method)[1]
     
     # Recover options
@@ -33,6 +34,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if(is.null(args[["low"]])) low <- NULL else low <- args$low
     if(is.null(args[["tol"]])) tol <- NULL else tol <- args$tol
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
+    if(!is.null(args[["response"]])) Y <- args$response
     
     # Warnings & checks
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
@@ -122,7 +124,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     numIter <- estimModel$count[1]
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
-    ndims <- list(n=n, p=p, m=m)
+    ndims <- list(n=n, p=p, m=m, assign=assign)
     
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")
