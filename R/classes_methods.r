@@ -188,14 +188,6 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Mean and residuals for the model
     MeanNull <- object$variables$X%*%beta
     
-    # Generate bootstrap samples
-    boots <- mclapply(1:nboot, function(i){
-        #Yp <- MeanNull + Dsqrt%*%(residuals[c(sample(N-1, replace=TRUE),N),]) # sampling with replacement for bootstrap
-        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),]) # sampling with replacement for bootstrap
-        rownames(Yp) <- rownames(object$variables$Y)
-        Yp
-    }, mc.cores = getOption("mc.cores", nbcores))
-    
         
     # Estimate the bias term
     D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
@@ -263,8 +255,12 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     # Estimate parameters on bootstrap samples
     bias <- pbmcmapply(function(i){
-        temp_data <- boots[[i]];
-        modelPerm$response <- quote(temp_data);
+        
+        # generate bootstrap sample
+        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),]) # sampling with replacement for bootstrap
+        rownames(Yp) <- rownames(object$variables$Y)
+     
+        modelPerm$response <- quote(Yp);
         estimModelNull <- eval(modelPerm);
         d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv)
         d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
@@ -279,7 +275,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     se <- sd(bias)/sqrt(nboot)  
     
     # concatenate the results
-    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, boot=boots, se=se, p=p, n=N)
+    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, se=se, p=p, n=N)
     class(results) <- c("eic.mvgls","eic")
     
     return(results)
