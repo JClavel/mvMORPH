@@ -6,7 +6,7 @@ exportClasses("mvmorph","mvmorph.bm","mvmorph.ou","mvmorph.acdc","mvmorph.shift"
 exportClasses("mvgls","summary.mvgls","gic.mvgls","gic","mvgls.pca","eic.mvgls","eic")
 importFrom("stats", AIC, simulate, logLik, pchisq, rnorm, runif, optim, cov, residuals, fitted, vcov, coef, terms, formula, model.matrix, model.response, cov2cor)
 importFrom("graphics", abline, text)
-importFrom("parallel", mclapply)
+importFrom("pbmcapply", pbmcmapply)
 S3method(summary, mvmorph)
 S3method(logLik, mvmorph)
 S3method(AIC, mvmorph)

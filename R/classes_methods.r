@@ -196,15 +196,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         Yp
     }, mc.cores = getOption("mc.cores", nbcores))
     
-    # Estimate parameters on bootstrap samples
-    estimPar <- mclapply(1:nboot, function(i){
-        temp_data <- boots[[i]];
-        modelPerm$response <- quote(temp_data);
-        estimModelNull <- eval(modelPerm);
-        estimModelNull
         
-    }, mc.cores = getOption("mc.cores", nbcores))
-    
     # Estimate the bias term
     D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
         
@@ -269,18 +261,25 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     detValue <- sum(2*log(diag(Gi)))
     llik <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov + ndimCov*detValue + quadprod)
     
-    # Estimate the bias term (variance reduction method)
-    D1_simul <- sapply(estimPar, function(x) D1(objectBoot=x, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv) )
-    D3_simul <- sapply(estimPar, function(x) D3(objectBoot=x, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p) )
-    
-    # combine the values for D1 and D3
-    bias <- D1_simul+D3_simul
-    
-    # compute the EIC
-    EIC <- -2*llik + 2*mean(bias)
+    # Estimate parameters on bootstrap samples
+    bias <- pbmcmapply(function(i){
+        temp_data <- boots[[i]];
+        modelPerm$response <- quote(temp_data);
+        estimModelNull <- eval(modelPerm);
+        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv)
+        d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
+        d1res+d3res
+    }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
+   
+    # compute the EIC                    
+    pboot <- mean(bias)
+    EIC <- -2*llik + 2*pboot 
+      
+    # standard-error
+    se <- sd(bias)/sqrt(nboot)  
     
     # concatenate the results
-    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, boot=boots, estimPar=estimPar, se=sd(bias)/sqrt(nboot), p=p, n=N)
+    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, boot=boots, se=se, p=p, n=N)
     class(results) <- c("eic.mvgls","eic")
     
     return(results)
@@ -536,7 +535,7 @@ print.gic.mvgls<-function(x,...){
 print.eic.mvgls<-function(x,...){
     cat("\n")
     message("-- Extended Information Criterion --","\n")
-    cat("EIC:",x$EIC,"| SE",x$se, "| Log-likelihood",x$LogLikelihood,"\n")
+    cat("EIC:",x$EIC,"| ±",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n")
     cat("\n")
 }
 
