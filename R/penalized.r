@@ -346,7 +346,7 @@
 .transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "BMM"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE){
     
     # pre-compute and checks
-    if(inherits(tree, "simmap") & attr(phy,"order")!="cladewise") phy <- reorderSimmap(phy, order="cladewise")
+    if(inherits(phy, "simmap") & attr(phy,"order")!="cladewise") phy <- reorderSimmap(phy, order="cladewise")
     if(attr(phy,"order")!="cladewise") phy <- reorder.phylo(phy, "cladewise")
     
     n <- Ntip(phy)
