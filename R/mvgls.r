@@ -13,13 +13,6 @@
 
 mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L","Mahalanobis"), REML=TRUE, ...){
     
-    # retrieve data and formula as in lm
-    model_fr = model.frame(formula=formula, data=data)
-    X = model.matrix(attr(model_fr, "terms"), data=model_fr)
-    Y = model.response(model_fr)
-    assign <- attr(X, "assign")
-    method = match.arg(method)
-    
     # Recover options
     args <- list(...)
     if(is.null(args[["scale.height"]])) scale.height <- FALSE else scale.height <- args$scale.height
@@ -34,6 +27,16 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if(is.null(args[["low"]])) low <- NULL else low <- args$low
     if(is.null(args[["tol"]])) tol <- NULL else tol <- args$tol
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
+    if(is.null(args[["contrasts"]])) contrasts.def <- NULL else contrasts.def <- args$contrasts
+    
+    # retrieve data and formula as in lm
+    model_fr = model.frame(formula=formula, data=data)
+    X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)
+    Y = model.response(model_fr)
+    assign <- attr(X, "assign")
+    method = match.arg(method)[1]
+    
+    # Option for bootstrap and permutation method
     if(!is.null(args[["response"]])) Y <- args$response
     
     # Warnings & checks
@@ -48,7 +51,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if (all(rownames(model_fr) %in% tree$tip.label)){ # to be changed for TS
         Y <- Y[tree$tip.label,,drop=FALSE]
         X <- X[tree$tip.label,,drop=FALSE]
-    }else{
+    }else if(is.null(args[["response"]])){
         warning("the data has no names, order assumed to be the same as tip labels in the tree.\n")
     }
     if(!inherits(tree, "phylo")) stop("object \"tree\" is needed if no custom correlation structure provided.")

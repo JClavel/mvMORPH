@@ -10,13 +10,12 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.1.0**
+**mvMORPH 1.1.1**
 
-1. This is the version 1.1.0:
-  + Penalized Likelihood methods for High-Dimensional datasets (mvgls)
-  + Multivariate GLS (mvgls)
-  + PCA on GLS covariance estimate (mvgls)
-  + Some minor bugs corrections (see NEWS)
+1. This is the version 1.1.1:
+  + Multivariate tests for "mvgls" models fit (manova.gls)
+  + EIC: Extended Information Criterion based on bootstrap (mvgls)
+  
 
 2. _TODO_:
   + Incorporation of a tests-suite
@@ -26,7 +25,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Improved mvOU model
   + Threshold model for categorical data
 
-The current stable version of the mvMORPH package (1.0.9) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.1.0) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ## **Package Installation**

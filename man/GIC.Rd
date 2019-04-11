@@ -38,7 +38,7 @@ Note that the current implementation of the criterion has not been tested for mu
 
 	
 \references{
-Clavel, J., Aristide, L., Morlon, H., 2018. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology DOI:10.1093/sysbio/syy045.
+Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
 
 Konishi S., Kitagawa G. 1996. Generalised information criteria in model selection. Biometrika. 83:875-890.
 

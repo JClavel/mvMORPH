@@ -106,7 +106,7 @@ An object of class '\code{mvgls}'. It contains a list including the following co
 }
 \references{
 
-Clavel, J., Aristide, L., Morlon, H., 2018. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology DOI:10.1093/sysbio/syy045.
+Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
 
 Friedman J., Hastie T., Tibshirani R. 2008. Sparse inverse covariance estimation with the graphical lasso. Biostatistics. 9:432-441.
 
@@ -129,6 +129,8 @@ Julien Clavel
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
+\code{\link{manova.gls}}
+\code{\link{EIC}}
 \code{\link{GIC}}
 \code{\link{mvgls.pca}}
 \code{\link{fitted.mvgls}}

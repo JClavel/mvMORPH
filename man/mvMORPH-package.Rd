@@ -12,7 +12,7 @@ Fits of multivariate evolutionary models on trees (with one or multiple selectiv
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.1.0\cr
+Version: \tab 1.1.1\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }
@@ -25,7 +25,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \references{
   Clavel et al. (2015). mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319. doi: 10.1111/2041-210X.12420.
   
-  Clavel et al. (2018). A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology doi: 10.1093/sysbio/syy045.
+  Clavel et al. (2019). A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116. doi: 10.1093/sysbio/syy045.
 
 }
 \keyword{ mvgls }
@@ -40,6 +40,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \seealso{
 \code{\link{mvgls}}
 \code{\link{mvgls.pca}}
+\code{\link{manova.gls}}
 \code{\link{mvOU}}
 \code{\link{mvBM}}
 \code{\link{mvEB}}
@@ -54,6 +55,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \code{\link{estim}}
 \code{\link{aicw}}
 \code{\link{GIC}}
+\code{\link{EIC}}
 }
 
 
