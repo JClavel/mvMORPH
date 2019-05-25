@@ -605,6 +605,8 @@ plot.manova.mvgls <- function(x,...){
     
     args <- list(...)
     if(is.null(args[["density"]])) density = FALSE else density = args$density
+    if(is.null(args[["breaks"]])) breaks = 50 else breaks = args$breaks
+    
     nterms <- length(x$terms)
     
     if(x$param==TRUE){
@@ -632,7 +634,7 @@ plot.manova.mvgls <- function(x,...){
       }else{
           hist(x$nullstat[,i], main=paste("Statistic distribution:",x$terms[i]),
         xlab=paste(x$test,"(",round(x$stat[i],3),")","p-value :",
-                round(x$pvalue[i],3)), las=1, breaks=50, border=NA, col="lightgrey", xlim=range(c(x$nullstat[,i],x$stat[i]))); 
+                round(x$pvalue[i],3)), las=1, breaks=breaks, border=NA, col="lightgrey", xlim=range(c(x$nullstat[,i],x$stat[i]))); 
       }
         abline(v=x$stat[i], col="red", lwd=2)
         }

@@ -96,7 +96,7 @@ if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
     tree<-precalc$tree
     
     if(is.null(tree[["mapped.edge"]])==TRUE & model=="BMM"){
-        model<-"BM1"
+        model<-"BM1"; k <-1;
        if(echo==TRUE) cat("No selective regimes mapped on the tree, only a BM1 model could be estimated","\n")
     }
     C1<-precalc$C1
@@ -106,7 +106,9 @@ if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
     # number of selective regimes
     if(model!="BM1"){
         k<-length(C2)
-    }else{ k<-1 }
+    }else{
+        k<-1
+    }
     
     if(method=="sparse"){
         # Yale sparse format
@@ -121,7 +123,7 @@ if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
 ##------------------------Precalc-off-----------------------------------------##
 ##------------------------Create VCV matrix-----------------------------------##
 if(is.null(tree[["mapped.edge"]])==TRUE & model=="BMM"){
-    model<-"BM1"
+    model<-"BM1"; k <-1;
     if(echo==TRUE) cat("No selective regimes mapped on the tree, only a BM1 model could be estimated","\n")
 }
 

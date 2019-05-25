@@ -30,7 +30,7 @@ if(any(is.na(data))){
 }
 
 # bind error to a vector
-if(!is.null(error)){error<-as.vector(error[-Indice_NA])}
+if(!is.null(error) & !is.null(Indice_NA)){ error<-as.vector(error[-Indice_NA]) }
 
 # First impute the dataset to compute the ancestral states?
 if(any(is.na(data)) & asr==TRUE){
@@ -51,7 +51,7 @@ if(any(class(object)=="mvmorph")){
     ## Ancestral states estimation??
     ## I must adapt it to the simmap format
     if(asr==TRUE){
-        if(!inherits(tree,"simmap") & k!=1) stop("The tree should be an object of class \"simmap\".")
+        if(!inherits(tree,"simmap") & k!=1 & model!="OU1") stop("The tree should be an object of class \"simmap\".")
         if(!inherits(tree,"phylo")) stop("The \"asr=TRUE\" argument works only with phylogenies.")
         # number of tips
         ntip <- length(tree$tip.label)
@@ -61,7 +61,7 @@ if(any(class(object)=="mvmorph")){
         sp_names <- tree$tip.label
         if(any(sp_names==rownames(data))){data<-data[sp_names,]}
         
-        if(k!=1){
+        if(k!=1 & model!="OU1"){
             C <- vcvSplit(tree, internal=TRUE)
             n <- ncol(C[[1]])
         }else{
@@ -266,7 +266,7 @@ switch(model,
     }else{
         V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
-    W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
+    W<-.Call("mvmorph_weights",nterm=as.integer(n), epochs=epochs, lambda=eig$values, S=eig$vectors, S1=svec, beta=listReg, root=as.integer(mod_stand))
     # Add measurment error?
     if(is.null(error)==FALSE){
         if(asr==TRUE){
@@ -289,7 +289,7 @@ switch(model,
     }else{
         V<-.Call(simmap_covar, as.integer(n), bt=bt, lambda=eig$values, S=eig$vectors, S1=svec, sigmasq=sigma)
     }
-    W<-.Call(mvmorph_weights, nterm=as.integer(n), epochs=epochs,lambda=eig$values,S=eig$vectors,S1=svec,beta=listReg,root=as.integer(mod_stand))
+    W<-.Call(mvmorph_weights, nterm=as.integer(n), epochs=epochs, lambda=eig$values, S=eig$vectors, S1=svec, beta=listReg, root=as.integer(mod_stand))
     # Add measurment error?
     if(is.null(error)==FALSE){
         if(asr==TRUE){

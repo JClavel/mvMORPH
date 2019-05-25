@@ -17,7 +17,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   if(is.null(args[["verbose"]])) verbose <- FALSE else verbose <- args$verbose
   
   # Performs the tests
-  if(inherits(object, "mvgls")){
+  if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\", see ?mvgls ")
     
     # TEMPORARY?
     if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
@@ -67,10 +67,6 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       summary_tests <- list(test=test, type=type, stat=permTests$observed, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests$simulated)
         
     }
-      
-  }else{
-    stop("Please provide an object of class \"mvgls\", see ?mvgls ")
-  }
   
   class(summary_tests) = "manova.mvgls"
   invisible(summary_tests)
