@@ -78,7 +78,7 @@ if(any(class(object)=="mvmorph")){
             # species names
             sp_names <- tree$tip.label
 
-            if(k!=1){
+            if(k!=1 & model!="OU1"){
                 C <- vcvSplit(tree)
                 if(any(sp_names==rownames(data))){C<-lapply(C,function(x) x[rownames(data),rownames(data)])}
             }else{
@@ -460,11 +460,11 @@ if(asr==TRUE){
     # extend Cunningham et al. 1998 to multivariate
     # Models included in the objects
     ## covariance between tip species and ancestral states
-    varAY <- V[-Indice_EXT, Indice_EXT]
+    varAY <- V[-Indice_EXT, Indice_EXT, drop=FALSE]
     ## covariance between ancestral states
-    varA <- V[-Indice_EXT, -Indice_EXT]
+    varA <- V[-Indice_EXT, -Indice_EXT, drop=FALSE]
     ## covariance between tip species
-    varY <- V[Indice_EXT,Indice_EXT]
+    varY <- V[Indice_EXT,Indice_EXT, drop=FALSE]
     data_complete<-data
     
     
@@ -478,9 +478,9 @@ if(asr==TRUE){
     anc <- as.numeric(W%*%as.numeric(mu))
     
     # Prepare the covariances
-    varY<-V[-Indice_NA,-Indice_NA]
-    varAY<-V[Indice_NA,-Indice_NA]
-    varA<-V[Indice_NA,Indice_NA]
+    varY<-V[-Indice_NA,-Indice_NA, drop=FALSE]
+    varAY<-V[Indice_NA,-Indice_NA, drop=FALSE]
+    varA<-V[Indice_NA,Indice_NA, drop=FALSE]
     # Prepare the data
     anc<-anc[Indice_NA]
     data_complete<-data[-Indice_NA]
