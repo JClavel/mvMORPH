@@ -11,7 +11,7 @@
 ################################################################################
 
 
-mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L","Mahalanobis"), REML=TRUE, ...){
+mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), REML=TRUE, ...){
     
     # Recover options
     args <- list(...)
@@ -23,8 +23,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     if(is.null(args[["penalty"]])) penalty <- "RidgeArch" else penalty <- args$penalty
     if(is.null(args[["optimization"]])) optimization <- "L-BFGS-B" else optimization <- args$optimization
     if(is.null(args[["ncores"]])) ncores <- 1L else ncores <- args$ncores
-    if(is.null(args[["up"]])) up <- NULL else up <- args$up
-    if(is.null(args[["low"]])) low <- NULL else low <- args$low
+    if(is.null(args[["upper"]])) up <- NULL else up <- args$upper
+    if(is.null(args[["lower"]])) low <- NULL else low <- args$lower
     if(is.null(args[["tol"]])) tol <- NULL else tol <- args$tol
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
     if(is.null(args[["contrasts"]])) contrasts.def <- NULL else contrasts.def <- args$contrasts
@@ -34,13 +34,13 @@ mvgls <- function(formula, data=list(), tree, model, method=c("LOOCV","LL","H&L"
     X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)
     Y = model.response(model_fr)
     assign <- attr(X, "assign")
-    method = match.arg(method)[1]
     
     # Option for bootstrap and permutation method
     if(!is.null(args[["response"]])) Y <- args$response
     
     # Warnings & checks
-    method <- match.arg(method)[1]
+    method = match.arg(method[1], c("PL-LOOCV","LOOCV","LL","H&L","Mahalanobis"))
+    if(method=="PL-LOOCV") method = "LOOCV" # to keep the explicit name with 'PL'
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
     if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", or \"lambda\" ")

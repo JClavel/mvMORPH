@@ -1,10 +1,10 @@
 # ------------------------------------------------------------------------- #
-# manova.mvgls                                                              #
+# manova.gls                                                                #
 # options: object, test, type, permutations, L...                           #
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=100L, L=NULL, ...){
+manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=999L, L=NULL, ...){
   
   # options
   type <- match.arg(type)[1]

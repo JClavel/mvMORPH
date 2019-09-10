@@ -9,7 +9,7 @@ Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
-            type=c("I","II","III"), nperm=100L, L=NULL, ...)
+            type=c("I","II","III"), nperm=999L, L=NULL, ...)
   
 }
 \arguments{
@@ -23,7 +23,7 @@ The multivariate test statistic to compute - "Wilks", "Pillai", "Hotelling-Lawle
 The type of test (sums of squares and cross-products) - "I", "II", or "III"}
 
   \item{nperm}{
-The number of permutations used for building the null distribution of the chosen statistic. Permutation is the only available approach for high-dimensional PL models, but either permutations or parametric tests can be used with maximum likelihood (method "LL")}
+The number of permutations used for building the null distribution of the chosen statistic. Permutation is the only available approach for high-dimensional PL models, but either permutations or parametric tests can be used with maximum likelihood (method "LL" in \code{mvgls})}
 
   \item{L}{
 A (contrasts) matrix or a vector giving linear combinations of the coefficients rows.}
@@ -44,7 +44,7 @@ Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the 
   }
 
 \details{
-\code{manova.gls} allows performing multivariate tests (e.g. Pillai's, Wilks, Hotelling-Lawley and Roy largest root) on generalized least squares (GLS) linear model (objects of class "mvgls") fit by either maximum likelihood (\code{method="LL"}) or penalized likelihood (\code{method="LOO"}) using the \code{mvgls} function. 
+\code{manova.gls} allows performing multivariate tests (e.g. Pillai's, Wilks, Hotelling-Lawley and Roy largest root) on generalized least squares (GLS) linear model (objects of class "mvgls") fit by either maximum likelihood (\code{method="LL"}) or penalized likelihood (\code{method="PL-LOO"}) using the \code{mvgls} function. 
 
 General Linear Hypothesis of the form:
 

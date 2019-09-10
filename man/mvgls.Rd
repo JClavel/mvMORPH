@@ -6,12 +6,12 @@ Fit linear model using Generalized Least Squares to multivariate (high-dimension
 %%  ~~function to do ... ~~
 }
 \description{
-This function use maximum likelihood (or restricted likelihood) and penalized likelihood approaches to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). \code{mvgls} uses a penalized-likelihood (PL) approach (see descriptions in Clavel et al. 2018) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). The PL approach generally provides improved estimates compared to ML.
+This function use maximum likelihood (or restricted likelihood) and penalized likelihood approaches to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). \code{mvgls} uses a penalized-likelihood (PL) approach (see descriptions in Clavel et al. 2019) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). The PL approach generally provides improved estimates compared to ML.
 
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-mvgls(formula, data, tree, model, method=c("LOOCV","LL","H&L","Mahalanobis"),
+mvgls(formula, data, tree, model, method=c("PL-LOOCV","LL"),
 		REML=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,7 +35,7 @@ The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB
 }
 
 \item{method}{
-The method used to fit the model. "LOOCV" is the nominal leave one out cross-validation of the log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation), "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (see details).
+The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (see details).
 }
 
 \item{REML}{
@@ -49,17 +49,17 @@ Options to be passed through. For instance the type of penalization:
 
 }
 \details{
-\code{mvgls} allows fitting various multivariate linear models to high-dimensional datasets (i.e. where the number of variables \emph{p} is larger than \emph{n}) for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU). Models estimates are generally more accurate than maximum likelihood methods. Models fit can be compared using the GIC criterion (see ?\code{GIC}).
+\code{mvgls} allows fitting various multivariate linear models to high-dimensional datasets (i.e. where the number of variables \emph{p} is larger than \emph{n}) for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU). Models estimates are generally more accurate than maximum likelihood methods. Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
 
 The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally.
 
 The various \emph{arguments} that can be passed through \bold{"..."}:
 
-\bold{"penalty"} - The "penalty" argument allow specifying the type of penalization used for regularization (described in Clavel et al. 2018). The various penalizations are: \code{penalty="RidgeArch"} (the default), \code{penalty="RidgeAlt"} and \code{penalty="LASSO"}. The "RidgeArch" penalization shrink linearly the covariance matrix toward a target structure (see below for \code{target}). This penalization is generally fast and the tuning parameter is bounded between 0 and 1 (see van Wieringen & Peeters 2016). The "RidgeAlt" penalization scheme uses a quadratic ridge penalty to shrink the covariance matrix toward a specified target matrix (see \code{target} below and also see van Wieringen & Peeters 2016). Finally, the "LASSO" regularize the covariance matrix by estimating a sparse estimate of its inverse (Friedman et al. 2008). The computation of the solution for this penalization is computationally intensive. Moreover, this penalization scheme is not invariant to arbitrary rotations of the data.
+\bold{"penalty"} - The "penalty" argument allow specifying the type of penalization used for regularization (described in Clavel et al. 2019). The various penalizations are: \code{penalty="RidgeArch"} (the default), \code{penalty="RidgeAlt"} and \code{penalty="LASSO"}. The "RidgeArch" penalization shrink linearly the covariance matrix toward a target structure (see below for \code{target}). This penalization is generally fast and the tuning parameter is bounded between 0 and 1 (see van Wieringen & Peeters 2016). The "RidgeAlt" penalization scheme uses a quadratic ridge penalty to shrink the covariance matrix toward a specified target matrix (see \code{target} below and also see van Wieringen & Peeters 2016). Finally, the "LASSO" regularize the covariance matrix by estimating a sparse estimate of its inverse (Friedman et al. 2008). The computation of the solution for this penalization is computationally intensive. Moreover, this penalization scheme is not invariant to arbitrary rotations of the data.
 
-\bold{"target"} - This argument allows specifying the target matrix toward which the covariance matrix is shrunk for "Ridge" penalties. \code{target="unitVariance"} (for a diagonal target proportional to the identity) and \code{target="Variance"} (for a diagonal unequal variance target) can be used with both "RidgeArch" and "RidgeAlt" penalties. \code{target="null"} (a null target matrix) is only available for "RidgeAlt". Penalization with the "Variance" target shrink the eigenvectors of the covariance matrix and is therefore not rotation invariant. See details on the various target properties in Clavel et al. (2018).
+\bold{"target"} - This argument allows specifying the target matrix toward which the covariance matrix is shrunk for "Ridge" penalties. \code{target="unitVariance"} (for a diagonal target proportional to the identity) and \code{target="Variance"} (for a diagonal unequal variance target) can be used with both "RidgeArch" and "RidgeAlt" penalties. \code{target="null"} (a null target matrix) is only available for "RidgeAlt". Penalization with the "Variance" target shrink the eigenvectors of the covariance matrix and is therefore not rotation invariant. See details on the various target properties in Clavel et al. (2019).
 
-\bold{"error"} - If \code{TRUE} the measurement error (or intra-specific variance) is estimated from the data (as in mixed models). It should probably be systematically used with empirical data. See also Housworth et al. 2004 and Clavel et al. 2018 for details on the proposed implementation.
+\bold{"error"} - If \code{TRUE} the measurement error (or intra-specific variance) is estimated from the data as a nuisance parameter (like in mixed models). It should probably be systematically used with empirical data. See also Housworth et al. 2004 and Clavel et al. 2019 for details on the proposed implementation.
 
 \bold{"scale.height"} - Whether the tree should be scaled to unit length or not.
 
