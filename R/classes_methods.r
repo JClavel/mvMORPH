@@ -575,10 +575,10 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     
   }else{ # permutation methods
     
-    if(x$type=="I") cat("Sequential MANOVA Tests by",x$nperm,"permutations:",x$test,"test statistic","\n")
-    if(x$type=="II") cat("Type II MANOVA Tests by",x$nperm,"permutations:",x$test,"test statistic","\n")
-    if(x$type=="III") cat("Type III MANOVA Tests by",x$nperm,"permutations:",x$test,"test statistic","\n")
-    if(x$type=="glh")  cat("General Linear Hypothesis Test by",x$nperm,"permutations:",x$test,"test statistic","\n")
+    if(x$type=="I") cat("Sequential MANOVA Tests with",x$nperm,"permutations:",x$test,"test statistic","\n")
+    if(x$type=="II") cat("Type II MANOVA Tests with",x$nperm,"permutations:",x$test,"test statistic","\n")
+    if(x$type=="III") cat("Type III MANOVA Tests with",x$nperm,"permutations:",x$test,"test statistic","\n")
+    if(x$type=="glh")  cat("General Linear Hypothesis Test with",x$nperm,"permutations:",x$test,"test statistic","\n")
  
     signif <- sapply(x$pvalue, function(i) if(i<0.001){"***"}else if(i<0.01){
       "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})

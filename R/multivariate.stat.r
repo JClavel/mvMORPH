@@ -710,8 +710,10 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   # QR decomposition
   Q_r <- qr(X)
   
-  # Hypothesis    
-  H <- t(L%*%B0 - rhs)%*%pseudoinverse(L%*%pseudoinverse(t(X)%*%X)%*%t(L))%*%(L%*%B0 - rhs) # The Hypothesis matrix under LB=rhs
+  # Hypothesis
+  Xc <- X%*%pseudoinverse(t(X)%*%X)%*%t(L)
+  XCXC <- pseudoinverse(t(Xc)%*%Xc)
+  H <- t(L%*%B0 - rhs)%*%XCXC%*%(L%*%B0 - rhs) # The Hypothesis matrix under LB=rhs
   
   # Error SSCP matrix (i.e. inverse of the unscaled covariance)
   WW  <- object$sigma$P/ndimCov
@@ -778,7 +780,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                tuningNull <- estimModelNull$par[1] 
                                
                                # Hypothesis SSCP matrix
-                               Hp <- t(L%*%Bp)%*%pseudoinverse(L%*%pseudoinverse(t(X)%*%X)%*%t(L))%*%(L%*%Bp)
+                               Hp <- t(L%*%Bp)%*%XCXC%*%(L%*%Bp)
                                
                                # SSCP matrix
                                SSCP <- crossprod(residuals)
@@ -796,9 +798,9 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                Yp <- Rz[c(sample(N-1),N), ]%*%Y # -1 because we use the constrasts; we also remove the effect it's not necessary
                                
                                # Hypothesis SSCP
-                               Bp <- XtX1Xt %*% Yp 
-                               Hp <- t(L%*%Bp)%*%pseudoinverse(L%*%pseudoinverse(t(X)%*%X)%*%t(L))%*%(L%*%Bp)
-                            
+                               Bp <- XtX1Xt %*% Yp
+                               Hp <- t(L%*%Bp)%*%XCXC%*%(L%*%Bp)
+                               
                                # Error SSCP
                                Ep <- crossprod(Yp - X%*%Bp)
                                # HE matrix

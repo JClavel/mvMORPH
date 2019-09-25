@@ -1,9 +1,10 @@
 ## mvMORPH 1.1.1
-   + manova.gls: MANOVA methods and multivariate statistics based on ML (n<p) and PL (p>n) model fit.
-   + EIC: function to compute the EIC score for both ML and PL techniques (class mvgls)
-   + update help pages of various functions
+   +  manova.gls: MANOVA methods and multivariate statistics based on ML (n<p) and PL (any p) model fit.
+   +  Phyllostomid dataset from Monteiro & Nogueira (2011)
+   +  EIC: function to compute the EIC score for both ML and PL techniques (class mvgls)
+   +  update help pages of various functions
 ## mvMORPH 1.1.0
-    + mvgls: a multivariate GLS function based on ML (n<p) and PL (p>n).
+    + mvgls: a multivariate GLS function based on ML (n<p) and PL (any p).
     + mvgls.pca: a function to perform PCA on serially correlated data.
     + GIC: function to compute the GIC score for both ML and PL techniques (class mvgls)
     + suite of functions to use with mvgls
