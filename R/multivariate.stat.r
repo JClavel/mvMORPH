@@ -496,7 +496,6 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   # Hypothesis (projection matrix)
   Proj_full  <- X %*% pseudoinverse(X)
   In  <- diag(N)
-  iXtX <- solve(crossprod(X))
   
   # Error SSCP matrix (i.e. inverse of the unscaled covariance)
   WW  <- object$sigma$P/ndimCov
