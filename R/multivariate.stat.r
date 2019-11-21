@@ -162,7 +162,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   Q <- qr.Q(Q_r)
   
   # Hypothesis (projection matrix)
-  Pf  <- X %*% solve(t(X) %*% X) %*% t(X)
+  Pf  <- X %*% pseudoinverse(X)
   Id  <- diag(N)
   WW  <- solve(t(Y) %*% (Id - Pf) %*% Y)
   

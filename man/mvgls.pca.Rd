@@ -50,7 +50,8 @@ Revell, L.J., 2009. Size-correction and principal components for intraspecific c
 
 \seealso{
 \code{\link{mvgls}},
-\code{\link{GIC}}
+\code{\link{GIC}},
+\code{\link{EIC}}
 }
 
 \examples{

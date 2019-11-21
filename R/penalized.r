@@ -28,7 +28,8 @@
     mod_par = .corrStr(corrStr$bounds$trPar(par), corrStr);
     
     # GLS estimates
-    B <- pseudoinverse(mod_par$X)%*%mod_par$Y
+    XtX <- pseudoinverse(mod_par$X)
+    B <- XtX%*%mod_par$Y
     residuals <- mod_par$Y - mod_par$X%*%B
     Ccov <- mod_par$det
     
@@ -76,18 +77,15 @@
         # target matrix
         target <- .targetM(Sk, targM, penalty)
         
-        # Nominal loocv
-        XtX <- solve(crossprod(mod_par$X))
-        
         # hat matrix
-        h <- diag(mod_par$X%*%pseudoinverse(mod_par$X))
+        h <- diag(mod_par$X%*%XtX)
         
         # check for hat score of 1 (e.g. MANOVA design)
         nloo <- corrStr$nloo[!h+1e-8>=1]
         const <- n/length(nloo)
         
         llik <- sapply(nloo, function(x){
-            Bx <- B - XtX%*%mod_par$X[x,]%*%residuals[x,]/(1-h[x]) # rank-1 update
+            Bx <- B - tcrossprod(XtX[,x], residuals[x,])/(1-h[x]) # rank-1 update
             # update the residuals
             residuals2 <- mod_par$Y - mod_par$X%*%Bx
             Skpartial <- crossprod(residuals2[-x,])/(n-1)

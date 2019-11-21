@@ -120,7 +120,7 @@ GIC.mvgls <- function(object, ...){
     })
     beta_df <- sum(T2)
     
-    if(m>1) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with cautions and consider simulations instead")
+    if(m>1) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with cautions and consider EIC or simulations instead")
     
     # LogLikelihood (minus)
     DP <- as.numeric(determinant(Pi)$modulus)

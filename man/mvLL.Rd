@@ -58,7 +58,7 @@ Five methods are proposed to compute the log-likelihood:
 
 The user must provide a variance-covariance matrix (e.g., vcv.phylo(tree)) or a multivariate variance-covariance matrix (e.g., kronecker(matrix(c(2,1,1,1.5),2),vcv.phylo(tree)) as well as a design matrix (or multivariate design matrix) with the "rpf", "sparse", "inverse", and "pseudoinverse" methods.
 
-Use the "param" list of arguments to define whether or not the brownian rate should be estimated and returned (estim=TRUE) with the "pic" method. Otherwise, the rate parameter (also called sigma) is fixed to 1. The arguments "mu" and "sigma" can be used to specify (e.g., in a MCMC setting) the mean at the root and the brownian rate, respectively.
+Use the "param" list of arguments to define whether or not the brownian rate should be estimated and returned (estim=TRUE) with the "pic" method. Otherwise, the rate parameter (also called sigma) is fixed to 1. The arguments "mu" and "sigma" can be used to specify (e.g., in a MCMC setting) the mean at the root and the (squared) brownian rate, respectively.
 
 You can choose to provide differently scaled trees for multivariate data with the "pic" method. In such a case, the trees (one per trait) should be embedded within a list() object. See example below.
 
@@ -67,7 +67,7 @@ You can choose to provide differently scaled trees for multivariate data with th
 \value{
 \item{logl }{Estimated log-likelihood for the data with the given matrix/tree.}
 \item{theta }{Estimated ancestral states at the root. They are defined by the design matrix (D) for all the methods but "pic".}
-\item{sigma }{Estimated rate parameters. Only when param$estim=TRUE with the "pic" method.}
+\item{sigma }{Estimated (squared) rate parameters. Only when param$estim=TRUE with the "pic" method.}
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
