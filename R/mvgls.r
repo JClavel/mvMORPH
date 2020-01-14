@@ -29,6 +29,13 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
     if(is.null(args[["contrasts"]])) contrasts.def <- NULL else contrasts.def <- args$contrasts
     
+    # check for coercion issues
+    data_format = sapply(data, function(x) inherits(x,"phylo"))
+    if(any(data_format)){
+        index <- which(data_format==TRUE)
+        data[[index]] <- NULL
+    }
+    
     # retrieve data and formula as in lm
     model_fr = model.frame(formula=formula, data=data)
     X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)

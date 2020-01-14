@@ -61,7 +61,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     # constraints?
     if(is.null(param[["constraint"]])==FALSE & is.null(param[["decomp"]])==TRUE){
         
-        if(class(param$constraint)=="matrix"){
+        if(inherits(param$constraint, "matrix")){
             # user defined constraints
             index.user<-param$constraint
             if(!isSymmetric(unname(index.user)))

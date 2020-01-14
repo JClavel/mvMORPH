@@ -64,7 +64,7 @@ index.user<-NULL
 if(is.null(param[["constraint"]])==TRUE){
     constraint<-param$constraint<-"default"
 }else{
-    if(class(param$constraint)=="matrix"){
+    if(inherits(param$constraint, "matrix")){
         # user defined constraints
         index.user<-param$constraint
         if(!isSymmetric(unname(index.user)))

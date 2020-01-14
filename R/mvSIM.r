@@ -217,7 +217,7 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})
                 }
-            }else if(length(param$sigma)==k & class(param$sigma)!="list"){
+            }else if(length(param$sigma)==k & is.list(param$sigma)==FALSE){
                     sigma<-lapply(1:k,function(x){ runif(n=1)})
                 if(p!=1){
                     sigma<-lapply(1:k,function(x){ diag(p)})

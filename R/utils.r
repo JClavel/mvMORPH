@@ -16,7 +16,7 @@ aicw <- function(x,...){
     args <- list(...)
     if(is.null(args[["aicc"]])) args$aicc <- FALSE
     
-    if(class(x)=="list"){
+    if(inherits(x, "list")){
         if(inherits(x[[1]],"mvmorph")){
             
             if(args$aicc==TRUE){
