@@ -260,6 +260,12 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         d1res+d3res
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
     
+    # Check estimates? For now we basically remove outliers
+    if(any(bias>1e6)) {
+        warning("Some of the bootstrap samples show abnormally extreme values that have been discarded")
+        bias = bias[bias<1e6]
+    }
+    
     # compute the EIC
     pboot <- mean(bias)
     EIC <- -2*llik + 2*pboot

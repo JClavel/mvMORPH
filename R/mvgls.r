@@ -65,6 +65,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(method%in%c("H&L","Mahalanobis") & penalty%in%c("RidgeAlt","LASSO")) stop("\"H&L\" and \"Mahalanobis\" works only with \"RidgeArch\" penalization")
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
     
+    # Miscellanous - pre-calculations
+    precalc = .prepModel(tree, model)
+    
     # dimensions
     n = nobs = nrow(Y)
     p = ncol(Y)
@@ -81,7 +84,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(scale.height) tree <- .scaleStruct(tree)
     corrModel <- list(Y=Y, X=X, REML=REML, mserr=mserr,
                     model=model, structure=tree, p=p, nobs=nobs,
-                    nloo=nloo, bounds=bounds)
+                    nloo=nloo, bounds=bounds, precalc=precalc)
     
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
@@ -129,6 +132,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
     ndims <- list(n=n, p=p, m=m, assign=assign)
+    
+    # Exceptions [to improve]
+    X <- .make.x(tree, mod_par, X, model)
     
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")

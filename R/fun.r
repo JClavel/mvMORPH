@@ -823,6 +823,34 @@ build.chol<-function(b,p){
  return(c.mat)
 }
 
+# Generate a weight matrix for OUM
+.make.x <- function(phy, param, X, model){
+    
+    switch(model,
+    "OUM"={
+        if(!inherits(phy,"simmap")) stop("A tree of class \"simmap\" is required for the OUM model")
+        n <- Ntip(phy)
+        precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=FALSE))
+        X <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(0))
+        },
+    
+    )
+return(X)
+}
+
+# precalculations for mvgls structures [ for future developments ]
+.prepModel <- function(phy, model){
+   
+   switch(model,
+        "OUM"={
+            if(!inherits(phy,"simmap") && model=="OUM") stop("A tree of class \"simmap\" is required for the OUM model")
+            precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=FALSE))
+        },
+        precalc <- NULL
+   )
+   return(precalc)
+}
+
 
 ##----------------------mvfit_likelihood--------------------------------------##
 

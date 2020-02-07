@@ -182,11 +182,11 @@
 # ------------------------------------------------------------------------- #
 .corrStr <- function(par, timeObject){
     
-    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv")){
+    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "OUM")){
         # Tree transformation
-        struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr, Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML)
+        struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr, Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML, precalc=timeObject$precalc)
     }else{
-        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\" and \"lambda\"  only...")
+        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\", \"OUM\" and \"lambda\"  only...")
     }
     return(struct)
 }
@@ -337,11 +337,11 @@
 
 # ------------------------------------------------------------------------- #
 # .transformTree                                                            #
-# options: phy, param, model, mserr=NULL, Y=NULL, X=NULL, REML=TRUE         #
-#                                                                           #
+# options: phy, param, model, mserr=NULL, Y=NULL, X=NULL, REML=TRUE,        #
+#          precalc=NULL                                                     #
 # ------------------------------------------------------------------------- #
 
-.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE){
+.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "OUM"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE, precalc=NULL){
     
     # pre-compute and checks
     if(attr(phy,"order")!="cladewise") phy <- reorder.phylo(phy, "cladewise")
@@ -387,6 +387,45 @@
         
         # Adjust errors
         if(!is.null(mserr)) mserr = mserr*exp(-2*param*D[descendent[extern]])
+    },
+    "OUM"={
+        # Weight matrix OUM
+        W <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(0))
+        
+        # transform the tree
+        D = numeric(n)
+        
+        # check first for ultrametric tree (see Ho & Ane 2014 - Systematic Biology; R code based on "phylolm" package implementation. Courtesy of L. Ho and C. Ane)
+        if(!is.ultrametric(phy)){
+            dis = node.depth.edgelength(phy) # has all nodes
+            D = max(dis[1:n]) - dis[1:n]
+            D = D - mean(D)
+            phy$edge.length[extern] <- phy$edge.length[extern] + D[descendent[extern]]
+        }
+        
+        # Branching times (now the tree is ultrametric)
+        times <- branching.times(phy)
+        Tmax <- max(times)
+        # compute the branch lengths
+        distRoot <-  exp(-2*param*times)*(1 - exp(-2*param*(Tmax-times)))
+        d1 = distRoot[parent-n]
+        d2 = numeric(N)
+        d2[extern] = exp(-2*param*D[descendent[extern]]) * (1-exp(-2*param*(Tmax-D[descendent[extern]])))
+        d2[!extern] = distRoot[descendent[!extern]-n]
+        
+        # weights for a 3 points structured matrix
+        diagWeight = exp(param*D)
+        phy$edge.length = (d2 - d1)/(2*param) # scale the tree for the stationary variance
+        names(diagWeight) = phy$tip.label
+        
+        # transform the variables
+        w <- 1/diagWeight
+        Y <- matrix(w*Y, nrow=n)
+        X <- matrix(w*W, nrow=n) # Here X is replaced by the weighted matrix
+        
+        # Adjust errors
+        if(!is.null(mserr)) mserr = mserr*exp(-2*param*D[descendent[extern]])
+        
     },
     "EB"={
         if (param!=0){
@@ -444,6 +483,7 @@
         switch(model,
         "EB"={up <- 0},
         "OU"={up <- 10},
+        "OUM"={up <- 10},
         "lambda"={up <- 1},
         "BM"={up <- Inf},
         up <- Inf)
@@ -455,6 +495,7 @@
         switch(model,
         "EB"={low <- -10},
         "OU"={low <- 1e-10},
+        "OUM"={low <- 1e-10},
         "lambda"={low <- 1e-8},
         "BM"={low <- -Inf},
         low <- -Inf)
@@ -558,6 +599,7 @@
     # Models starting guesses
     switch(corrModel$model,
         "OU"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
+        "OUM"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
         "OUvcv"={mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))},
         "lambda"={mod_val <- c(0.2,0.5,0.8)},
         "EB"={mod_val <- -log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))}
