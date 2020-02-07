@@ -35,7 +35,7 @@ You can install the package directly from gitHub through devtools:
 ```
 library(devtools)
 
-install_github("JClavel/mvMORPH", build_vignettes = TRUE)
+install_github("JClavel/mvMORPH", ref="devel-1.1.2")
 
 ```
 

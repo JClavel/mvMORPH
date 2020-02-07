@@ -832,8 +832,8 @@ build.chol<-function(b,p){
         n <- Ntip(phy)
         precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=FALSE))
         X <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(0))
+        colnames(X) <- colnames(phy$mapped.edge)
         },
-    
     )
 return(X)
 }
