@@ -854,7 +854,7 @@ return(X)
             precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=root))
         },
         "OU1"={
-            if(is.ultrametric(phy) & root=TRUE) warning("Estimation of the root and optimum in \"OU1\" is not identifiable on ultrametric trees")
+            if(is.ultrametric(phy) & root==TRUE) warning("Estimation of the root and optimum in \"OU1\" is not identifiable on ultrametric trees")
             precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OU1", root=root))
         },
         precalc <- list(randomRoot=TRUE)
