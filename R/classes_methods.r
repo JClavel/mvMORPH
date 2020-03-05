@@ -145,7 +145,8 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # retrieve arguments
     args <- list(...)
     if(is.null(args[["eigSqm"]])) eigSqm <- TRUE else eigSqm <- args$eigSqm
-    if(is.null(args[["restricted"]])) restricted <- FALSE else restricted <- args$restricted
+    if(is.null(args[["restricted"]])) args$restricted <- FALSE else args$restricted <- args$restricted
+    if(is.null(args[["REML"]])) args$forceREML <- FALSE else args$forceREML <- args$REML
     
     # retrieve data to simulate bootstrap samples
     beta <- object$coefficients
@@ -168,7 +169,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     N = nrow(Y)
     p = object$dims$p
-    if(object$REML) ndimCov = object$dims$n - object$dims$m else ndimCov = object$dims$n
+    if(object$REML==TRUE && args$forceREML==TRUE) ndimCov = object$dims$n - object$dims$m else ndimCov = object$dims$n
     tuning <- object$tuning
     target <- object$target
     penalty <- object$penalty
@@ -181,41 +182,45 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Mean and residuals for the model
     MeanNull <- object$variables$X%*%beta
     
+    # Square root and determinant of the observed model [pre-calc]
+    Gi2 <- try(chol(object$sigma$Pinv), silent=TRUE)
+    if(inherits(Gi2, 'try-error')) return("error")
+    detValue2 <- sum(2*log(diag(Gi2)))
+    if(object$REML==TRUE && args$forceREML==FALSE) Ccov2 <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus + object$corrSt$const) else Ccov2 <- as.numeric(object$corrSt$det)
+    
     
     # Estimate the bias term
-    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
+    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM, Gi2, detValue, args){ # LL(Y*|param*) - LL(Y*| param)
         
         # Y*|param*
         residualsBoot <- residuals(objectBoot, type="normalized")
         
         # For boot "i" LL1(Y*|param*)
-        Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
         detValue <- sum(2*log(diag(Gi1)))
+        
+        ## ML ON REML ESTIMATES?
+        if(objectFit$REML==TRUE && args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         llik1 <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov1 + ndimCov*detValue + quadprod)
         
         # Y*|param
         #if(!restricted) residualsBoot <- objectBoot$corrSt$Y - objectBoot$corrSt$X%*%objectFit$coefficients
-        if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
+        if(!args$restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
         
         # For boot "i" LL2(Y*|param)
-        Ccov2 <- as.numeric(objectFit$corrSt$det)
-        Gi2 <- try(chol(objectFit$sigma$Pinv), silent=TRUE)
-        if(inherits(Gi2, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi2, t(residualsBoot), transpose = TRUE)^2)
-        detValue <- sum(2*log(diag(Gi2)))
         llik2 <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov2 + ndimCov*detValue + quadprod)
         
         # Return the difference in LL for D1
         return(llik1 - llik2)
     }
     
-    D3 <- function(objectBoot, objectFit, loglik, ndimCov, p){ # LL(Y|param) - LL(Y| param*)
+    D3 <- function(objectBoot, objectFit, loglik, ndimCov, p, args){ # LL(Y|param) - LL(Y| param*)
         
         # Y|param*
-        if(!restricted) {
+        if(!args$restricted) {
             sqM_temp <- pruning(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
             residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
             
@@ -225,7 +230,8 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         #else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
         
         # For boot "i" LL2(Y|param*)
-        Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE && args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -239,24 +245,23 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Estimate EIC: LL+bias
     
     # Maximum Likelihood
-    Ccov <- as.numeric(object$corrSt$det)
     Gi <- try(chol(object$sigma$Pinv), silent=TRUE)
     if(inherits(Gi, 'try-error')) return("error")
     quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
     detValue <- sum(2*log(diag(Gi)))
-    llik <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov + ndimCov*detValue + quadprod)
+    llik <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov2 + ndimCov*detValue + quadprod)
     
     # Estimate parameters on bootstrap samples
     bias <- pbmcmapply(function(i){
-        
+       
         # generate bootstrap sample
         Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),]) # sampling with replacement for bootstrap
         rownames(Yp) <- rownames(object$variables$Y)
         
         modelPerm$response <- quote(Yp);
         estimModelNull <- eval(modelPerm);
-        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv)
-        d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
+        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv, Gi2=Gi2, detValue=detValue2, args=args)
+        d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p,  args=args)
         d1res+d3res
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
     
@@ -274,7 +279,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     se <- sd(bias)/sqrt(nboot)
     
     # concatenate the results
-    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, se=se, p=p, n=N)
+    results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, se=se, p=p, n=N, args=args)
     class(results) <- c("eic.mvgls","eic")
     
     return(results)
@@ -526,7 +531,7 @@ print.gic.mvgls<-function(x,...){
 print.eic.mvgls<-function(x,...){
     cat("\n")
     message("-- Extended Information Criterion --","\n")
-    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n")
+    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n") # normal approximation of the sample mean CI using clt
     cat("\n")
 }
 

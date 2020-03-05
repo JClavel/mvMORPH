@@ -112,7 +112,7 @@ Friedman J., Hastie T., Tibshirani R. 2008. Sparse inverse covariance estimation
 
 Hoffbeck J.P., Landgrebe D.A. 1996. Covariance matrix estimation and classification with limited training data. IEEE Trans. Pattern Anal. Mach. Intell. 18:763-767.
 
-Housworth E.A., Martins E.P., LynchM. 2004. The phylogenetic mixed model. Am. Nat. 163:84-96.
+Housworth E.A., Martins E.P., Lynch M. 2004. The phylogenetic mixed model. Am. Nat. 163:84-96.
 
 Theiler J. 2012. The incredible shrinking covariance estimator. In: Automatic Target Recognition XXII. Proc. SPIE 8391, Baltimore, p. 83910P.
 

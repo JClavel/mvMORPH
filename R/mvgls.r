@@ -28,6 +28,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(is.null(args[["tol"]])) tol <- NULL else tol <- args$tol
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
     if(is.null(args[["contrasts"]])) contrasts.def <- NULL else contrasts.def <- args$contrasts
+    if(is.null(args[["randomRoot"]])) randomRoot <- TRUE else randomRoot <- args$randomRoot
+    if(is.null(args[["root"]])) root <- "stationary" else root <- args$root
+    if(root=="stationary") root_std <- 1L else root_std <- 0L
     
     # check for coercion issues
     data_format = sapply(data, function(x) inherits(x,"phylo"))
@@ -66,7 +69,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
     
     # Miscellanous - pre-calculations
-    precalc = .prepModel(tree, model)
+    precalc = .prepModel(tree, model, root)
+    precalc$randomRoot = randomRoot
+    precalc$root_std = root_std
     
     # dimensions
     n = nobs = nrow(Y)
@@ -116,6 +121,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
+    # Exceptions [to improve]
+    X <- .make.x(tree, mod_par, X, model, root, root_std)
     
     # List of results to return
     corrSt = .corrStr(mod_par, corrModel);
@@ -133,8 +140,6 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
     ndims <- list(n=n, p=p, m=m, assign=assign)
     
-    # Exceptions [to improve]
-    X <- .make.x(tree, mod_par, X, model)
     
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")
