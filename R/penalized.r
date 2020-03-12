@@ -248,20 +248,20 @@
         Q <- eig$vectors
         d <- eig$values - lambda*target[1]
         evalues <- sqrt(lambda + d^2/4) + d/2
-        D1 <- diag(evalues)
-        D2 <- diag(1/evalues) # Inverse
-        Alt <- Q %*% D1 %*% t(Q)
-        AltInv <- Q %*% D2 %*% t(Q)
+        D1 <- evalues
+        D2 <- 1/evalues # Inverse
+        Alt <- Q %*% (D1 * t(Q))
+        AltInv <- Q %*% (D2 * t(Q))
     },
     "null"={
         eig  <- eigen(S, symmetric = TRUE)
         Q <- eig$vectors
         d <- eig$values
         evalues <- sqrt(lambda + d^2/4) + d/2
-        D1 <- diag(evalues)
-        D2 <- diag(1/evalues)
-        Alt <- Q %*% D1 %*% t(Q)
-        AltInv <- Q %*% D2 %*% t(Q)
+        D1 <- evalues
+        D2 <- 1/evalues
+        Alt <- Q %*% (D1 * t(Q))
+        AltInv <- Q %*% (D2 * t(Q))
     }
     )
     pen <- list(S=Alt, P=AltInv, ev=evalues)
@@ -277,7 +277,7 @@
 .sqM <- function(x){
     if(!all(is.finite(x))) return(Inf)
     eig <- eigen(x, symmetric = TRUE)
-    sqrtM <- tcrossprod(eig$vectors %*% diag(sqrt(eig$values)), eig$vectors)
+    sqrtM <- eig$vectors %*% (sqrt(eig$values) * t(eig$vectors))
     return(sqrtM)
 }
 
@@ -286,7 +286,7 @@
     if(inherits(x, "phylo")) x <- vcv.phylo(x)
     if(!all(is.finite(x))) return(Inf)
     eig <- eigen(x, symmetric = TRUE)
-    sqrtM <- tcrossprod(eig$vectors %*% diag(1/sqrt(eig$values)), eig$vectors)
+    sqrtM <- eig$vectors %*% ((1/sqrt(eig$values)) * t(eig$vectors))
     return(sqrtM)
 }
 
@@ -316,7 +316,7 @@
         eig <- eigen(Pi)
         V <- eig$vectors
         d <- eig$values
-        P <- V%*%diag(1/d)%*%t(V)
+        P <- V %*% ((1/d) * t(V))
     },
     "LASSO"={
         LASSO <- glassoFast(S,tuning)
@@ -328,7 +328,7 @@
         eig <- eigen(Pi)
         V <- eig$vectors
         d <- eig$values
-        P <- V%*%diag(1/d)%*%t(V)
+        P <- V %*% ((1/d) * t(V))
     })
     
     estimate <- list(Pinv=Pi, P=P, S=S)
