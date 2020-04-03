@@ -111,6 +111,13 @@ mvSIM<-function(tree,nsim=1,error=NULL,model=c("BM1","BMM","OU1","OUM","EB"), pa
              if(inherits(tree,"phylo")){
                  if(!is.null(tree[["mapped.edge"]])){
                     k<-length(colnames(tree$mapped.edge))
+                 }else{
+                     if(model=="OUBMi" | model=="BMOUi" | model=="OUEBi" | model=="EBOUi" | model=="BMEBi" | model=="EBBMi" | model=="RR" | model=="RC"){
+                         k <- 2
+                     }else{
+                         k <- 1
+                     }
+    
                  }
              }else{
                  k<-1

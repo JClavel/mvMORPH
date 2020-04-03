@@ -112,8 +112,8 @@ LRT(mod1,mod2)
 nsim = 500
 boot <- simulate(mod2, tree=tree, nsim=nsim)
 simulations <- sapply(1:nsim, function(i){
-  mod1boot<-mvBM(tree, boot[[i]], model="BMM", diagnostic=F, echo=F)
-  mod2boot<-mvBM(tree, boot[[i]], model="BM1", diagnostic=F, echo=F, method="pic")
+  mod1boot<-mvBM(tree, boot[[i]], model="BMM", diagnostic=FALSE, echo=FALSE)
+  mod2boot<-mvBM(tree, boot[[i]], model="BM1", diagnostic=FALSE, echo=FALSE, method="pic")
   2*(mod1boot$LogLik-mod2boot$LogLik)
 })
 

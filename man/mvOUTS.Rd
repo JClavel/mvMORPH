@@ -187,7 +187,7 @@ timeseries <- 1:ts
 sigma <- matrix(c(0.01,0.005,0.003,0.005,0.01,0.003,0.003,0.003,0.01),3)
 # upper triangular matrix with effect of trait 2 on trait 1.
 alpha <- matrix(c(0.4,0,0,-0.5,0.3,0,0,0,0.2),3,3) 
-theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=T, ncol=3); root=TRUE
+theta <- matrix(c(0,0,0,1,0.5,0.5),byrow=TRUE, ncol=3); root=TRUE
 
 data <- mvSIM(timeseries, model="OUTS", param=list(alpha=alpha, 
               sigma=sigma, theta=theta, root=root, 

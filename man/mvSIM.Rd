@@ -141,7 +141,7 @@ simul3<-simulate(model_fit,nsim=nsim,tree=tree)
  simul4<-simulate(model_fit,nsim=100,tree=tree)
  
  results<-lapply(simul4,function(x){
-    mvBM(tree,x,model="BM1",method="pic", echo=F,diagnostic=F)
+    mvBM(tree,x,model="BM1",method="pic", echo=FALSE,diagnostic=FALSE)
     })
 
  sigma_simul<-sapply(results,function(x){x$sigma})

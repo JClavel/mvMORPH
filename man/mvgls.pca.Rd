@@ -68,7 +68,7 @@ Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R))
 
 # The conventional phylogenetic PCA
 phylo_pca <- mvgls(Y~1, tree=tree, model="BM", method="LL")
-mvgls.pca(phylo_pca, plot=T) 
+mvgls.pca(phylo_pca, plot=TRUE) 
 
 
 
@@ -77,7 +77,7 @@ mvgls.pca(phylo_pca, plot=T)
 fit <- mvgls(Y~1, tree=tree, model="lambda", method="LOO", penalty="RidgeAlt")
 
 # Perform a regularized phylogenetic PCA using the model fit (Pagel lambda model)
-pca_results <- mvgls.pca(fit, plot=T) 
+pca_results <- mvgls.pca(fit, plot=TRUE) 
 
 # retrieve the scores
 head(pca_results$scores)
