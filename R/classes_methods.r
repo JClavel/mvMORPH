@@ -146,6 +146,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     args <- list(...)
     if(is.null(args[["eigSqm"]])) eigSqm <- TRUE else eigSqm <- args$eigSqm
     if(is.null(args[["restricted"]])) restricted <- FALSE else restricted <- args$restricted
+    if(is.null(args[["REML"]])) args$forceREML <- FALSE else args$forceREML <- args$REML
     
     # retrieve data to simulate bootstrap samples
     beta <- object$coefficients
@@ -168,11 +169,14 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     N = nrow(Y)
     p = object$dims$p
-    if(object$REML) ndimCov = object$dims$n - object$dims$m else ndimCov = object$dims$n
+    if(object$REML & args$forceREML==TRUE) ndimCov = object$dims$n - object$dims$m else ndimCov = object$dims$n
     tuning <- object$tuning
     target <- object$target
     penalty <- object$penalty
     Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
+    # TODO (change to allow n-ultrametric and OU
+    if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
+    
     DsqrtInv <- pruning(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
@@ -189,7 +193,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         residualsBoot <- residuals(objectBoot, type="normalized")
         
         # For boot "i" LL1(Y*|param*)
-        Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -201,7 +205,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
         
         # For boot "i" LL2(Y*|param)
-        Ccov2 <- as.numeric(objectFit$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus) else Ccov2 <- as.numeric(objectFit$corrSt$det)
         Gi2 <- try(chol(objectFit$sigma$Pinv), silent=TRUE)
         if(inherits(Gi2, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi2, t(residualsBoot), transpose = TRUE)^2)
@@ -224,7 +228,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         #else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
         
         # For boot "i" LL2(Y|param*)
-        Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -238,7 +242,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Estimate EIC: LL+bias
     
     # Maximum Likelihood
-    Ccov <- as.numeric(object$corrSt$det)
+    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus) else Ccov <- as.numeric(object$corrSt$det)
     Gi <- try(chol(object$sigma$Pinv), silent=TRUE)
     if(inherits(Gi, 'try-error')) return("error")
     quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
