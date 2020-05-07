@@ -104,15 +104,21 @@ mvOU(tree, simul[[1]], method="sparse", model="OU1", precalc=precal,
 # Fit the model to the "nsim" simulated datasets
  results<-lapply(1:nsim,function(x){
  mvOU(tree, simul[[x]], method="sparse", model="OU1", precalc=precal,
-    param=list(decomp="cholesky"))
+    param=list(decomp="cholesky"),
+    echo=FALSE, diagnostic=FALSE)
  })
 
 ### Use parallel package
  library(parallel)
- number_of_cores<-2L
+if(.Platform$OS.type == "unix"){
+  number_of_cores<-2L # Only working on Unix systems
+}else{
+  number_of_cores<-1L
+} 
+
  results<-mclapply(simul, function(x){
     mvOU(tree, x, method="sparse", model="OU1", precalc=precal,
-       param=list(decomp="cholesky"))
+       param=list(decomp="cholesky"), echo=FALSE, diagnostic=FALSE)
  }, mc.cores = getOption("mc.cores", number_of_cores))
 
 

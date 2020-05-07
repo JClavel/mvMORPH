@@ -5,7 +5,7 @@
 pruning <- function(tree, inv=TRUE, scaled=TRUE, trans=TRUE, check=TRUE){
   # check the order of the tree; prunning algorithm use "postorder"
   if(check==TRUE){
-      if(!is.binary.tree(tree)) tree <- multi2di(tree, random=FALSE)
+      if(!is.binary.phylo(tree)) tree <- multi2di(tree, random=FALSE)
       if(attr(tree,"order")!="postorder") tree <- reorder.phylo(tree, "postorder")
   }
   
