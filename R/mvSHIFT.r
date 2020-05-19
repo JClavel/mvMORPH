@@ -751,9 +751,9 @@ results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, s
 }else if(model=="RR"){
 results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="CV"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=beta.mat, sigma=sigma.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="CVG"){
-results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=alpha.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
+results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, beta=beta.mat, sigma=sigma.mat, sig=sig.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="OV"){
 results<-list(LogLik=LL, AIC=AIC, AICc=AICc, theta=theta.mat, alpha=alpha.mat, sigma=sigma.mat, beta=beta.mat, convergence=estim$convergence, hess.values=hess.val, param=param, llik=llfun)
 }else if(model=="OVG"){
