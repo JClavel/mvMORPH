@@ -366,7 +366,7 @@ switch(model,
 },
 "CV"={
     # Brownian & ACDC models with the same rates
-    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n))
+    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
     # Compute the design matrix
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
@@ -380,7 +380,7 @@ switch(model,
 },
 "CVG"={
     # Brownian & ACDC models with different rates
-    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=alpha, Rrows=as.integer(p),  Crows=as.integer(n))
+    V<-.Call(kronecker_shiftEB_BM, R1=sig, R2=sigma, C1=C[[before]], C2=C[[after]], beta=beta, Rrows=as.integer(p),  Crows=as.integer(n))
     # Compute the design matrix
     W<-multD(tree,p,n,smean=TRUE)
     # Add measurment error?
