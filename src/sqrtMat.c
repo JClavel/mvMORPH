@@ -9,7 +9,7 @@
 
 static void phylo_squareRoot(const int *nsp, const int *edge1, const int *edge2, double *tempbl, double *F, double *D, double *var_prun, double *root_v, double *V, int *invMat, int *normIC){
     int i, j, k, l, f, anc, da, d1, d2, ntip, indice;
-    double sumbl, tfinal, t1, t2;
+    double sumbl, tfinal, t1=0., t2=0.;
     
     ntip=*nsp;
     indice = 0; // counter for the columns of D (the matrix square root)
