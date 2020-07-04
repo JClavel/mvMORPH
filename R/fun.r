@@ -420,7 +420,7 @@ matrixParam<-function(x,p,matrix="cholesky",index.user=NULL,tol=0.000001){
         dval <- diag(A)
         diag(A) <- diag(dval%*%t(dval))
         eigval <- eigen(A)
-        eig <- min(eigval$values)
+        eig <- min(Re(eigval$values))
         if(eig<0){
             # arbitrary tolerance value to shift the smallest eigenvalue
             A <- A+(abs(eig)+tol)*diag(p)
