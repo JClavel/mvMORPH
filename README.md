@@ -10,10 +10,10 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.1.2**
+**mvMORPH 1.1.4**
 
-1. This is the version 1.1.2:
-  + Minor changes to 1.1.1 to follow CRAN policies
+1. This is the version 1.1.4:
+  + add the BMM and OUM models
   
 
 2. _TODO_:

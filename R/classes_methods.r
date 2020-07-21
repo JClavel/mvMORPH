@@ -55,7 +55,13 @@ GIC.mvgls <- function(object, ...){
         Y <- object$corrSt$Y
     }
     
-    if(object$model=="BM") mod.par=0 else mod.par=1
+    if(object$model=="BM"){
+       mod.par=0
+    }else if(object$model=="BMM"){
+       mod.par=(ncol(object$corrSt$phy$mapped.edge)) - 1
+    }else{
+       mod.par=1
+    }
     if(is.numeric(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
     if(object$REML) ndimCov = n - m else ndimCov = n
     # Nominal loocv
@@ -187,13 +193,13 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     
     # Estimate the bias term
-    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
+    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM, Ccov2){ # LL(Y*|param*) - LL(Y*| param)
         
         # Y*|param*
         residualsBoot <- residuals(objectBoot, type="normalized")
         
         # For boot "i" LL1(Y*|param*)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -205,7 +211,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
         
         # For boot "i" LL2(Y*|param)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus) else Ccov2 <- as.numeric(objectFit$corrSt$det)
+        # if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus + objectFit$corrSt$const) else Ccov2 <- as.numeric(objectFit$corrSt$det)
         Gi2 <- try(chol(objectFit$sigma$Pinv), silent=TRUE)
         if(inherits(Gi2, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi2, t(residualsBoot), transpose = TRUE)^2)
@@ -228,7 +234,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         #else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
         
         # For boot "i" LL2(Y|param*)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -242,7 +248,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Estimate EIC: LL+bias
     
     # Maximum Likelihood
-    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus) else Ccov <- as.numeric(object$corrSt$det)
+    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus + object$corrSt$const) else Ccov <- as.numeric(object$corrSt$det)
     Gi <- try(chol(object$sigma$Pinv), silent=TRUE)
     if(inherits(Gi, 'try-error')) return("error")
     quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
@@ -258,7 +264,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         
         modelPerm$response <- quote(Yp);
         estimModelNull <- eval(modelPerm);
-        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv)
+        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv, Ccov2=Ccov)
         d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
         d1res+d3res
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
@@ -381,11 +387,12 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
@@ -436,11 +443,12 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
