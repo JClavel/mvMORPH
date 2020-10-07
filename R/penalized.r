@@ -182,7 +182,7 @@
 # ------------------------------------------------------------------------- #
 .corrStr <- function(par, timeObject){
     
-    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM", "OUM", "OU1")){
+    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM", "OUM", "OU1", "BMM2")){
         # Tree transformation
         struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr, Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML, precalc=timeObject$precalc)
     }else{
@@ -286,7 +286,11 @@
     if(inherits(x, "phylo")) x <- vcv.phylo(x)
     if(!all(is.finite(x))) return(Inf)
     eig <- eigen(x, symmetric = TRUE)
-    sqrtM <- eig$vectors %*% ((1/sqrt(eig$values)) * t(eig$vectors))
+    # check for singular dimensions =>  hack from corpcor package. Just retain the dimensions with positive eigenvalues
+    tol = max(dim(x))*max(eig$values)*.Machine$double.eps
+    Positive = eig$values > tol
+    if(sum(Positive)<length(eig$values)) warning("The phylogenetic covariance matrix was singular. Check the results carefully and consider using 'eigSqm=FALSE' option and 'error=TRUE'")
+    sqrtM <- eig$vectors[,Positive,drop=FALSE] %*% ((1/sqrt(eig$values[Positive])) * t(eig$vectors[,Positive,drop=FALSE]))
     return(sqrtM)
 }
 
@@ -343,10 +347,7 @@
 
 .transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "BMM", "OUM"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE, precalc=NULL){
     
-    # pre-compute and checks | TODO reduce computational burden by avoiding reordering
-    if(inherits(phy, "simmap") & attr(phy,"order")!="cladewise") phy <- reorderSimmap(phy, order="cladewise")
-    if(attr(phy,"order")!="cladewise") phy <- reorder.phylo(phy, "cladewise")
-    
+    # pre-compute and checks | TODO reduce computational burden by avoiding reordering and recomputing distances, ages...etc
     n <- Ntip(phy)
     parent <- phy$edge[,1]
     descendent <- phy$edge[,2]
@@ -354,6 +355,7 @@
     N <- 2*n-2
     diagWeight <- NULL
     const <- 0
+    flag <- FALSE
     
     # Model
     switch(model,
@@ -366,6 +368,7 @@
             D = max(dis[1:n]) - dis[1:n]
             D = D - mean(D)
             phy$edge.length[extern] <- phy$edge.length[extern] + D[descendent[extern]]
+            flag <- TRUE
         }
         
         # Branching times (now the tree is ultrametric)
@@ -404,6 +407,7 @@
             D = max(dis[1:n]) - dis[1:n]
             D = D - mean(D)
             phy$edge.length[extern] <- phy$edge.length[extern] + D[descendent[extern]]
+            flag <- TRUE
         }
         
         # Branching times (now the tree is ultrametric)
@@ -454,6 +458,7 @@
             D = max(dis[1:n]) - dis[1:n]
             D = D - mean(D)
             phy$edge.length[extern] <- phy$edge.length[extern] + D[descendent[extern]]
+            flag <- TRUE
         }
         
         # Branching times (now the tree is ultrametric)
@@ -515,9 +520,13 @@
     "RWTS"={
        stop("Not yet implemented. The time-series models are coming soon, please be patient")
     },
-    "BMM"={
+    "BMM2"={
         # multirates model - I remove the first column because it's a proportional scaling? or just phy$mapped.edge%*%c(1,param)?
         phy$edge.length <- phy$mapped.edge %*% c(1,param)
+    },
+    "BMM"={
+        # multirates model - I remove the first column because it's a proportional scaling? or just phy$mapped.edge%*%c(1,param)?
+        phy$edge.length <- phy$mapped.edge %*% param
     })
     
     # Add measurment error
@@ -529,7 +538,11 @@
     Y <- crossprod(C$sqrtM, Y)
     
     # Return the determinant
-    if(REML) deterM <- C$det + determinant(crossprod(X))$modulus - const else deterM <- C$det
+    deterM <- C$det
+    
+    # Adjust the determinant for non-ultrametric OU (see Ho & Ané 2014 - Syst. Bio., p. 401)
+    if(flag) deterM <- deterM + 2*sum(log(diagWeight))
+    if(REML) deterM <- deterM + determinant(crossprod(X))$modulus - const
     
     # Return the score, variances, and scaled tree
     return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM, const=const))
@@ -545,17 +558,18 @@
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-.setBounds <- function(penalty, model, lower, upper, tol=1e-10, mserr=NULL, penalized=TRUE, k=NULL){
+.setBounds <- function(penalty, model, lower, upper, tol=1e-10, mserr=NULL, penalized=TRUE, corrModel=NULL, k=NULL){
     
     if(is.null(upper)){
         switch(model,
         "EB"={up <- 0},
-        "OU"={up <- 10},
-        "OU1"={up <- 10},
-        "OUM"={up <- 10},
+        "OU"={up <- 30/max(node.depth.edgelength(corrModel$structure))}, # ~ 30 half-lifes upper limit for phylogenetic trees. Should change the format for general models
+        "OU1"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
+        "OUM"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
         "lambda"={up <- 1},
         "BM"={up <- Inf},
         "BMM"={up <- rep(Inf,k)},
+        "BMM2"={up <- rep(Inf,k)},
         up <- Inf)
     }else{
         up <- upper
@@ -570,6 +584,7 @@
         "lambda"={low <- 1e-8},
         "BM"={low <- -Inf},
         "BMM"={low <- rep(-Inf,k)},
+        "BMM2"={low <- rep(-Inf,k)},
         low <- -Inf)
     }else{
         low <- lower
@@ -595,7 +610,7 @@
         }
         
         # parameters
-        if(model=="BMM"){
+        if(model=="BMM" | model=="BMM2"){
             id1 <- 1; id2 <- 2:(k+1); id3 <- k+2
         }else if(model=="BM"){
             id1 <- id2 <- 1; id3 <- 2
@@ -609,7 +624,7 @@
         lowerBound <- low
         
         # parameters
-        if(model=="BMM"){
+        if(model=="BMM" | model=="BMM2"){
             id1 <- 1; id2 <- 1:k; id3 <- k+1
         }else if(model=="BM"){
             id1 <- id2 <- id3 <- 1
@@ -639,6 +654,7 @@
     "EB" ={ transformPar <- function(x) (x[id2])},
     "lambda" ={ transformPar <- function(x) (x[id2])},
     "BMM"={transformPar <- function(x) (x[id2]*x[id2])},
+    "BMM2"={transformPar <- function(x) (x[id2]*x[id2])},
     transformPar <- function(x) (x[id2])
     )
     
@@ -667,15 +683,14 @@
         }else{
             range_val <- log(c(1e-6, 0.01, 0.1, 1, 10, 100, 1000))
         }
-        mod_val <- NULL
     }else{
         range_val <- NULL
-        mod_val <- 1
     }
     
     # prepare the list
     list_param <- list()
     list_param[[1]] <- range_val
+    list_param[[2]] <- 1 # dummy starting value for BM...
     
     # Models starting guesses
     switch(corrModel$model,
@@ -709,9 +724,16 @@
             list_param[[2]] <- mod_val
             index_err <- 3
         },
-        "BMM"={
+        "BMM2"={
             mod_val <- 1
             k = ncol(corrModel$structure$mapped.edge) - 1 # the first is used as reference
+            list_param <- c(list(range_val), as.list(rep(mod_val, k)))
+            #list_param[2:ncol(corrModel$structure$mapped.edge)] <- 1
+            index_err <- length(list_param) + 1
+        },
+        "BMM"={
+            mod_val <- 1
+            k = ncol(corrModel$structure$mapped.edge) # all groups
             list_param <- c(list(range_val), as.list(rep(mod_val, k)))
             #list_param[2:ncol(corrModel$structure$mapped.edge)] <- 1
             index_err <- length(list_param) + 1
@@ -739,4 +761,27 @@
     
     if(echo==TRUE & penalized==TRUE)  cat("Best starting for the tuning: ",as.numeric(corrModel$bounds$trTun(start[1])))
     return(start)
+}
+
+
+# ------------------------------------------------------------------------- #
+# .check_par_results  (TODO)                                                #
+# options: model, par, penalized                                            #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+.check_par_results <- function(corrModel, par, penalized=TRUE){
+    
+    if(penalized) indice = 2 else indice = 1
+    switch(corrModel$model,
+        "OU"={
+           if(par==corrModel$bounds$upper[indice]) warning("Parameter search reached the upper bound. You should consider increasing the \"upper\" argument value ")
+        },
+        "OU1"={
+           if(par==corrModel$bounds$upper[indice]) warning("Parameter search reached the upper bound. You should consider increasing the \"upper\" argument value ")
+        },
+        "OUM"={
+           if(par==corrModel$bounds$upper[indice]) warning("Parameter search reached the upper bound. You should consider increasing the \"upper\" argument value ")
+        },
+    )
 }

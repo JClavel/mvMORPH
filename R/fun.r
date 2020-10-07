@@ -864,6 +864,19 @@ build.chol<-function(b,p){
 }
 
 
+
+# Functions to check input values in lists > e.g. in EIC
+.check_samples <- function(list_values){
+    check <- sapply(list_values, function(x){
+        if(inherits(x, "try-error")) NA else x
+    })
+    
+    na_rm <- check[!is.na(check)]
+    if(length(na_rm)<length(check)) warning("There were multiple issues/aborted estimations in the bootstrapped samples")
+    return(na_rm)
+}
+
+
 ##----------------------mvfit_likelihood--------------------------------------##
 
 loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL,NA_val=NULL,Indice_NA=NULL,theta_mle=TRUE,theta=NULL,istrend=FALSE,trend=0){

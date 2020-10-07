@@ -25,6 +25,8 @@ GIC.mvgls <- function(object, ...){
     # retrieve arguments
     args <- list(...)
     if(is.null(args[["eigSqm"]])) eigSqm <- TRUE else eigSqm <- args$eigSqm
+    if(is.null(args[["REML"]])) args$forceREML <- TRUE else args$forceREML <- args$REML # force to true to follow what has been done in the first paper?
+     
     method <- object$method
     penalty <- object$penalty
     target <- object$target
@@ -57,15 +59,17 @@ GIC.mvgls <- function(object, ...){
     
     if(object$model=="BM"){
        mod.par=0
-    }else if(object$model=="BMM"){
+    }else if(object$model=="BMM2"){
        mod.par=(ncol(object$corrSt$phy$mapped.edge)) - 1
+    }else if(object$model=="BMM"){
+        mod.par=(ncol(object$corrSt$phy$mapped.edge))
     }else{
        mod.par=1
     }
     if(is.numeric(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
-    if(object$REML) ndimCov = n - m else ndimCov = n
+    if(object$REML & args$forceREML==TRUE) ndimCov = n - m else ndimCov = n
     # Nominal loocv
-    XtX <- solve(crossprod(X))
+    XtX <- pseudoinverse(crossprod(X))
     # hat matrix
     h <- diag(X%*%pseudoinverse(X))
     
@@ -119,23 +123,22 @@ GIC.mvgls <- function(object, ...){
     
     # Number of parameters for the root state:
     # The Information matrix from the Hessian and gradients scores
-    XtX <- solve(t(X)%*%(X))
     T2 <- sapply(nloo, function(i){
         gradient <- (X[i,])%*%t(P%*%t(Y[i,]-X[i,]%*%beta))
         sum(gradient * (XtX%*%gradient%*%Pi))
     })
     beta_df <- sum(T2)
     
-    if(m>1) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with cautions and consider EIC or simulations instead")
+    if( min(m, sum(object$dims$assign!=0))>1 ) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with care and consider EIC or simulations instead")
     
     # LogLikelihood (minus)
     DP <- as.numeric(determinant(Pi)$modulus)
-    Ccov <- object$corrSt$det
+    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus + object$corrSt$const) else Ccov <- as.numeric(object$corrSt$det)
     llik <- 0.5 * (ndimCov*p*log(2*pi) + p*Ccov + ndimCov*DP + ndimCov*sum(S*P))
     GIC <- 2*llik + 2*(sigma_df+beta_df+mod.par)
     
     # return the results
-    results <- list(LogLikelihood=-llik, GIC=GIC, p=p, n=n, bias=sigma_df+beta_df+mod.par, bias_cov=sigma_df)
+    results <- list(LogLikelihood=-llik, GIC=GIC, p=p, n=n, bias=sigma_df+beta_df+mod.par, bias_cov=sigma_df, args=args)
     class(results) <- c("gic.mvgls","gic")
     return(results)
 }
@@ -179,9 +182,15 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     tuning <- object$tuning
     target <- object$target
     penalty <- object$penalty
+    if(is.null(object$corrSt$diagWeight)){
+        diagWeight <- 1; is_weight = FALSE
+    }else{
+        diagWeight <- object$corrSt$diagWeight; is_weight = TRUE
+        diagWeightInv <- 1/diagWeight
+    }
     Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
-    # TODO (change to allow n-ultrametric and OU
-    if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
+    # TODO (change to allow n-ultrametric and OU) > just need to standardize the data by the weights
+    # if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
     
     DsqrtInv <- pruning(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
     modelPerm <- object$call
@@ -208,7 +217,14 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         
         # Y*|param
         #if(!restricted) residualsBoot <- objectBoot$corrSt$Y - objectBoot$corrSt$X%*%objectFit$coefficients # does not account for the phylo model of the original fit
-        if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
+        if(!restricted){
+            if(is_weight){
+                residualsBoot <- crossprod(sqM, (objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)*diagWeightInv)
+            }else{
+                residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
+                
+            }
+        }
         
         # For boot "i" LL2(Y*|param)
         # if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus + objectFit$corrSt$const) else Ccov2 <- as.numeric(objectFit$corrSt$det)
@@ -227,7 +243,12 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         # Y|param*
         if(!restricted) {
             sqM_temp <- pruning(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
-            residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
+            if(is_weight){
+                residualsBoot <- try(crossprod(sqM_temp, (objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients)/objectBoot$corrSt$diagWeight), silent=TRUE)
+            } else {
+                residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
+                
+            }
         }else{ residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients}
         
         #if(!restricted) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectBoot$coefficients
@@ -259,7 +280,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     bias <- pbmcmapply(function(i){
         
         # generate bootstrap sample
-        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),]) # sampling with replacement for bootstrap
+        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),])*diagWeight # sampling with replacement for bootstrap
         rownames(Yp) <- rownames(object$variables$Y)
         
         modelPerm$response <- quote(Yp);
@@ -269,12 +290,16 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         d1res+d3res
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
     
+    # check for errors first?
+    bias <- .check_samples(bias)
+    nboot_eff <- length(bias)
+    
     # compute the EIC
     pboot <- mean(bias)
     EIC <- -2*llik + 2*pboot
     
     # standard-error
-    se <- sd(bias)/sqrt(nboot)
+    se <- sd(bias)/sqrt(nboot_eff)
     
     # concatenate the results
     results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, se=se, p=p, n=N)
@@ -392,6 +417,7 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        "BMM2"={print(round(x$param, digits=digits)); cat("\n")},
         "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
@@ -449,6 +475,7 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
         "BMM"={print(round(x$param, digits=digits)); cat("\n")},
+        "BMM2"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }

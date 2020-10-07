@@ -52,7 +52,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     method = match.arg(method[1], c("PL-LOOCV","LOOCV","LL","H&L","Mahalanobis"))
     if(method=="PL-LOOCV") method = "LOOCV" # to keep the explicit name with 'PL'
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
-    if(!inherits(tree, "simmap") & (model=="BMM" | model=="OUM")) stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" and \"OUM\" models")
+    if(!inherits(tree, "simmap") & (model=="BMM" | model=="BMM2" | model=="OUM")) stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" and \"OUM\" models")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
     if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", \"BMM\", \"OUM\" or \"lambda\" ")
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
@@ -80,18 +80,20 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     m = ncol(X) # dim of predictors
     nloo = 1:n
     if(REML) ndimCov = n - m else ndimCov = n
-    if(inherits(tree, "simmap")) k <- ncol(tree$mapped.edge) - 1 else k <- NULL
+    if(inherits(tree, "simmap")){
+        if(model=="BMM2") k <- ncol(tree$mapped.edge) - 1 else if(model=="BMM") k <- ncol(tree$mapped.edge)
+    }else k <- NULL
     if(method=="LL") penalized=FALSE else penalized=TRUE
     if(n<p & method=="LL") stop("There are more variables than observations. Please try instead the penalized methods \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"")
-    
-    # Set bounds for parameter search
-    bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized, k=k)
     
     # CorrStruct object (include data, model, covariance...)
     if(scale.height) tree <- .scaleStruct(tree)
     corrModel <- list(Y=Y, X=X, REML=REML, mserr=mserr,
                     model=model, structure=tree, p=p, nobs=nobs,
-                    nloo=nloo, bounds=bounds, precalc=precalc)
+                    nloo=nloo, precalc=precalc)
+    
+    # Set bounds for parameter search
+    bounds <- corrModel$bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized, corrModel=corrModel, k=k)
     
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
@@ -120,9 +122,19 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # Estimates
     tuning <- bounds$trTun(estimModel$par)
     mod_par <- bounds$trPar(estimModel$par)
-    if(inherits(tree, "simmap") && model=="BMM"){
+    
+    # convergence & bounds checks?
+    .check_par_results(corrModel, mod_par, penalized);
+    
+    # Multiple rates relative to the baseline BMM2
+    if(inherits(tree, "simmap") && model=="BMM2"){
         names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]][-1] # set the names of the groups for BMM. we remove the first one which is used as reference
     }
+    # Multiple rates BMM
+    if(inherits(tree, "simmap") && model=="BMM"){
+        names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM. we remove the first one which is used as reference
+    }
+    
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
