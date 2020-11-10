@@ -1142,7 +1142,7 @@ print.mvmorph.shift<-function(x,...){
         cat("\n")
         cat("ML sigma values ( recent slice:",x$param$names_regimes[2],")","\n")
         cat("______________________","\n")
-        print(x$sigma)
+        print(x$sig)
     }
     if(x$param$model[1]=="OVG" || x$param$model[1]=="OV"){
         cat("\n")
@@ -1316,7 +1316,10 @@ stationary.mvmorph<-function(object){
 ## Compute the phylogenetic half-life
 
 halflife.mvmorph<-function(object){
-    if(class(object)[2]=="mvmorph.ou"){
+    if(inherit(object,"mvmorph.ou") | inherit(object,"mvmorph.shift")){
+        if(is.null(object[["alpha"]])==TRUE){
+            stop("The phylogenetic half-life can be computed only for models including Ornstein-Uhlenbeck processes.")
+        }
     lambda<-eigen(object$alpha)$values
     phyhalflife<-log(2)/Re(lambda)
         return(phyhalflife)

@@ -521,7 +521,7 @@ summary.mvgls <- function(object, ...){
     
     if(object$method=="LL"){
         LL = object$logLik
-        nparam = length(object$start_values) + p + p*(p + 1)/2
+        nparam = if(object$model=="BM") (length(object$start_values)-1) + p + p*(p + 1)/2 else length(object$start_values) + p + p*(p + 1)/2 
         # AIC
         AIC = -2*LL+2*nparam
         # GIC
@@ -680,3 +680,140 @@ plot.manova.mvgls <- function(x,...){
 
 }
 
+# ------------------------------------------------------------------------- #
+# plot.mvgls                                                                #
+# options: x, term, ..., fitted=TRUE                                        #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+plot.mvgls <- function(x, term, ..., fitted=FALSE){
+    
+    if(missing(term)) term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
+    if(!is.numeric(term) & !term%in%attr(x$variables$X,"dimnames")[[2]]) stop("Unknown predictor name.","\n")
+    # based on Drake & Klingenberg 2008 shape score
+    betas <- coefficients(x)[term,,drop=TRUE]
+    standBeta <- betas %*% sqrt(solve(crossprod(betas)))
+    scoreVar <- (x$variables$Y)%*% standBeta
+    
+    # plot
+    plot(scoreVar ~ x$variables$X[,term], xlab=term, ylab="mvScore", ...)
+    
+    # plot predictions on the same space?
+    if(fitted){
+        scoreVar2 <- (x$fitted ) %*% standBeta
+        points(scoreVar2 ~ x$variables$X[,term], col="red", pch=16)
+    }
+    
+    results <- list(scores = scoreVar, standBeta=standBeta, betas=betas, term=term)
+    invisible(results)
+}
+
+# ------------------------------------------------------------------------- #
+# predict.mvgls                                                             #
+# options: object, newdata, ...                                             #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+predict.mvgls <- function(object, newdata, ...){
+    
+    args <- list(...)
+    # if "tree" is provided
+    if(!is.null(args[["tree"]])){
+        if(!inherits(args$tree, "phylo")) stop("the provided tree is not of class \"phylo\" ") else tree <- args$tree
+        if(!is.data.frame(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree ")
+    } else tree <- NULL
+    if(is.null(args[["na.action"]])) na.action <- na.pass else na.action <- args$na.action
+    
+    # check if newdata is provided
+    if(missing(newdata) || is.null(newdata)) {
+        X <- object$variables$X # simply return fitted values when newdata is empty
+    }else{
+        
+        Terms <- delete.response(object$terms)
+        # as in "stats v3.3.0
+        m <- model.frame(Terms, newdata,
+        xlev = object$xlevels, na.action = na.action)
+        
+        # check the arguments
+        if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+        
+        # FIXME allow lists
+        predictors_names <- rownames(newdata)
+    }
+    
+    
+    # GLS/OLS prediction
+    if(is.null(tree)){
+        predicted <- X%*%object$coefficients # simply return fitted values when newdata is empty
+    }else{
+        rcov <- .resid_cov_phylo(tree, object, predictors_names)
+        predicted <- X%*%object$coefficients + rcov$w%*%solve(rcov$Vt)%*%object$residuals[rcov$train,,drop=FALSE] # FIXME account for (multivariate) variance scaling? Rao & Toutenberg => no just the correlation structure
+    }
+    
+    return(predicted)
+}
+
+# ------------------------------------------------------------------------- #
+# .resid_cov_phylo                                                          #
+# options: tree, object, sp_name, ...                                       #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+.resid_cov_phylo <- function(tree, object, sp_name, ...){
+    
+    if(is.null(sp_name)) error("You must provide species names to \"newdata\"")
+    if(any(!sp_name%in%tree$tip.label)) stop("the \"newdata\" names does not matches names in the tree ")
+    train_sample <- tree$tip.label[!tree$tip.label%in%sp_name]
+    
+    # check first that species in the training sample are the same as in the model fit object
+    if(any(!train_sample%in%object$corrSt$phy$tip.label)) train_sample <- object$corrSt$phy$tip.label
+    
+    # helper to obtain the covariances between data used in a model and newdata
+    switch(object$model,
+    "BM"={ V <- vcv.phylo(tree)},
+    "OU"={
+        V <- .Call("mvmorph_covar_ou_fixed", A=vcv.phylo(tree), alpha=as.double(object$param), sigma=1, PACKAGE="mvMORPH")
+        rownames(V) <- colnames(V) <- tree$tip.label
+    },
+    "EB"={ V <- vcv.phylo(.transformPhylo(tree, model="EB", param=object$param)) },
+    "lambda"={ V <- vcv.phylo(.transformPhylo(tree, model="lambda", param=object$param)) },
+    )
+    
+    # Build the covariance matrix
+    w <- V[sp_name, train_sample, drop=FALSE]
+    Vt <- V[train_sample, train_sample, drop=FALSE]
+    
+    # return the covariances
+    results <- list(w=w, Vt=Vt, train=train_sample)
+    return(results)
+}
+
+# ------------------------------------------------------------------------- #
+# .transformPhylo                                                           #
+# options: phy, model, param, ...                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+.transformPhylo <- function(phy, model, param, ...){
+    
+    # precomputations
+    n <- Ntip(phy)
+    parent <- phy$edge[,1]
+    descendent <- phy$edge[,2]
+    extern <- (descendent <= n)
+    
+    switch(model,
+    "EB"={
+        if (param!=0){
+            distFromRoot <- node.depth.edgelength(phy)
+            phy$edge.length = (exp(param*distFromRoot[descendent])-exp(param*distFromRoot[parent]))/param
+        }
+    },
+    "lambda"={
+        # Pagel's lambda tree transformation
+        if(param!=1) {
+            root2tipDist <- node.depth.edgelength(phy)[1:n] # for non-ultrametric trees. The 'up' limit should be exactly 1 to avoid singularity issues
+            phy$edge.length <- phy$edge.length * param
+            phy$edge.length[extern] <- phy$edge.length[extern] + (root2tipDist * (1-param))
+        }
+    },)
+    
+    return(phy)
+}

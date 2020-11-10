@@ -40,7 +40,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="III" | type=="3") terms <- c("(Intercept)",attr(terms(object$formula),"term.labels")) else terms <- attr(terms(object$formula),"term.labels")
       
       summary_tests <- list(test=test, type=type, stat=paramTest[2,], approxF=paramTest[3,],
-                            Df=paramTest[1,], NumDf=paramTest[4,], DenDf=paramTest[5,], pvalue=paramTest[6,],  param=param, terms=terms)
+                            Df=paramTest[1,], NumDf=paramTest[4,], DenDf=paramTest[5,], pvalue=paramTest[6,],  param=param, terms=terms, dims=object$dims)
     }else{
       # we use permutation methods
       if(object$method!="LL" & is.null(penalized)) penalized <- "approx" else if(object$method=="LL") penalized <- "none"
@@ -64,7 +64,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="III" | type=="3") terms <- c("(Intercept)",attr(terms(object$formula),"term.labels")) else terms <- attr(terms(object$formula),"term.labels")
       
       # retrieve the statistic
-      summary_tests <- list(test=test, type=type, stat=permTests$observed, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests$simulated)
+      summary_tests <- list(test=test, type=type, stat=permTests$observed, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests$simulated, dims=object$dims)
         
     }
   
@@ -802,6 +802,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                
                                # Error SSCP
                                Ep <- crossprod(Yp - X%*%Bp)
+                               
                                # HE matrix
                                HE <- Hp%*%solve(Ep)
                              }
@@ -841,4 +842,68 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
 .derivllik <- function(alpha, Evalues, ZZD, target, const=1, p=NULL){
   res <- ((target - Evalues)*(target*alpha*const + Evalues*const - Evalues*alpha*const - ZZD))/(Evalues - Evalues*alpha + alpha*target)^2
   return(0.5*sum(res))
+}
+
+# ------------------------------------------------------------------------- #
+# effectsize - multivariate measures of association                         #
+# options: x, ...                                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+effectsize <- function(x, ...){
+    # Multivariate measures of association
+    args <- list(...)
+    if(is.null(args[["normalized"]])) normalized <- TRUE else normalized <- args$normalized
+    if(is.null(args[["adjusted"]])) adjusted <- FALSE else adjusted <- args$adjusted
+    if(x$param){
+        s = x$Df #min(vh,p)
+        switch(x$test,
+        "Wilks"={
+            # generalized eta^2 => take as normalized the conservative estimate based on the geometric mean of the canonical correlations
+            if(normalized) mult <- 1 - x$stat^(1/s) else mult <- 1 - x$stat
+            if(adjusted){
+                # Tatsuoka adjustment
+                N <- x$dims$n
+                mult <- abs( 1 - N*x$stat/((N - s - 1) + x$stat))
+            }
+        },
+        "Pillai"={
+            mult <- x$stat/s
+            
+            if(adjusted){
+                # Serlin adjustment
+                N <- x$dims$n
+                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+            }
+        },
+        "Hotelling-Lawley"={
+            mult <- (x$stat/s)/(1 + x$stat/s)
+        },
+        "Roy"={
+            mult <- x$stat/(1+x$stat)
+        })
+        mult <- matrix(mult,nrow=1)
+        colnames(mult) = x$terms
+        rownames(mult) = paste("A(",x$test,")",sep = "")
+    }else{
+        # Provide a standardized size effect instead if permutation were used
+        if(normalized){
+            if(x$test=="Wilks"){
+                # first compute SES (use a z-transform for Wilks' lambda?)
+                ses <- (atanh(x$stat) - colMeans(atanh(x$nullstat))) / apply(atanh(x$nullstat), 2, sd)
+            }else{
+                ses <- (log(x$stat) - colMeans(log(x$nullstat))) / apply(log(x$nullstat), 2, sd)
+            }
+        }else{
+            ses <-  (x$stat - colMeans(x$nullstat)) / apply(x$nullstat, 2, sd)
+        }
+        # can return ses/(1+ses) for a readable measure; for Wilks we can derive a suitable measure
+        if(x$test=="Wilks") multRel <- abs(1 - x$stat/tanh(colMeans(atanh(x$nullstat)))) else  multRel <- abs(ses)/(1+abs(ses))
+        mult <- rbind(abs(ses), multRel)
+        colnames(mult) <- x$terms
+        if(x$test=="Wilks") rownames(mult) <- c("SES","A(perm.)") else rownames(mult) <- c("SES","Rel.")
+        
+    }
+    message("Multivariate measure(s) of association","\n")
+    return(mult)
 }

@@ -44,6 +44,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)
     Y = model.response(model_fr)
     assign <- attr(X, "assign")
+    terms <- attr(model_fr, "terms")
+    xlevels <- .getXlevels(terms, data)
+    contrasts <- attr(X, "contrasts")
     
     # Option for bootstrap and permutation method
     if(!is.null(args[["response"]])) Y <- args$response
@@ -164,6 +167,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     results = list(formula=formula,
         call = match.call(),
         coefficients=coefficients,
+        terms=terms,
+        xlevels=xlevels,
+        contrasts=contrasts,
         variables=list(Y=Y, X=X, tree=tree),
         dims=ndims,
         fitted=fitted.values,
