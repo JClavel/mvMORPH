@@ -855,32 +855,56 @@ effectsize <- function(x, ...){
     args <- list(...)
     if(is.null(args[["normalized"]])) normalized <- TRUE else normalized <- args$normalized
     if(is.null(args[["adjusted"]])) adjusted <- FALSE else adjusted <- args$adjusted
+    if(is.null(args[["tatsuoka"]])) tatsuoka <- FALSE else tatsuoka <- args$tatsuoka
+    
     if(x$param){
         s = x$Df #min(vh,p)
         switch(x$test,
         "Wilks"={
-            # generalized eta^2 => take as normalized the conservative estimate based on the geometric mean of the canonical correlations
-            if(normalized) mult <- 1 - x$stat^(1/s) else mult <- 1 - x$stat
-            if(adjusted){
-                # Tatsuoka adjustment
+
+            if(tatsuoka){
+                # Tatsuoka w^2
                 N <- x$dims$n
                 mult <- abs( 1 - N*x$stat/((N - s - 1) + x$stat))
+            }else{
+                # generalized eta^2 => take as normalized the conservative estimate based on the geometric mean of the canonical correlations
+                # corresponds to Cramer-Nicewander 1979
+                mult <- 1 - x$stat^(1/s)
+            }
+            
+            # we return instead the bias corrected tatsuoka test.
+            if(adjusted){
+                # Tatsuoka w^2 bias adjusted / Maybe better to consider the Serlin correction for CN79 (Kim & Olejnik 2005)?
+                N <- x$dims$n
+                mult <- abs(mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
             }
         },
         "Pillai"={
             mult <- x$stat/s
             
             if(adjusted){
-                # Serlin adjustment
+                # Serlin (1982) adjustment
                 N <- x$dims$n
                 mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
             }
         },
         "Hotelling-Lawley"={
             mult <- (x$stat/s)/(1 + x$stat/s)
+            
+            if(adjusted){
+                # Serlin adjustment (see Kim & Olejnik 2005)
+                N <- x$dims$n
+                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+            }
         },
         "Roy"={
             mult <- x$stat/(1+x$stat)
+            
+            if(adjusted){
+                # Serlin adjustment for Roy?
+                N <- x$dims$n
+                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+            }
         })
         mult <- matrix(mult,nrow=1)
         colnames(mult) = x$terms
