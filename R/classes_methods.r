@@ -521,7 +521,7 @@ summary.mvgls <- function(object, ...){
     
     if(object$method=="LL"){
         LL = object$logLik
-        nparam = if(object$model=="BM") (length(object$start_values)-1) + p + p*(p + 1)/2 else length(object$start_values) + p + p*(p + 1)/2 
+        nparam = if(object$model=="BM") (length(object$start_values)-1) + length(object$coefficients) + p*(p + 1)/2 else length(object$start_values) + length(object$coefficients) + p*(p + 1)/2 
         # AIC
         AIC = -2*LL+2*nparam
         # GIC
@@ -688,6 +688,7 @@ plot.manova.mvgls <- function(x,...){
 plot.mvgls <- function(x, term, ..., fitted=FALSE){
     
     if(missing(term)) term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
+    term <- attr(x$variables$X,"dimnames")[[2]][term]
     if(!is.numeric(term) & !term%in%attr(x$variables$X,"dimnames")[[2]]) stop("Unknown predictor name.","\n")
     # based on Drake & Klingenberg 2008 shape score
     betas <- coefficients(x)[term,,drop=TRUE]
