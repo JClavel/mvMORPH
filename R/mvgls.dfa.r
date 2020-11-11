@@ -289,7 +289,7 @@ plot.mvgls.dfa <- function(x, ..., dims=c(1,2), type=c("raw","std")){
     if(type=="raw") scores = x$scores[,dims] 
     else scores = (x$residuals%*%x$coeffs.std)[,dims]
     # plot the scores
-    plot(scores, xlab="Discr. 1", ylab="Discr. 2", ...)
+    plot(scores, xlab=paste("Discr.",dims[1]), ylab=paste("Discr.",dims[2]), ...)
     
     # plot the mean for each classes. FIXME
     # coeff(fit)%*%x$coeffs[,dims] # if the design matrix is not a treatment contrast?
