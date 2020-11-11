@@ -294,7 +294,7 @@ plot.mvgls.dfa <- function(x, ..., dims=c(1,2), type=c("raw","std")){
     # plot the mean for each classes. FIXME
     # coeff(fit)%*%x$coeffs[,dims] # if the design matrix is not a treatment contrast?
     mu <- pseudoinverse(model.matrix(~grp+0))%*%scores
-    points(mu[,dims], pch=8, col="red")
+    points(mu, pch=8, col="red")
   }
 }
 

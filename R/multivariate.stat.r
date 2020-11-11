@@ -872,7 +872,7 @@ effectsize <- function(x, ...){
                 mult <- 1 - x$stat^(1/s)
             }
             
-            # we return instead the bias corrected tatsuoka test.
+            # we return instead the bias corrected tatsuoka test. See also Huberty 1994, p. 195
             if(adjusted){
                 # Tatsuoka w^2 bias adjusted / Maybe better to consider the Serlin correction for CN79 (Kim & Olejnik 2005)?
                 N <- x$dims$n
