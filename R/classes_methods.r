@@ -685,7 +685,7 @@ plot.manova.mvgls <- function(x,...){
 # options: x, term, ..., fitted=TRUE                                        #
 #                                                                           #
 # ------------------------------------------------------------------------- #
-plot.mvgls <- function(x, term, ..., fitted=FALSE){
+plot.mvgls <- function(x, term, ..., fitted=FALSE, residuals=FALSE){
     
     if(missing(term)){
         term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
@@ -696,7 +696,7 @@ plot.mvgls <- function(x, term, ..., fitted=FALSE){
     # based on Drake & Klingenberg 2008 shape score
     betas <- coefficients(x)[term,,drop=TRUE]
     standBeta <- betas %*% sqrt(solve(crossprod(betas)))
-    scoreVar <- (x$variables$Y)%*% standBeta
+    if(residuals) scoreVar <- (x$residuals)%*% standBeta else scoreVar <- (x$variables$Y)%*% standBeta
     
     # plot
     plot(scoreVar ~ x$variables$X[,term], xlab=term, ylab="mvScore", ...)
