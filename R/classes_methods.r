@@ -687,8 +687,11 @@ plot.manova.mvgls <- function(x,...){
 # ------------------------------------------------------------------------- #
 plot.mvgls <- function(x, term, ..., fitted=FALSE){
     
-    if(missing(term)) term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
-    term <- attr(x$variables$X,"dimnames")[[2]][term]
+    if(missing(term)){
+        term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
+        term <- attr(x$variables$X,"dimnames")[[2]][term]
+    }
+    
     if(!is.numeric(term) & !term%in%attr(x$variables$X,"dimnames")[[2]]) stop("Unknown predictor name.","\n")
     # based on Drake & Klingenberg 2008 shape score
     betas <- coefficients(x)[term,,drop=TRUE]
