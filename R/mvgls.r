@@ -71,17 +71,25 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!inherits(tree, "phylo")) stop("object \"tree\" is needed if no custom correlation structure provided.")
     if(method%in%c("H&L","Mahalanobis") & penalty%in%c("RidgeAlt","LASSO")) stop("\"H&L\" and \"Mahalanobis\" works only with \"RidgeArch\" penalization")
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
+   
+    # further checks
+    qrx <- qr(X)
+    fullrank = ifelse(ncol(X)==qrx$rank, TRUE, FALSE)
+    if(!fullrank) warning("The design matrix is not of full rank. The dimensionality has been reduced by",ncol(X)-qrx$rank,". Check your results carefully. \n")
+    if(!fullrank) assign <- assign[qrx$pivot[1L:qrx$rank]]
+    X <- X[,qrx$pivot[1L:qrx$rank], drop=FALSE] # FIXME: be less strict and handle case specific issues?
+    
+    # dimensions
+    n = nobs = nrow(Y)
+    p = ncol(Y)
+    m = qrx$rank # dim of predictors
+    nloo = 1:n
     
     # Miscellanous - pre-calculations | TODO handle time series
     precalc = .prepModel(tree, model, root)
     precalc$randomRoot = randomRoot
     precalc$root_std = root_std
-    
-    # dimensions
-    n = nobs = nrow(Y)
-    p = ncol(Y)
-    m = ncol(X) # dim of predictors
-    nloo = 1:n
+
     if(REML) ndimCov = n - m else ndimCov = n
     if(inherits(tree, "simmap")){
         if(model=="BMM2") k <- ncol(tree$mapped.edge) - 1 else if(model=="BMM") k <- ncol(tree$mapped.edge)
@@ -158,7 +166,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     numIter <- estimModel$count[1]
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
-    ndims <- list(n=n, p=p, m=m, assign=assign)
+    ndims <- list(n=n, p=p, m=m, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
     
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")

@@ -378,7 +378,7 @@ logLik.mvgls<-function(object,...){
         # param
         n <- object$dims$n
         p <- object$dims$p
-        m <- object$dims$m
+        m <- object$dims$rank
         if(object$REML) ndimCov = n - m else ndimCov = n
         DP <- as.numeric(determinant(object$sigma$Pi)$modulus)
         Ccov <- object$corrSt$det
@@ -513,7 +513,7 @@ summary.mvgls <- function(object, ...){
     # param
     n <- object$dims$n
     p <- object$dims$p
-    m <- object$dims$m
+    m <- object$dims$rank
     if(object$REML) ndimCov = n - m else ndimCov = n
     
     # loocv or LL

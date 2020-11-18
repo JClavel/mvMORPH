@@ -168,7 +168,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   
   # Number of degrees of freedom
   nb.resid <- N - Q_r$rank
-  asgn <- object$dims$assign[1L:Q_r$rank]
+  #pivots <- Q_r$pivot[1L:Q_r$rank] # retrieve full rank pivots
+  asgn <- object$dims$assign
   nterms <- sum(unique(asgn)!=0)
   
   # Tests on each variables (type I SS type)
@@ -238,7 +239,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- object$sigma$P/ndimCov
   
   # Number of degrees of freedom
-  asgn <- object$dims$assign[1L:Q_r$rank]
+  #pivots <- Q_r$pivot[1L:Q_r$rank] # retrieve full rank pivots
+  asgn <- object$dims$assign
   uasgn <- unique(asgn)
   nterms <- sum(uasgn!=0)
   nb.resid <- N - Q_r$rank
@@ -400,7 +402,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   X <- object$corrSt$X
   N = nrow(Y)
   
-  # QR decomposition
+  # QR decomposition # FIXME: perform the QR ahead in the mvgls call
   Q_r <- qr(X)
   
   # Hypothesis (projection matrix)
@@ -409,6 +411,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- solve(t(Y) %*% (Id - Proj_full) %*% Y)
   
   # Number of degrees of freedom
+  #pivots <- Q_r$pivot[1L:Q_r$rank]
   asgn <- object$dims$assign
   if(type=="II"){
     asgn <- asgn[asgn!=0]
@@ -445,9 +448,10 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           # Compute the test statistic. 
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
-                          Stats <- .multivTests(Re(eig$values), length(which(asgn[1L:Q_r$rank]==k)), nb.resid, test=test)
+                          df <- ifelse(type=="III", length(which(asgn==(k-1))), length(which(asgn==k)))
+                          Stats <- .multivTests(Re(eig$values), df, nb.resid, test=test)
                           Pval<-pf(Stats[2],Stats[3],Stats[4],lower.tail=FALSE)
-                          results <- c(length(which(asgn[1L:Q_r$rank]==k)), Stats[1], Stats[2],
+                          results <- c(df, Stats[1], Stats[2],
                                        Stats[3], Stats[4], Pval)
                           results
                         })
@@ -501,7 +505,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- object$sigma$P/ndimCov
   
   # Number of degrees of freedom
-  asgn <- object$dims$assign #[1L:Q_r$rank]
+  #pivots <- Q_r$pivot[1L:Q_r$rank]
+  asgn <- object$dims$assign
   if(type=="II"){
     asgn <- asgn[asgn!=0]
     intercept = TRUE # we removed the intercept (TODO: handle cases where a model without intercept is fitted => type III)
