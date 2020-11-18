@@ -409,7 +409,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- solve(t(Y) %*% (Id - Proj_full) %*% Y)
   
   # Number of degrees of freedom
-  asgn <- object$dims$assign[1L:Q_r$rank]
+  asgn <- object$dims$assign
   if(type=="II"){
     asgn <- asgn[asgn!=0]
     intercept = TRUE # (TODO: handle cases where a model without intercept is fitted => type III)
@@ -445,9 +445,9 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           # Compute the test statistic. 
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
-                          Stats <- .multivTests(Re(eig$values), length(which(asgn==k)), nb.resid, test=test)
+                          Stats <- .multivTests(Re(eig$values), length(which(asgn[1L:Q_r$rank]==k)), nb.resid, test=test)
                           Pval<-pf(Stats[2],Stats[3],Stats[4],lower.tail=FALSE)
-                          results <- c(length(which(asgn==asgn[k])), Stats[1], Stats[2],
+                          results <- c(length(which(asgn[1L:Q_r$rank]==k)), Stats[1], Stats[2],
                                        Stats[3], Stats[4], Pval)
                           results
                         })
@@ -501,7 +501,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- object$sigma$P/ndimCov
   
   # Number of degrees of freedom
-  asgn <- object$dims$assign[1L:Q_r$rank]
+  asgn <- object$dims$assign #[1L:Q_r$rank]
   if(type=="II"){
     asgn <- asgn[asgn!=0]
     intercept = TRUE # we removed the intercept (TODO: handle cases where a model without intercept is fitted => type III)
