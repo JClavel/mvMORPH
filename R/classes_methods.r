@@ -732,7 +732,7 @@ predict.mvgls <- function(object, newdata, ...){
     }else{
         
         Terms <- delete.response(object$terms)
-        # as in "stats v3.3.0
+        # as in "stats v3.3.0"
         m <- model.frame(Terms, newdata,
         xlev = object$xlevels, na.action = na.action)
         
