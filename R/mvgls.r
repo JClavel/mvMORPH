@@ -75,7 +75,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # further checks
     qrx <- qr(X)
     fullrank = ifelse(ncol(X)==qrx$rank, TRUE, FALSE)
-    if(!fullrank) warning("The design matrix is not of full rank. The dimensionality has been reduced by",ncol(X)-qrx$rank,". Check your results carefully. \n")
+    if(!fullrank) warning("The design matrix is not of full rank. The dimensionality has been reduced by ",ncol(X)-qrx$rank,". Check your results carefully. \n")
     if(!fullrank) assign <- assign[qrx$pivot[1L:qrx$rank]]
     X <- X[,qrx$pivot[1L:qrx$rank], drop=FALSE] # FIXME: be less strict and handle case specific issues?
     

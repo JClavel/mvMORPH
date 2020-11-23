@@ -862,77 +862,97 @@ effectsize <- function(x, ...){
     if(is.null(args[["adjusted"]])) adjusted <- FALSE else adjusted <- args$adjusted
     if(is.null(args[["tatsuoka"]])) tatsuoka <- FALSE else tatsuoka <- args$tatsuoka
     
+    # check that an object of class manova.mvgls is provided
+    if(!inherits(x,"manova.mvgls")) stop("effectsize() can be used only with objects of class \"manova.gls\"")
+    
     if(x$param){
         s = x$Df #min(vh,p)
         switch(x$test,
         "Wilks"={
-
+            N <- x$dims$n
             if(tatsuoka){
-                # Tatsuoka w^2
-                N <- x$dims$n
+                # Tatsuoka 1973 w^2
                 mult <- abs( 1 - N*x$stat/((N - s - 1) + x$stat))
+                if(adjusted) mult <- abs(mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
+                row_names <- paste("\U03C9^2 [",x$test,"]",sep = "")
             }else{
-                # generalized eta^2 => take as normalized the conservative estimate based on the geometric mean of the canonical correlations
-                # corresponds to Cramer-Nicewander 1979
+                # generalized eta^2 - Cramer-Nicewander 1979
                 mult <- 1 - x$stat^(1/s)
-            }
-            
-            # we return instead the bias corrected tatsuoka test. See also Huberty 1994, p. 195
-            if(adjusted){
-                # Tatsuoka w^2 bias adjusted / Maybe better to consider the Serlin correction for CN79 (Kim & Olejnik 2005)?
-                N <- x$dims$n
-                mult <- abs(mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
+                # Serlin (1982) adjustment
+                if(adjusted) mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
+                row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
             }
         },
         "Pillai"={
             mult <- x$stat/s
-            
+             row_names <- paste("\U03BE^2 [",x$test,"]",sep = "")
             if(adjusted){
                 # Serlin (1982) adjustment
                 N <- x$dims$n
-                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
             }
         },
         "Hotelling-Lawley"={
             mult <- (x$stat/s)/(1 + x$stat/s)
-            
+             row_names <- paste("\U03B6^2 [",x$test,"]",sep = "")
             if(adjusted){
-                # Serlin adjustment (see Kim & Olejnik 2005)
+                # Serlin adjustment (see Kim & Olejnik 2005, Huberty & Olejnik 2006)
                 N <- x$dims$n
                 mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
             }
         },
         "Roy"={
             mult <- x$stat/(1+x$stat)
-            
+             row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
             if(adjusted){
-                # Serlin adjustment for Roy?
+                # Serlin adjustment for Roy > correspond to H&L with s=1
                 N <- x$dims$n
                 mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
             }
         })
         mult <- matrix(mult,nrow=1)
-        colnames(mult) = x$terms
-        rownames(mult) = paste("A(",x$test,")",sep = "")
+        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        rownames(mult) = row_names # paste("A(",x$test,")",sep = "")
     }else{
-        # Provide a standardized size effect instead if permutation were used
-        if(normalized){
-            if(x$test=="Wilks"){
-                # first compute SES (use a z-transform for Wilks' lambda?)
-                ses <- (atanh(x$stat) - colMeans(atanh(x$nullstat))) / apply(atanh(x$nullstat), 2, sd)
-            }else{
-                ses <- (log(x$stat) - colMeans(log(x$nullstat))) / apply(log(x$nullstat), 2, sd)
-            }
-        }else{
-            ses <-  (x$stat - colMeans(x$nullstat)) / apply(x$nullstat, 2, sd)
-        }
-        # can return ses/(1+ses) for a readable measure; for Wilks we can derive a suitable measure
-        if(x$test=="Wilks") multRel <- abs(1 - x$stat/tanh(colMeans(atanh(x$nullstat)))) else  multRel <- abs(ses)/(1+abs(ses))
-        mult <- rbind(abs(ses), multRel)
-        colnames(mult) <- x$terms
-        if(x$test=="Wilks") rownames(mult) <- c("SES","A(perm.)") else rownames(mult) <- c("SES","Rel.")
+    
+        # retrieve expectations and theoretical bounds
+        Anull <- colMeans(x$nullstat)
+        if(x$type=="III") Df <- table(x$dims$assign) else Df <- table(x$dims$assign)[-1L]
         
+        switch(x$test,
+        "Wilks"={
+            
+            if(normalized){ # Kramer-Nicewander 1979 > default as for the parametric case?
+                mult <- (1 - abs(x$stat/tanh(colMeans(atanh(x$nullstat))))^(1/Df))
+                row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
+            }else{
+                mult <- abs(1 - x$stat/tanh(colMeans(atanh(x$nullstat))))
+                row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
+            }
+            
+        },
+        "Pillai"={
+            mult <- abs((x$stat - Anull)/(Df - Anull))
+            row_names <- paste("\U03BE^2 [",x$test,"]",sep = "")
+        },
+        "Hotelling-Lawley"={
+            rootb <- abs(x$stat - Anull)
+            mult <- rootb/(Df + rootb)
+            row_names <- paste("\U03B6^2 [",x$test,"]",sep = "")
+        },
+        "Roy"={
+            rootb <- abs(x$stat - Anull)
+            mult <- rootb/(1 + rootb)
+            row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
+        })
+        
+        # return the chance-corrected metrics? Should we return 0 when mult <0?
+        mult <- matrix(mult, nrow=1)
+        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        rownames(mult) = row_names #paste("Aperm.(",x$test,")",sep = "")
     }
-    message("Multivariate measure(s) of association","\n")
-    return(mult)
+    if(x$test=="Wilks") attr(adjusted, "tatsuoka") <- tatsuoka else attr(adjusted, "tatsuoka") <- FALSE
+    results = list(effect=mult, adjusted=adjusted, parametric=x$param)
+    class(results) = "mvgls.effect"
+    return(results)
 }

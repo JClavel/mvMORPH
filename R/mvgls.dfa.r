@@ -273,10 +273,10 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
 
 # ------------------------------------------------------------------------- #
 # plot.mvgls.dfa                                                            #
-# options: x, ..., dims=c(1,2), type=c("raw","std")                         #
+# options: x, ..., dims=c(1,2), type=c("raw","std"), biplot=FALSE           #
 #                                                                           #
 # ------------------------------------------------------------------------- #
-plot.mvgls.dfa <- function(x, ..., dims=c(1,2), type=c("raw","std")){
+plot.mvgls.dfa <- function(x, ..., dims=c(1,2), type=c("raw","std"), biplot=FALSE){
   type = match.arg(type[1], c("raw","std"))
   if(x$rank==1) dims = 1
   if(length(dims)>2) stop("The maximum number of discriminant axes is 2")
@@ -295,6 +295,15 @@ plot.mvgls.dfa <- function(x, ..., dims=c(1,2), type=c("raw","std")){
     # coeff(fit)%*%x$coeffs[,dims] # if the design matrix is not a treatment contrast?
     mu <- pseudoinverse(model.matrix(~grp+0))%*%scores
     points(mu, pch=8, col="red")
+    
+    if(biplot){
+        if(type=="raw") coefficients = x$coeffs else if(type=="std") coefficients = x$coeffs.std
+        scaling <- min(apply(scores,2,range)/apply(coefficients[,dims],2,range))
+        if(scaling<1) scaling <- scaling - 0.05*scaling else scaling <- 1
+        arrows(x0=0, y0=0, x1=scaling*coefficients[,dims[1]], y1=scaling*coefficients[,dims[2]])
+        text(scaling*coefficients[,dims], labels=rownames(coefficients), ...)
+        abline(h=0,v=0,lty=2)
+    }
   }
 }
 
