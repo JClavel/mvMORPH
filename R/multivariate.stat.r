@@ -4,7 +4,7 @@
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=999L, L=NULL, ...){
+manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=1000L, L=NULL, ...){
   
   # options
   type <- match.arg(type)[1]
@@ -873,13 +873,13 @@ effectsize <- function(x, ...){
             if(tatsuoka){
                 # Tatsuoka 1973 w^2
                 mult <- abs( 1 - N*x$stat/((N - s - 1) + x$stat))
-                if(adjusted) mult <- abs(mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
+                if(adjusted) mult <- (mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
                 row_names <- paste("\U03C9^2 [",x$test,"]",sep = "")
             }else{
                 # generalized eta^2 - Cramer-Nicewander 1979
                 mult <- 1 - x$stat^(1/s)
                 # Serlin (1982) adjustment
-                if(adjusted) mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
+                if(adjusted) mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
                 row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
             }
         },
@@ -889,7 +889,7 @@ effectsize <- function(x, ...){
             if(adjusted){
                 # Serlin (1982) adjustment
                 N <- x$dims$n
-                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
             }
         },
         "Hotelling-Lawley"={
@@ -898,7 +898,7 @@ effectsize <- function(x, ...){
             if(adjusted){
                 # Serlin adjustment (see Kim & Olejnik 2005, Huberty & Olejnik 2006)
                 N <- x$dims$n
-                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
             }
         },
         "Roy"={
@@ -907,7 +907,7 @@ effectsize <- function(x, ...){
             if(adjusted){
                 # Serlin adjustment for Roy > correspond to H&L with s=1
                 N <- x$dims$n
-                mult <- abs(1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
             }
         })
         mult <- matrix(mult,nrow=1)
@@ -917,36 +917,36 @@ effectsize <- function(x, ...){
     
         # retrieve expectations and theoretical bounds
         Anull <- colMeans(x$nullstat)
-        if(x$type=="III") Df <- table(x$dims$assign) else Df <- table(x$dims$assign)[-1L]
+        if(x$type=="III") s <- table(x$dims$assign) else s <- table(x$dims$assign)[-1L]
         
         switch(x$test,
         "Wilks"={
             
             if(normalized){ # Kramer-Nicewander 1979 > default as for the parametric case?
-                mult <- (1 - abs(x$stat/tanh(colMeans(atanh(x$nullstat))))^(1/Df))
+                mult <- (1 - (x$stat/tanh(colMeans(atanh(x$nullstat))))^(1/s))
                 row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
             }else{
-                mult <- abs(1 - x$stat/tanh(colMeans(atanh(x$nullstat))))
+                mult <- (1 - x$stat/tanh(colMeans(atanh(x$nullstat))))
                 row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
             }
             
         },
         "Pillai"={
-            mult <- abs((x$stat - Anull)/(Df - Anull))
+            mult <- ((x$stat - Anull)/(s - Anull))
             row_names <- paste("\U03BE^2 [",x$test,"]",sep = "")
         },
         "Hotelling-Lawley"={
-            rootb <- abs(x$stat - Anull)
-            mult <- rootb/(Df + rootb)
+            rootb <- (x$stat - Anull)
+            mult <- rootb/(s + rootb)
             row_names <- paste("\U03B6^2 [",x$test,"]",sep = "")
         },
         "Roy"={
-            rootb <- abs(x$stat - Anull)
+            rootb <- (x$stat - Anull)
             mult <- rootb/(1 + rootb)
             row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
         })
         
-        # return the chance-corrected metrics? Should we return 0 when mult <0?
+        # We return the chance-corrected metrics. Should we return 0 when mult <0?
         mult <- matrix(mult, nrow=1)
         if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
         rownames(mult) = row_names #paste("Aperm.(",x$test,")",sep = "")

@@ -9,7 +9,7 @@ Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
-            type=c("I","II","III"), nperm=999L, L=NULL, ...)
+            type=c("I","II","III"), nperm=1000L, L=NULL, ...)
   
 }
 \arguments{

@@ -840,4 +840,5 @@ print.mvgls.effect <- function(x, digits = max(3L, getOption("digits") - 3L), ..
       print(x$effect, digits=digits)
       if(x$adjusted) cat("## Note: bias is empirically adjusted     ##","\n")
     }
+    if(any(x$effect<0)) message("## Values < 0 represent no association    ##","\n")
 }
