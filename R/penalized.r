@@ -96,11 +96,17 @@
         
     },
     "LL"={
+        # Constraints
+        if(corrStr$model=="BMM"){ # constraint on the relative rates
+            scaling <- mean(diag(Sk))
+            Sk <- Sk*(1/scaling)
+        }
+        
         # Maximum Likelihood
         Gi <- try(chol(Sk), silent=TRUE)
         if(inherits(Gi, 'try-error')) return(1e6)
-        quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
         detValue <- sum(2*log(diag(Gi)))
+        quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
         ll <- 0.5 * (n*p*log(2*pi) + p*Ccov + n*detValue + quadprod)
         
     },
@@ -732,10 +738,30 @@
             index_err <- length(list_param) + 1
         },
         "BMM"={
-            mod_val <- 1
-            k = ncol(corrModel$structure$mapped.edge) # all groups
-            list_param <- c(list(range_val), as.list(rep(mod_val, k)))
-            #list_param[2:ncol(corrModel$structure$mapped.edge)] <- 1
+            
+            # guess starting values
+            start_values <- function(tree, data){
+                tip_values <- 1:Ntip(tree)
+                index_tips <- tree$edge[,2]%in%tip_values
+                maps <- sapply(tree$maps[index_tips], function(x) names(x[length(x)]))
+                # check if any tips are missing?
+                k = ncol(tree$mapped.edge)
+                if(length(unique(maps))<k) {
+                    mod_val <- mean(diag(mvLL(tree, data, method="pic")$sigma))
+                    guesses <- as.list(rep(sqrt(mod_val), k))
+                }else{
+                    guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
+                        dat_red <- which(maps==map_names)
+                        tree_red=drop.tip(tree, tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]] )
+                        sqrt(mean(diag(mvLL(tree_red, data[tree_red$tip.label,], method="pic")$sigma)))
+                    })
+                }
+                
+                return(guesses)
+            }
+            
+            mod_val <- start_values(corrModel$structure, corrModel$Y)
+            list_param <- c(list(range_val), mod_val)
             index_err <- length(list_param) + 1
         },
         index_err <- 3

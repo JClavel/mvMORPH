@@ -166,6 +166,12 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     numIter <- estimModel$count[1]
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
+    if(model=="BMM" & method!="LL"){
+        scaling_factor <- mean(diag(R$Pinv))
+        mod_par <- mod_par*scaling_factor
+        R$Pinv <- R$Pinv/scaling_factor
+        R$P <- R$P*scaling_factor
+    }
     ndims <- list(n=n, p=p, m=m, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
     
     # End
