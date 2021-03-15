@@ -781,6 +781,9 @@ predict.mvgls <- function(object, newdata, ...){
     "lambda"={ V <- vcv.phylo(.transformPhylo(tree, model="lambda", param=object$param)) },
     )
     
+    # If error=TRUE, we add it to the covariance matrix here
+    #if(!is.na(object$mserr)) diag(V) = diag(V) + object$mserr
+    
     # Build the covariance matrix
     w <- V[sp_name, train_sample, drop=FALSE]
     Vt <- V[train_sample, train_sample, drop=FALSE]

@@ -546,7 +546,7 @@
     # Return the determinant
     deterM <- C$det
     
-    # Adjust the determinant for non-ultrametric OU (see Ho & Ané 2014 - Syst. Bio., p. 401)
+    # Adjust the determinant for non-ultrametric OU (see Ho & Ane 2014 - Syst. Bio., p. 401)
     if(flag) deterM <- deterM + 2*sum(log(diagWeight))
     if(REML) deterM <- deterM + determinant(crossprod(X))$modulus - const
     

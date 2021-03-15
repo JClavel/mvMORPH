@@ -1316,7 +1316,7 @@ stationary.mvmorph<-function(object){
 ## Compute the phylogenetic half-life
 
 halflife.mvmorph<-function(object){
-    if(inherit(object,"mvmorph.ou") | inherit(object,"mvmorph.shift")){
+    if(inherits(object,"mvmorph.ou") | inherits(object,"mvmorph.shift")){
         if(is.null(object[["alpha"]])==TRUE){
             stop("The phylogenetic half-life can be computed only for models including Ornstein-Uhlenbeck processes.")
         }
