@@ -824,6 +824,59 @@ build.chol<-function(b,p){
 }
 
 
+# Generate a weight matrix for OUM
+.make.x <- function(phy, param, X, model, root, std=0){
+    
+    switch(model,
+    "OUM"={
+        if(!inherits(phy,"simmap")) stop("A tree of class \"simmap\" is required for the OUM model")
+        n <- Ntip(phy)
+        precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=root))
+        X <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(std))
+        if(root==TRUE) colnames(X) <- c("root", colnames(phy$mapped.edge)) else colnames(X) <- colnames(phy$mapped.edge)
+    },
+    "OU1"={
+        n <- Ntip(phy)
+        precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OU1", root=root))
+        X <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(0))
+        if(root==TRUE) colnames(X) <- c("root","optimum") else colnames(X) <- c("optimum")
+    },
+    )
+    
+    return(X)
+}
+
+# precalculations for mvgls structures [ for future developments ]
+.prepModel <- function(phy, model, root){
+    
+    switch(model,
+    "OUM"={
+        if(!inherits(phy,"simmap") && model=="OUM") stop("A tree of class \"simmap\" is required for the OUM model")
+        precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OUM", root=root))
+    },
+    "OU1"={
+        if(is.ultrametric(phy) & root==TRUE) warning("Estimation of the root and optimum in \"OU1\" is not identifiable on ultrametric trees")
+        precalc <- mv.Precalc(phy, nb.traits=1, param=list(model="OU1", root=root))
+    },
+    precalc <- list(randomRoot=TRUE)
+    )
+    return(precalc)
+}
+
+
+
+# Functions to check input values in lists > e.g. in EIC
+.check_samples <- function(list_values){
+    check <- sapply(list_values, function(x){
+        if(inherits(x, "try-error")) NA else x
+    })
+    
+    na_rm <- check[!is.na(check)]
+    if(length(na_rm)<length(check)) warning("There were multiple issues/aborted estimations in the bootstrapped samples")
+    return(na_rm)
+}
+
+
 ##----------------------mvfit_likelihood--------------------------------------##
 
 loglik_mvmorph<-function(data,V=NULL,D=NULL,n,k,error=NULL,precalc=precalc,method, param=list(),ch=NULL,precalcMat=NULL,sizeD=NULL,NA_val=NULL,Indice_NA=NULL,theta_mle=TRUE,theta=NULL,istrend=FALSE,trend=0){
@@ -1089,7 +1142,7 @@ print.mvmorph.shift<-function(x,...){
         cat("\n")
         cat("ML sigma values ( recent slice:",x$param$names_regimes[2],")","\n")
         cat("______________________","\n")
-        print(x$sigma)
+        print(x$sig)
     }
     if(x$param$model[1]=="OVG" || x$param$model[1]=="OV"){
         cat("\n")
@@ -1263,7 +1316,10 @@ stationary.mvmorph<-function(object){
 ## Compute the phylogenetic half-life
 
 halflife.mvmorph<-function(object){
-    if(class(object)[2]=="mvmorph.ou"){
+    if(inherits(object,"mvmorph.ou") | inherits(object,"mvmorph.shift")){
+        if(is.null(object[["alpha"]])==TRUE){
+            stop("The phylogenetic half-life can be computed only for models including Ornstein-Uhlenbeck processes.")
+        }
     lambda<-eigen(object$alpha)$values
     phyhalflife<-log(2)/Re(lambda)
         return(phyhalflife)

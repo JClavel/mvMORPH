@@ -25,6 +25,8 @@ GIC.mvgls <- function(object, ...){
     # retrieve arguments
     args <- list(...)
     if(is.null(args[["eigSqm"]])) eigSqm <- TRUE else eigSqm <- args$eigSqm
+    if(is.null(args[["REML"]])) args$forceREML <- TRUE else args$forceREML <- args$REML # force to true to follow what has been done in the first paper?
+     
     method <- object$method
     penalty <- object$penalty
     target <- object$target
@@ -55,11 +57,17 @@ GIC.mvgls <- function(object, ...){
         Y <- object$corrSt$Y
     }
     
-    if(object$model=="BM") mod.par=0 else mod.par=1
+    if(object$model=="BM"){
+       mod.par=0
+    }else if(object$model=="BMM"){
+        mod.par=(ncol(object$corrSt$phy$mapped.edge))
+    }else{
+       mod.par=1
+    }
     if(is.numeric(object$mserr)) mod.par = mod.par + 1 # already included in the covariance matrix structure?
-    if(object$REML) ndimCov = n - m else ndimCov = n
+    if(object$REML & args$forceREML==TRUE) ndimCov = n - m else ndimCov = n
     # Nominal loocv
-    XtX <- solve(crossprod(X))
+    XtX <- pseudoinverse(crossprod(X))
     # hat matrix
     h <- diag(X%*%pseudoinverse(X))
     
@@ -113,23 +121,22 @@ GIC.mvgls <- function(object, ...){
     
     # Number of parameters for the root state:
     # The Information matrix from the Hessian and gradients scores
-    XtX <- solve(t(X)%*%(X))
     T2 <- sapply(nloo, function(i){
         gradient <- (X[i,])%*%t(P%*%t(Y[i,]-X[i,]%*%beta))
         sum(gradient * (XtX%*%gradient%*%Pi))
     })
     beta_df <- sum(T2)
     
-    if(m>1) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with cautions and consider EIC or simulations instead")
+    if( min(m, sum(object$dims$assign!=0))>1 ) warning("GIC criterion with multiple predictors has not been fully tested. Please use it with care and consider EIC or simulations instead")
     
     # LogLikelihood (minus)
     DP <- as.numeric(determinant(Pi)$modulus)
-    Ccov <- object$corrSt$det
+    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus + object$corrSt$const) else Ccov <- as.numeric(object$corrSt$det)
     llik <- 0.5 * (ndimCov*p*log(2*pi) + p*Ccov + ndimCov*DP + ndimCov*sum(S*P))
     GIC <- 2*llik + 2*(sigma_df+beta_df+mod.par)
     
     # return the results
-    results <- list(LogLikelihood=-llik, GIC=GIC, p=p, n=n, bias=sigma_df+beta_df+mod.par, bias_cov=sigma_df)
+    results <- list(LogLikelihood=-llik, GIC=GIC, p=p, n=n, bias=sigma_df+beta_df+mod.par, bias_cov=sigma_df, args=args)
     class(results) <- c("gic.mvgls","gic")
     return(results)
 }
@@ -173,9 +180,15 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     tuning <- object$tuning
     target <- object$target
     penalty <- object$penalty
+    if(is.null(object$corrSt$diagWeight)){
+        diagWeight <- 1; is_weight = FALSE
+    }else{
+        diagWeight <- object$corrSt$diagWeight; is_weight = TRUE
+        diagWeightInv <- 1/diagWeight
+    }
     Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
-    # TODO (change to allow n-ultrametric and OU
-    if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
+    # TODO (change to allow n-ultrametric and OU) > just need to standardize the data by the weights
+    # if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
     
     DsqrtInv <- pruning(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
     modelPerm <- object$call
@@ -187,13 +200,13 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     
     # Estimate the bias term
-    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM){ # LL(Y*|param*) - LL(Y*| param)
+    D1 <- function(objectBoot, objectFit, ndimCov, p, sqM, Ccov2){ # LL(Y*|param*) - LL(Y*| param)
         
         # Y*|param*
         residualsBoot <- residuals(objectBoot, type="normalized")
         
         # For boot "i" LL1(Y*|param*)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -202,10 +215,17 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         
         # Y*|param
         #if(!restricted) residualsBoot <- objectBoot$corrSt$Y - objectBoot$corrSt$X%*%objectFit$coefficients # does not account for the phylo model of the original fit
-        if(!restricted) residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
+        if(!restricted){
+            if(is_weight){
+                residualsBoot <- crossprod(sqM, (objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)*diagWeightInv)
+            }else{
+                residualsBoot <- crossprod(sqM, objectBoot$variables$Y - objectBoot$variables$X%*%objectFit$coefficients)
+                
+            }
+        }
         
         # For boot "i" LL2(Y*|param)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus) else Ccov2 <- as.numeric(objectFit$corrSt$det)
+        # if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov2 <- as.numeric(objectFit$corrSt$det - determinant(crossprod(objectFit$corrSt$X))$modulus + objectFit$corrSt$const) else Ccov2 <- as.numeric(objectFit$corrSt$det)
         Gi2 <- try(chol(objectFit$sigma$Pinv), silent=TRUE)
         if(inherits(Gi2, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi2, t(residualsBoot), transpose = TRUE)^2)
@@ -221,14 +241,19 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         # Y|param*
         if(!restricted) {
             sqM_temp <- pruning(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
-            residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
+            if(is_weight){
+                residualsBoot <- try(crossprod(sqM_temp, (objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients)/objectBoot$corrSt$diagWeight), silent=TRUE)
+            } else {
+                residualsBoot <- try(crossprod(sqM_temp, objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients), silent=TRUE)
+                
+            }
         }else{ residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients}
         
         #if(!restricted) residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectBoot$coefficients
         #else residualsBoot <- objectFit$corrSt$Y - objectFit$corrSt$X%*%objectFit$coefficients
         
         # For boot "i" LL2(Y|param*)
-        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
+        if(objectFit$REML==TRUE & args$forceREML==FALSE) Ccov1 <- as.numeric(objectBoot$corrSt$det - determinant(crossprod(objectBoot$corrSt$X))$modulus + objectBoot$corrSt$const) else Ccov1 <- as.numeric(objectBoot$corrSt$det)
         Gi1 <- try(chol(objectBoot$sigma$Pinv), silent=TRUE)
         if(inherits(Gi1, 'try-error')) return("error")
         quadprod <- sum(backsolve(Gi1, t(residualsBoot), transpose = TRUE)^2)
@@ -242,7 +267,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     # Estimate EIC: LL+bias
     
     # Maximum Likelihood
-    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus) else Ccov <- as.numeric(object$corrSt$det)
+    if(object$REML==TRUE & args$forceREML==FALSE) Ccov <- as.numeric(object$corrSt$det - determinant(crossprod(object$corrSt$X))$modulus + object$corrSt$const) else Ccov <- as.numeric(object$corrSt$det)
     Gi <- try(chol(object$sigma$Pinv), silent=TRUE)
     if(inherits(Gi, 'try-error')) return("error")
     quadprod <- sum(backsolve(Gi, t(residuals), transpose = TRUE)^2)
@@ -253,22 +278,26 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     bias <- pbmcmapply(function(i){
         
         # generate bootstrap sample
-        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),]) # sampling with replacement for bootstrap
+        Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),])*diagWeight # sampling with replacement for bootstrap
         rownames(Yp) <- rownames(object$variables$Y)
         
         modelPerm$response <- quote(Yp);
         estimModelNull <- eval(modelPerm);
-        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv)
+        d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv, Ccov2=Ccov)
         d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
         d1res+d3res
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
+    
+    # check for errors first?
+    bias <- .check_samples(bias)
+    nboot_eff <- length(bias)
     
     # compute the EIC
     pboot <- mean(bias)
     EIC <- -2*llik + 2*pboot
     
     # standard-error
-    se <- sd(bias)/sqrt(nboot)
+    se <- sd(bias)/sqrt(nboot_eff)
     
     # concatenate the results
     results <- list(EIC=EIC, bias=bias, LogLikelihood=llik, se=se, p=p, n=N)
@@ -347,7 +376,7 @@ logLik.mvgls<-function(object,...){
         # param
         n <- object$dims$n
         p <- object$dims$p
-        m <- object$dims$m
+        m <- object$dims$rank
         if(object$REML) ndimCov = n - m else ndimCov = n
         DP <- as.numeric(determinant(object$sigma$Pi)$modulus)
         Ccov <- object$corrSt$det
@@ -381,11 +410,12 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
@@ -436,11 +466,12 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
     
     # Model parameters
     cat("\nParameter estimate(s):\n")
-    if(!is.na(x$param)){
+    if(!any(is.na(x$param))){
         switch(x$model,
         "OU"={ cat("alpha:",round(x$param, digits=digits),"\n\n")},
         "EB"={ cat("r:",round(x$param, digits=digits),"\n\n")},
         "lambda"={cat("lambda:",round(x$param, digits=digits),"\n\n")},
+        "BMM"={print(round(x$param, digits=digits)); cat("\n")},
         cat("parameter(s):",round(x$param, digits=digits),"\n\n")
         )
     }
@@ -478,7 +509,7 @@ summary.mvgls <- function(object, ...){
     # param
     n <- object$dims$n
     p <- object$dims$p
-    m <- object$dims$m
+    m <- object$dims$rank
     if(object$REML) ndimCov = n - m else ndimCov = n
     
     # loocv or LL
@@ -486,7 +517,7 @@ summary.mvgls <- function(object, ...){
     
     if(object$method=="LL"){
         LL = object$logLik
-        nparam = length(object$start_values) + p + p*(p + 1)/2
+        nparam = if(object$model=="BM") (length(object$start_values)-1) + length(object$coefficients) + p*(p + 1)/2 else length(object$start_values) + length(object$coefficients) + p*(p + 1)/2 
         # AIC
         AIC = -2*LL+2*nparam
         # GIC
@@ -643,5 +674,161 @@ plot.manova.mvgls <- function(x,...){
         }
     }
 
+}
+
+# ------------------------------------------------------------------------- #
+# plot.mvgls                                                                #
+# options: x, term, ..., fitted=TRUE                                        #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+plot.mvgls <- function(x, term, ..., fitted=FALSE, residuals=FALSE){
+    
+    if(missing(term)){
+        term <- which(attr(x$variables$X,"dimnames")[[2]]!="(Intercept)")[1]
+        term <- attr(x$variables$X,"dimnames")[[2]][term]
+    }
+    
+    if(!is.numeric(term) & !term%in%attr(x$variables$X,"dimnames")[[2]]) stop("Unknown predictor name.","\n")
+    
+    # based on Drake & Klingenberg 2008 shape score
+    betas <- coefficients(x)[term,,drop=TRUE]
+    standBeta <- betas %*% sqrt(solve(crossprod(betas)))
+    if(residuals) scoreVar <- (x$residuals)%*% standBeta else scoreVar <- (x$variables$Y)%*% standBeta
+    
+    # plot
+    plot(scoreVar ~ x$variables$X[,term], xlab=term, ylab="mvScore", ...)
+    
+    # plot predictions on the same space?
+    if(fitted){
+        scoreVar2 <- (x$fitted ) %*% standBeta
+        points(scoreVar2 ~ x$variables$X[,term], col="red", pch=16)
+    }
+    
+    # loess on the residuals?
+    if(residuals){
+        abline(h=0, lty=2)
+        scores_residuals <- data.frame(score=scoreVar, xvar=x$variables$X[,term])
+        loess_fit <- loess(score ~ xvar, data=scores_residuals)
+        xseq <- seq(from=min(scores_residuals$xvar), to=max(scores_residuals$xvar), length=80)
+        pred <- predict(loess_fit, newdata=data.frame(xvar=xseq))
+        lines(pred~xseq, col="red", xpd=FALSE)
+    }
+    
+    
+    results <- list(scores = scoreVar, standBeta=standBeta, betas=betas, term=term)
+    invisible(results)
+}
+
+# ------------------------------------------------------------------------- #
+# predict.mvgls                                                             #
+# options: object, newdata, ...                                             #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+predict.mvgls <- function(object, newdata, ...){
+    
+    args <- list(...)
+    # if "tree" is provided
+    if(!is.null(args[["tree"]])){
+        if(!inherits(args$tree, "phylo")) stop("the provided tree is not of class \"phylo\" ") else tree <- args$tree
+        if(!is.data.frame(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree ")
+    } else tree <- NULL
+    if(is.null(args[["na.action"]])) na.action <- na.pass else na.action <- args$na.action
+    
+    # check if newdata is provided
+    if(missing(newdata) || is.null(newdata)) {
+        X <- object$variables$X # simply return fitted values when newdata is empty
+    }else{
+        
+        Terms <- delete.response(object$terms)
+        # as in "stats v3.3.0"
+        m <- model.frame(Terms, newdata, xlev = object$xlevels, na.action = na.action)
+        
+        # check the arguments
+        if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+        X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+        
+        # FIXME allow lists
+        predictors_names <- rownames(newdata)
+    }
+    
+    
+    # GLS/OLS prediction
+    if(is.null(tree)){
+        predicted <- X%*%object$coefficients # simply return fitted values when newdata is empty
+    }else{
+        rcov <- .resid_cov_phylo(tree, object, predictors_names)
+        predicted <- X%*%object$coefficients + rcov$w%*%solve(rcov$Vt)%*%object$residuals[rcov$train,,drop=FALSE] # FIXME account for (multivariate) variance scaling? Rao & Toutenberg => no just the correlation structure
+    }
+    
+    return(predicted)
+}
+
+# ------------------------------------------------------------------------- #
+# .resid_cov_phylo                                                          #
+# options: tree, object, sp_name, ...                                       #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+.resid_cov_phylo <- function(tree, object, sp_name, ...){
+    
+    if(is.null(sp_name)) stop("You must provide species names to \"newdata\"")
+    if(any(!sp_name%in%tree$tip.label)) stop("the \"newdata\" names does not matches names in the tree ")
+    train_sample <- tree$tip.label[!tree$tip.label%in%sp_name]
+    
+    # check first that species in the training sample are the same as in the model fit object
+    if(any(!train_sample%in%object$corrSt$phy$tip.label)) train_sample <- object$corrSt$phy$tip.label
+    
+    # helper to obtain the covariances between data used in a model and newdata
+    switch(object$model,
+    "BM"={ V <- vcv.phylo(tree)},
+    "OU"={
+        V <- .Call("mvmorph_covar_ou_fixed", A=vcv.phylo(tree), alpha=as.double(object$param), sigma=1, PACKAGE="mvMORPH")
+        rownames(V) <- colnames(V) <- tree$tip.label
+    },
+    "EB"={ V <- vcv.phylo(.transformPhylo(tree, model="EB", param=object$param)) },
+    "lambda"={ V <- vcv.phylo(.transformPhylo(tree, model="lambda", param=object$param)) },
+    )
+    
+    # If error=TRUE, we add it to the covariance matrix here
+    #if(!is.na(object$mserr)) diag(V) = diag(V) + object$mserr
+    
+    # Build the covariance matrix
+    w <- V[sp_name, train_sample, drop=FALSE]
+    Vt <- V[train_sample, train_sample, drop=FALSE]
+    
+    # return the covariances
+    results <- list(w=w, Vt=Vt, train=train_sample)
+    return(results)
+}
+
+# ------------------------------------------------------------------------- #
+# .transformPhylo                                                           #
+# options: phy, model, param, ...                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+.transformPhylo <- function(phy, model, param, ...){
+    
+    # precomputations
+    n <- Ntip(phy)
+    parent <- phy$edge[,1]
+    descendent <- phy$edge[,2]
+    extern <- (descendent <= n)
+    
+    switch(model,
+    "EB"={
+        if (param!=0){
+            distFromRoot <- node.depth.edgelength(phy)
+            phy$edge.length = (exp(param*distFromRoot[descendent])-exp(param*distFromRoot[parent]))/param
+        }
+    },
+    "lambda"={
+        # Pagel's lambda tree transformation
+        if(param!=1) {
+            root2tipDist <- node.depth.edgelength(phy)[1:n] # for non-ultrametric trees. The 'up' limit should be exactly 1 to avoid singularity issues
+            phy$edge.length <- phy$edge.length * param
+            phy$edge.length[extern] <- phy$edge.length[extern] + (root2tipDist * (1-param))
+        }
+    },)
+    
+    return(phy)
 }
 

@@ -9,7 +9,7 @@ Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
-            type=c("I","II","III"), nperm=999L, L=NULL, ...)
+            type=c("I","II","III"), nperm=1000L, L=NULL, ...)
   
 }
 \arguments{
@@ -61,7 +61,7 @@ Permutations on high-dimensional datasets is time consuming. You can use the opt
 \references{
 Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
 
-Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology (DOI:10.1093/sysbio/syaa010)
+Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
 }
 
 \author{J. Clavel}

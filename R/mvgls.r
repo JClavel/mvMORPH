@@ -28,6 +28,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(is.null(args[["tol"]])) tol <- NULL else tol <- args$tol
     if(is.null(args[["start"]])) start <- NULL else start <- args$start
     if(is.null(args[["contrasts"]])) contrasts.def <- NULL else contrasts.def <- args$contrasts
+    if(is.null(args[["randomRoot"]])) randomRoot <- TRUE else randomRoot <- args$randomRoot
+    if(is.null(args[["root"]])) root <- "stationary" else root <- args$root
+    if(root=="stationary") root_std <- 1L else root_std <- 0L
     
     # check for coercion issues
     data_format = sapply(data, function(x) inherits(x,"phylo"))
@@ -41,6 +44,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)
     Y = model.response(model_fr)
     assign <- attr(X, "assign")
+    terms <- attr(model_fr, "terms")
+    xlevels <- .getXlevels(terms, data)
+    contrasts <- attr(X, "contrasts")
     
     # Option for bootstrap and permutation method
     if(!is.null(args[["response"]])) Y <- args$response
@@ -49,8 +55,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     method = match.arg(method[1], c("PL-LOOCV","LOOCV","LL","H&L","Mahalanobis"))
     if(method=="PL-LOOCV") method = "LOOCV" # to keep the explicit name with 'PL'
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
+    if(!inherits(tree, "simmap") & (model=="BMM" | model=="OUM")) stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" and \"OUM\" models")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
-    if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", or \"lambda\" ")
+    if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", \"BMM\", \"OUM\" or \"lambda\" ")
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
     if(!penalty%in%c("RidgeArch","RidgeAlt","LASSO")) stop("The penalization method must be \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"");
     if(!target%in%c("unitVariance","Variance","null")) warning("Default target are \"unitVariance\", \"null\" or \"Variance\". Check the target matrix provided");
@@ -64,24 +71,40 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!inherits(tree, "phylo")) stop("object \"tree\" is needed if no custom correlation structure provided.")
     if(method%in%c("H&L","Mahalanobis") & penalty%in%c("RidgeAlt","LASSO")) stop("\"H&L\" and \"Mahalanobis\" works only with \"RidgeArch\" penalization")
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
+   
+    # further checks
+    qrx <- qr(X)
+    fullrank = ifelse(ncol(X)==qrx$rank, TRUE, FALSE)
+    if(!fullrank) warning("The design matrix is not of full rank. The dimensionality has been reduced by ",ncol(X)-qrx$rank,". Check your results carefully. \n")
+    if(!fullrank) assign <- assign[qrx$pivot[1L:qrx$rank]]
+    X <- X[,qrx$pivot[1L:qrx$rank], drop=FALSE] # FIXME: be less strict and handle case specific issues?
     
     # dimensions
     n = nobs = nrow(Y)
     p = ncol(Y)
-    m = ncol(X) # dim of predictors
+    m = qrx$rank # dim of predictors
     nloo = 1:n
+    
+    # Miscellanous - pre-calculations | TODO handle time series
+    precalc = .prepModel(tree, model, root)
+    precalc$randomRoot = randomRoot
+    precalc$root_std = root_std
+
     if(REML) ndimCov = n - m else ndimCov = n
+    if(inherits(tree, "simmap")){
+        if(model=="BMM") k <- ncol(tree$mapped.edge)
+    }else k <- NULL
     if(method=="LL") penalized=FALSE else penalized=TRUE
     if(n<p & method=="LL") stop("There are more variables than observations. Please try instead the penalized methods \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"")
-    
-    # Set bounds for parameter search
-    bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized)
     
     # CorrStruct object (include data, model, covariance...)
     if(scale.height) tree <- .scaleStruct(tree)
     corrModel <- list(Y=Y, X=X, REML=REML, mserr=mserr,
                     model=model, structure=tree, p=p, nobs=nobs,
-                    nloo=nloo, bounds=bounds)
+                    nloo=nloo, precalc=precalc)
+    
+    # Set bounds for parameter search
+    bounds <- corrModel$bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized, corrModel=corrModel, k=k)
     
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
@@ -110,9 +133,20 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # Estimates
     tuning <- bounds$trTun(estimModel$par)
     mod_par <- bounds$trPar(estimModel$par)
+    
+    # convergence & bounds checks?
+    .check_par_results(corrModel, mod_par, penalized);
+    
+    # Multiple rates BMM
+    if(inherits(tree, "simmap") && model=="BMM"){
+        names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM. we remove the first one which is used as reference
+    }
+    
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
+    # Exceptions [to improve]
+    X <- .make.x(tree, mod_par, X, model, root, root_std)
     
     # List of results to return
     corrSt = .corrStr(mod_par, corrModel);
@@ -128,7 +162,17 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     numIter <- estimModel$count[1]
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
-    ndims <- list(n=n, p=p, m=m, assign=assign)
+    
+    # scale relative to an average covariance of 1
+    if(model=="BMM" & method!="LL"){
+        scaling_factor <- mean(diag(R$Pinv))
+        mod_par <- mod_par*scaling_factor
+        R$Pinv <- R$Pinv/scaling_factor
+        R$P <- R$P*scaling_factor
+    }
+    
+    # number of dimensions
+    ndims <- list(n=n, p=p, m=m, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
     
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")
@@ -137,6 +181,9 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     results = list(formula=formula,
         call = match.call(),
         coefficients=coefficients,
+        terms=terms,
+        xlevels=xlevels,
+        contrasts=contrasts,
         variables=list(Y=Y, X=X, tree=tree),
         dims=ndims,
         fitted=fitted.values,

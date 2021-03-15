@@ -30,7 +30,7 @@ Phylogenetic tree (an object of class "\code{phylo}") or a time-series object (n
 }
 
 \item{model}{
-The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB" is Early Burst, and "lambda" is Pagel's lambda transformation.
+The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB" is Early Burst, "lambda" is Pagel's lambda transformation, and "BMM" is a multi-rates Brownian motion (needs a tree of class "simmap").
 
 }
 
@@ -51,7 +51,7 @@ Options to be passed through. For instance the type of penalization:
 \details{
 \code{mvgls} allows fitting various multivariate linear models to high-dimensional datasets (i.e. where the number of variables \emph{p} is larger than \emph{n}) for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU). Models estimates are generally more accurate than maximum likelihood methods. Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
 
-The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally.
+The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally. Note that for the "BMM" model, a tree of class "simmap" must be provided to scale the BM covariance in different parts of the tree.
 
 The various \emph{arguments} that can be passed through \bold{"..."}:
 

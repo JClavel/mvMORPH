@@ -197,3 +197,4 @@ SEXP   Chol_RPF_quadprod_column(SEXP U, SEXP resid, SEXP nterm){
     UNPROTECT (3);
     return (Bet); 
 }
+

@@ -20,7 +20,7 @@ The four grouping factor variables (e.g., \emph{phyllostomid$grp1}, \emph{phyllo
 \references{
 Monteiro L.R., Nogueira M.R. 2011. Evolutionary patterns and processes in the radiation of phyllostomid bats. BMC Evolutionary Biology. 11:1-23.
 
-Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology (DOI:10.1093/sysbio/syaa010)
+Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
 
 %%  ~~ possibly secondary sources and usages ~~
 }

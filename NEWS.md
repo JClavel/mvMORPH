@@ -1,3 +1,12 @@
+## mvMORPH 1.1.4
+    + model BMM in mvgls
+    + "predict" function for mvgls
+    + plot function for mvgls objects
+    + dfa on gls fit (beta)
+    + fix typo in mvSHIFT output print 
+    + fix error in estimation of OU with n-ultrametric trees in mvgls + new adjusted bounds for parameters search
+    + fix typo in summary.mvgls print option in the calculation of the AIC.
+    + handling of design matrices with deficient ranks in regressions
 ## mvMORPH 1.1.3
     + CRAN request to remove the export statements for S3 classes
     + replace is.binary.tree to is.binary.phylo, the former being deprecated from "ape".

@@ -10,10 +10,12 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.1.2**
+**mvMORPH 1.1.4**
 
-1. This is the version 1.1.2:
-  + Minor changes to 1.1.1 to follow CRAN policies
+1. This is the version 1.1.4:
+  + add the BMM model in mvgls
+  + predict option for mvgls objects
+  + DFA on mvgls objects
   
 
 2. _TODO_:
@@ -24,7 +26,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Improved mvOU model
   + Threshold model for categorical data
 
-The current stable version of the mvMORPH package (1.1.1) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.1.4) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ## **Package Installation**
@@ -48,4 +50,4 @@ Any bugs encountered when using the package can be reported [here](https://githu
 
 **Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.    DOI: 10.1111/2041-210X.12420
 
-[Download version with appended supplementary material.](http://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)
+[Download version with appended supplementary material.](https://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)

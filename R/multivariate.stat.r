@@ -4,7 +4,7 @@
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=999L, L=NULL, ...){
+manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), type=c("I","II","III"), nperm=1000L, L=NULL, ...){
   
   # options
   type <- match.arg(type)[1]
@@ -40,7 +40,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="III" | type=="3") terms <- c("(Intercept)",attr(terms(object$formula),"term.labels")) else terms <- attr(terms(object$formula),"term.labels")
       
       summary_tests <- list(test=test, type=type, stat=paramTest[2,], approxF=paramTest[3,],
-                            Df=paramTest[1,], NumDf=paramTest[4,], DenDf=paramTest[5,], pvalue=paramTest[6,],  param=param, terms=terms)
+                            Df=paramTest[1,], NumDf=paramTest[4,], DenDf=paramTest[5,], pvalue=paramTest[6,],  param=param, terms=terms, dims=object$dims)
     }else{
       # we use permutation methods
       if(object$method!="LL" & is.null(penalized)) penalized <- "approx" else if(object$method=="LL") penalized <- "none"
@@ -64,7 +64,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="III" | type=="3") terms <- c("(Intercept)",attr(terms(object$formula),"term.labels")) else terms <- attr(terms(object$formula),"term.labels")
       
       # retrieve the statistic
-      summary_tests <- list(test=test, type=type, stat=permTests$observed, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests$simulated)
+      summary_tests <- list(test=test, type=type, stat=permTests$observed, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests$simulated, dims=object$dims)
         
     }
   
@@ -168,6 +168,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   
   # Number of degrees of freedom
   nb.resid <- N - Q_r$rank
+  #pivots <- Q_r$pivot[1L:Q_r$rank] # retrieve full rank pivots
   asgn <- object$dims$assign
   nterms <- sum(unique(asgn)!=0)
   
@@ -238,6 +239,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- object$sigma$P/ndimCov
   
   # Number of degrees of freedom
+  #pivots <- Q_r$pivot[1L:Q_r$rank] # retrieve full rank pivots
   asgn <- object$dims$assign
   uasgn <- unique(asgn)
   nterms <- sum(uasgn!=0)
@@ -400,7 +402,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   X <- object$corrSt$X
   N = nrow(Y)
   
-  # QR decomposition
+  # QR decomposition # FIXME: perform the QR ahead in the mvgls call
   Q_r <- qr(X)
   
   # Hypothesis (projection matrix)
@@ -409,6 +411,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- solve(t(Y) %*% (Id - Proj_full) %*% Y)
   
   # Number of degrees of freedom
+  #pivots <- Q_r$pivot[1L:Q_r$rank]
   asgn <- object$dims$assign
   if(type=="II"){
     asgn <- asgn[asgn!=0]
@@ -445,9 +448,10 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           # Compute the test statistic. 
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
-                          Stats <- .multivTests(Re(eig$values), length(which(asgn==asgn[k])), nb.resid, test=test)
+                          df <- ifelse(type=="III", length(which(asgn==(k-1))), length(which(asgn==k)))
+                          Stats <- .multivTests(Re(eig$values), df, nb.resid, test=test)
                           Pval<-pf(Stats[2],Stats[3],Stats[4],lower.tail=FALSE)
-                          results <- c(length(which(asgn==asgn[k])), Stats[1], Stats[2],
+                          results <- c(df, Stats[1], Stats[2],
                                        Stats[3], Stats[4], Pval)
                           results
                         })
@@ -501,6 +505,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   WW  <- object$sigma$P/ndimCov
   
   # Number of degrees of freedom
+  #pivots <- Q_r$pivot[1L:Q_r$rank]
   asgn <- object$dims$assign
   if(type=="II"){
     asgn <- asgn[asgn!=0]
@@ -802,6 +807,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                
                                # Error SSCP
                                Ep <- crossprod(Yp - X%*%Bp)
+                               
                                # HE matrix
                                HE <- Hp%*%solve(Ep)
                              }
@@ -842,3 +848,4 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   res <- ((target - Evalues)*(target*alpha*const + Evalues*const - Evalues*alpha*const - ZZD))/(Evalues - Evalues*alpha + alpha*target)^2
   return(0.5*sum(res))
 }
+
