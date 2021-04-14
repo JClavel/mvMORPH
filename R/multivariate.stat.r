@@ -15,6 +15,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   if(is.null(args[["permutation"]])) penalized <- NULL else penalized <- args$permutation
   if(is.null(args[["rhs"]])) rhs <- NULL else rhs <- args$rhs
   if(is.null(args[["verbose"]])) verbose <- FALSE else verbose <- args$verbose
+  if(is.null(args[["P"]])) P <- NULL else P <- args$P
   
   # Performs the tests
   if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\", see ?mvgls ")
@@ -22,11 +23,19 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     # TEMPORARY?
     if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
     if(!is.null(L)){
-        type <- "glh"
+        if(!is.null(P)) type <- "glhrm" else type <- "glh"
         if(!is.matrix(L)) warning("\n","The supplied contrasts vector L has been formatted to a matrix")
         L <- matrix(L, ncol=nrow(object$coefficients))
-       
     } 
+    # check if P is provided but not L?
+    if(!is.null(P) & is.null(L)){
+      type <- "glhrm"
+      warning("\n","No contrasts vector L supplied for the Hypothesis. Assumes comparison to the intercept")
+      if(!any(object$dims$assign==0)) stop("You're model doesn't includes an intercept term. Please provide a contrast matrix for L")
+      intercept_X <- rep(0, length(object$dims$assign))
+      intercept_X[object$dims$assign==0] = 1
+      L <- matrix(intercept_X, ncol=nrow(object$coefficients))
+    }
        
     # if ML we can use the parametric tests or permutations
     if(object$method=="LL" & param==TRUE){
@@ -34,7 +43,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="I" | type==1) paramTest <- .aov.mvgls.I(object, test)
       if(type=="II" | type==2) paramTest <- .aov.mvgls.mar(object, test, type=type)
       if(type=="III" | type==3) paramTest <- .aov.mvgls.mar(object, test, type=type)
-      if(type=="glh") paramTest <- .linearhypothesis.gls(object, test, L, rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=TRUE, penalized=FALSE)
+      if(type=="glh" | type=="glhrm") paramTest <- .linearhypothesis.gls(object, test, L, rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=TRUE, penalized=FALSE, P=P)
         
       # terms labels
       if(type=="III" | type=="3") terms <- c("(Intercept)",attr(terms(object$formula),"term.labels")) else terms <- attr(terms(object$formula),"term.labels")
@@ -51,7 +60,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       if(type=="I" | type==1) permTests <- .aov.mvgls.perm.I(object, test, nperm=nperm, nbcores=nbcores, penalized=penalized, verbose=verbose)
       if(type=="II" | type==2) permTests <- .aov.mvgls.perm.mar(object, test, nperm=nperm, nbcores=nbcores, type=type, penalized=penalized, verbose=verbose)
       if(type=="III" | type==3) permTests <- .aov.mvgls.perm.mar(object, test, nperm=nperm, nbcores=nbcores, type=type, penalized=penalized, verbose=verbose)
-      if(type=="glh") permTests <- .linearhypothesis.gls(object, test, L, rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=param, penalized=penalized, verbose=verbose)
+      if(type=="glh" | type=="glhrm") permTests <- .linearhypothesis.gls(object, test, L, rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=param, penalized=penalized, verbose=verbose, P=P)
          
       # compute the p-values for the tests
       if(test=="Wilks"){ # Wilks's lambda is an inverse test (reject H0 for small values of lambda)
@@ -691,7 +700,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   # options
   args <- list(...)
   if(is.null(args[["verbose"]])) verbose <- TRUE else verbose <- args$verbose
-      
+  if(is.null(args[["P"]])) P <- NULL else P <- args$P
+  
   # variables and parameters
   Y <- object$corrSt$Y
   X <- object$corrSt$X
@@ -705,27 +715,40 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   
   if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf 
   if(is.null(rhs)){
-      rhs <- matrix(0, ncol=p, nrow=nrow(L))
+    rhs <- matrix(0, ncol=p, nrow=nrow(L))
+    if(!is.null(P)) rhs <- matrix(0, ncol=ncol(P), nrow=nrow(L))
   }else if(length(rhs)==1){
-      rhs <- matrix(rhs, ncol=p, nrow=nrow(L))
+    rhs <- matrix(rhs, ncol=p, nrow=nrow(L))
+    if(!is.null(P))  rhs <- matrix(rhs, ncol=ncol(P), nrow=nrow(L))
   }
       
   if(penalized==TRUE) penalized <- "approx"
   # QR decomposition
   Q_r <- qr(X)
   
-  # Hypothesis
+  # Hypothesis contrasts matrix
   Xc <- X%*%pseudoinverse(t(X)%*%X)%*%t(L)
   XCXC <- pseudoinverse(t(Xc)%*%Xc)
-  H <- t(L%*%B0 - rhs)%*%XCXC%*%(L%*%B0 - rhs) # The Hypothesis matrix under LB=rhs
   
-  # Error SSCP matrix (i.e. inverse of the unscaled covariance)
-  WW  <- object$sigma$P/ndimCov
+  if(!is.null(P)){
+    # Hypothesis
+    H <- t(L%*%B0%*%P - rhs)%*%XCXC%*%(L%*%B0%*%P - rhs) # The Hypothesis matrix under LB=rhs
+    
+    # Error SSCP matrix (i.e. inverse of the unscaled covariance)
+    WW  <- solve(t(P)%*%(object$sigma$Pinv*ndimCov)%*%P)
+    # FIXME permutations for the intercept-only model
+  }else{
+    # Hypothesis
+    H <- t(L%*%B0 - rhs)%*%XCXC%*%(L%*%B0 - rhs) # The Hypothesis matrix under LB=rhs
+  
+    # Error SSCP matrix (i.e. inverse of the unscaled covariance)
+    WW  <- object$sigma$P/ndimCov
+  }
   
   # Compute the statistic
   HE <- H%*%WW
   eig=eigen(HE, only.values = TRUE)$values
-  nb.df <- qr(L)$rank
+  if(!is.null(P)) nb.df <- min(qr(L)$rank, qr(P)$rank) else nb.df <- qr(L)$rank
   nb.resid <- N - Q_r$rank
   Stats <- .multivTests(Re(eig), nb.df, nb.resid, test=test) 
     
@@ -782,10 +805,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                
                                # param if(penalty=="RidgeArch")
                                tuningNull <- estimModelNull$par[1] 
-                               
-                               # Hypothesis SSCP matrix
-                               Hp <- t(L%*%Bp)%*%XCXC%*%(L%*%Bp)
-                               
+                              
                                # SSCP matrix
                                SSCP <- crossprod(residuals)
                                
@@ -793,23 +813,49 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                targetE <- .targetM(SSCP, target, penalty)
                                Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
                                
-                               # HE matrix
-                               HE <- Hp%*%solve(Ep)
+                              if(is.null(P)){
+                                  # Hypothesis SSCP matrix
+                                  LB <- L%*%Bp
+                                  Hp <- t(LB)%*%XCXC%*%(LB)
+                               
+                                  # HE matrix
+                                  HE <- Hp%*%solve(Ep)
+                               }else{
+                                  # Hypothesis SSCP matrix under RM deisgn
+                                  LBP <- L%*%Bp%*%P
+                                  Hp <- t(LBP)%*%XCXC%*%(LBP)
+                                  
+                                  # HE matrix
+                                  HE <- Hp%*%solve(t(P)%*%Ep%*%P)
+                               } 
+
                                
                              }else if(penalized=="none"){
                                
                                # randomize the residuals of the reduced model
-                               Yp <- Rz[c(sample(N-1),N), ]%*%Y # -1 because we use the constrasts; we also remove the effect it's not necessary
+                               Yp <- Rz[c(sample(N-1),N), ]%*%Y # -1 because we use the contrasts; we also remove the effect it's not necessary
                                
-                               # Hypothesis SSCP
+                               # coefficients under randomized sets
                                Bp <- XtX1Xt %*% Yp
-                               Hp <- t(L%*%Bp)%*%XCXC%*%(L%*%Bp)
                                
                                # Error SSCP
                                Ep <- crossprod(Yp - X%*%Bp)
-                               
-                               # HE matrix
-                               HE <- Hp%*%solve(Ep)
+          
+                               if(is.null(P)){
+                                 # Hypothesis SSCP matrix
+                                 LB <- L%*%Bp
+                                 Hp <- t(LB)%*%XCXC%*%(LB)
+                                 
+                                 # HE matrix
+                                 HE <- Hp%*%solve(Ep)
+                               }else{
+                                 # Hypothesis SSCP matrix under RM deisgn
+                                 LBP <- L%*%Bp%*%P
+                                 Hp <- t(LBP)%*%XCXC%*%(LBP)
+                                 
+                                 # HE matrix
+                                 HE <- Hp%*%solve(t(P)%*%Ep%*%P)
+                               } 
                              }
                              
                              # compute the statistic

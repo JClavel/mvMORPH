@@ -594,12 +594,13 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     if(x$type=="II") cat("Type II MANOVA Tests:",x$test,"test statistic","\n")
     if(x$type=="III") cat("Type III MANOVA Tests:",x$test,"test statistic","\n")
     if(x$type=="glh") cat("General Linear Hypothesis Test:",x$test,"test statistic","\n")
+    if(x$type=="glhrm") cat("General Linear Hypothesis Test (repeated measures design):",x$test,"test statistic","\n")
     
     signif <- sapply(x$pvalue, function(i) if(i<0.001){"***"}else if(i<0.01){
       "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
     
     table_results <- data.frame(Df=x$Df, stat=x$stat, approxF=x$approxF, numDf=x$NumDf, denDf=x$DenDf, pval=x$pvalue, signif=signif)
-    if(x$type!="glh") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
+    if(x$type!="glh" & x$type!="glhrm") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
     colnames(table_results) <- c("Df", "test stat", "approx F", "num Df", "den Df", "Pr(>F)", "")
     print(table_results, digits = digits, ...)
     cat("---","\n")
@@ -613,12 +614,12 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     if(x$type=="II") cat("Type II MANOVA Tests with",x$nperm,"permutations:",x$test,"test statistic","\n")
     if(x$type=="III") cat("Type III MANOVA Tests with",x$nperm,"permutations:",x$test,"test statistic","\n")
     if(x$type=="glh")  cat("General Linear Hypothesis Test with",x$nperm,"permutations:",x$test,"test statistic","\n")
- 
+    if(x$type=="glhrm")  cat("General Linear Hypothesis Test (repeated measures design) with",x$nperm,"permutations:",x$test,"test statistic","\n")
     signif <- sapply(x$pvalue, function(i) if(i<0.001){"***"}else if(i<0.01){
       "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
     
     table_results <- data.frame(stat=x$stat, pval=x$pvalue, signif=signif)
-    if(x$type!="glh") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
+    if(x$type!="glh" & x$type!="glhrm") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
     colnames(table_results) <- c("Test stat", "Pr(>Stat)", "")
     print(table_results, digits = digits, ...)
     cat("---","\n")
