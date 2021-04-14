@@ -36,6 +36,10 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
       intercept_X[object$dims$assign==0] = 1
       L <- matrix(intercept_X, ncol=nrow(object$coefficients))
     }
+    if(!is.null(P) & !is.matrix(P)){
+        warning("\n","The supplied contrasts vector P has been formatted to a matrix")
+        P <- matrix(P, nrow=ncol(object$coefficients))
+    }
        
     # if ML we can use the parametric tests or permutations
     if(object$method=="LL" & param==TRUE){
@@ -671,6 +675,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                
                                # Error SSCP
                                Ep <- crossprod(Yp, (In - Proj_full)%*%Yp)
+                               
                                # HE matrix
                                HE <- Hp%*%solve(Ep)
                              }

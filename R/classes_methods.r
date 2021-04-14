@@ -604,7 +604,7 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     colnames(table_results) <- c("Df", "test stat", "approx F", "num Df", "den Df", "Pr(>F)", "")
     print(table_results, digits = digits, ...)
     cat("---","\n")
-    cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
+    cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1","\n")
     
     
     
