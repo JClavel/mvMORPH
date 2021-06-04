@@ -833,3 +833,23 @@ predict.mvgls <- function(object, newdata, ...){
     return(phy)
 }
 
+# ------------------------------------------------------------------------- #
+# print option for effect/association of multivariate tests                 #
+# options: x, digits, ...                                                   #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+print.effects.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
+    
+    if(x$adjusted & x$parametric==TRUE){
+        tatsuoka <- attr(x$adjusted, "tatsuoka")
+        cat("## Multivariate measure(s) of association ##","\n")
+        if(tatsuoka) cat("## Tatsuoka' bias adjustment              ##","\n") else cat("## Serlin' bias adjustment                ##","\n")
+        print(x$effect, digits=digits)
+    }else{
+        cat("## Multivariate measure(s) of association ##","\n")
+        print(x$effect, digits=digits)
+        if(x$adjusted) cat("## Note: bias is empirically adjusted     ##","\n")
+    }
+    if(any(x$effect<0)) message("## Values < 0 represent no association    ##","\n")
+}

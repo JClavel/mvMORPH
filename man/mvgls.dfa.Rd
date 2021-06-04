@@ -57,6 +57,7 @@ Clavel, J., Morlon, H., 2020. Reliable phylogenetic regressions for multivariate
 \code{\link{mvgls}},
 \code{\link{manova.gls}},
 \code{\link{mvgls.pca}},
+\code{\link{predict.mvgls.dfa}},
 }
 
 \examples{
