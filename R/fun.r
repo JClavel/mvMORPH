@@ -568,7 +568,7 @@ varBM<-function(tree,data,n,k){
 user_guess <- function(user_const, sigma){
     diag(sigma) <- sqrt(diag(sigma))
     indvalue <- sort(unique(c(user_const[!is.na(user_const)])))
-    rcind <- sapply(indvalue,function(x) which(user_const==x, arr.ind=TRUE))
+    rcind <- sapply(indvalue,function(x) which(user_const==x, arr.ind=TRUE), simplify = FALSE)
     guess <- sapply(rcind, function(x) {
         dim_val <- nrow(x)
         mean(sapply(1:dim_val, function(i) sigma[x[i,1],x[i,2]]))})
