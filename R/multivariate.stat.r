@@ -1013,6 +1013,7 @@ effectsize <- function(x, ...){
 # options: object, term, ...                                                #
 #                                                                           #
 # ------------------------------------------------------------------------- #
+
 pairs.contrasts <- function(object, term=1, ...){
     if(object$contrasts[term]!="contr.treatment") stop("object fit must use dummy coding - see ?contr.treatment")
     names_variables <- paste(names(object$xlevels[term]), object$xlevels[[term]], sep="")
@@ -1039,12 +1040,12 @@ pairs.contrasts <- function(object, term=1, ...){
     return(matrices_residuals)
 }
 
-
 # ------------------------------------------------------------------------- #
 # pairwise.glh                                                              #
 # options: object, term, test, adjust, nperm, ...                           #
 #                                                                           #
 # ------------------------------------------------------------------------- #
+
 pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), adjust="holm", nperm=1000L, ...){
     
     # options
@@ -1115,7 +1116,6 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-
 print.pairs.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     
     # select the appropriate output
@@ -1130,8 +1130,6 @@ print.pairs.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...
         print(table_results, digits = digits, ...)
         cat("---","\n")
         cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1","\n")
-        
-        
         
     }else{ # permutation methods
         
