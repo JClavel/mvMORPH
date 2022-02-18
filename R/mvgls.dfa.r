@@ -303,6 +303,8 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         predicted_names <- rownames(newdata)
         rcov <- .resid_cov_phylo(tree, object$fit, predicted_names)
         X1 <- matrix(1,ncol=1,nrow=nrow(newdata))
+        rownames(X1) <- predicted_names
+        
         # modify the design matrix FIXME, is it necessary?
         if(any(object$fit$dims$assign==0)){
             grp <- as.factor(object$fit$variables$X[,object$classid]%*%(1:object$nclass))
@@ -311,12 +313,15 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         }else{
             resid <- residuals(object$fit)
         }
+        
         # we compute the residuals across all subjects
+        # the "bias" term can be computed before hand?
+        bias <- rcov$w%*%solve(rcov$Vt)%*%resid[rcov$train,,drop=FALSE]
         
         # compute prediction scores
-        prediction <- sapply(1:nrow(newdata), function(x){
+        # prediction <- sapply(1:nrow(newdata), function(x){
+        prediction <- sapply(predicted_names, function(x){
             sapply(1:nrow(B), function(i){
-                bias <- rcov$w%*%solve(rcov$Vt)%*%resid[rcov$train,,drop=FALSE]
                 predicted <- X1%*%B[i,] + bias
                 -0.5*( t(as.numeric(newdata[x,] - predicted[x,]))%*%object$fit$sigma$P%*%as.numeric(newdata[x,] - predicted[x,])) + log(prior[i]) #eg eq 26 in Hastie et al. 1994 - PDA
             })
