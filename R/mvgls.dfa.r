@@ -256,6 +256,17 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         B[object$fit$dims$assign==object$term,] <-  sweep(B[object$fit$dims$assign==object$term,,drop=FALSE], 2, B[object$fit$dims$assign==0,], "+")
     }
     
+    # estimated (inverse) covariance matrix
+    Rinv <- object$fit$sigma$P
+    
+    # scale the covariance by the determinant of the evolutionary model
+    # this make the vcv to the same scale as the traits.
+    # should make the distance measure consistant with the Bayes rule between both OLS and GLS approaches.
+    if(!all(prior==prior[1])){
+        
+        Rinv <- Rinv * (1/exp( (object$fit$corrSt$det - determinant(crossprod(object$fit$corrSt$X))$modulus) * (1/object$fit$dims$n))) # determinant corrected for REML
+    }
+    
     # log-sum-exp trick to avoid over/under flow
     logsumexp <- function(v) max(v) + log(sum(exp(v - max(v))))
     
@@ -264,7 +275,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         # Bayes classifier for group "g" is d(x) = t(x)S^-1u - 0.5t(u)S^-1u + log(P(g)) => can be used to precompute quantities for multiple values to predict
         if(missing(newdata)){
             prediction <- sapply(index_B, function(i){
-                SB <- object$fit$sigma$P%*%B[i,]
+                SB <- Rinv%*%B[i,]
                 const_prior <- -0.5*t(B[i,])%*%SB + log(prior[i])
                 sapply(1:nrow(object$fit$variable$Y), function(x){
                     t(object$fit$variable$Y[x,])%*%SB + const_prior
@@ -273,7 +284,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             
         }else{
             prediction <- sapply(index_B, function(i){
-                SB <- object$fit$sigma$P%*%B[i,]
+                SB <- Rinv%*%B[i,]
                 const_prior <- -0.5*t(B[i,])%*%SB + log(prior[i])
                 sapply(1:nrow(newdata), function(x){
                     t(newdata[x,])%*%SB + const_prior
@@ -323,7 +334,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         prediction <- sapply(predicted_names, function(x){
             sapply(1:nrow(B), function(i){
                 predicted <- X1%*%B[i,] + bias
-                -0.5*( t(as.numeric(newdata[x,] - predicted[x,]))%*%object$fit$sigma$P%*%as.numeric(newdata[x,] - predicted[x,])) + log(prior[i]) #eg eq 26 in Hastie et al. 1994 - PDA
+                -0.5*( t(as.numeric(newdata[x,] - predicted[x,]))%*%Rinv%*%as.numeric(newdata[x,] - predicted[x,])) + log(prior[i]) #eg eq 26 in Hastie et al. 1994 - PDA
             })
         })
         
