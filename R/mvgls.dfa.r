@@ -92,8 +92,8 @@ mvgls.dfa <- function(object, ...){
   if(length(prior)!=nclass) warning("The number of classes and  priors doesn't match")
   
   # results
-  results <- list(coeffs=coeffs.raw, coeffs.std=coeffs.std
-                  , scores=scores, H=H, E=E, residuals=Ystand
+  results <- list(coeffs=coeffs.raw[, 1:rank, drop=FALSE], coeffs.std=coeffs.std[, 1:rank, drop=FALSE]
+                  , scores=scores[, 1:rank, drop=FALSE], H=H, E=E, residuals=Ystand
                   ,rank=rank, pct=pct, prior=prior, nclass=nclass, classid=classid, term=term, fit=object)
   
   class(results) <- "mvgls.dfa"
@@ -264,9 +264,11 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     # should make the distance measure consistant with the Bayes rule between both OLS and GLS approaches.
     if(!all(prior==prior[1])){
         if(object$fit$REML){ #TODO handle "const" in REML determinant for OUM
-            Rinv <- Rinv * (1/exp( (object$fit$corrSt$det - determinant(crossprod(object$fit$corrSt$X))$modulus) * (1/object$fit$dims$n)))
+            scale_fct <- (1/exp( (object$fit$corrSt$det - determinant(crossprod(object$fit$corrSt$X))$modulus) * (1/object$fit$dims$n)))
+            Rinv <- Rinv * scale_fct
         }else{
-            Rinv <- Rinv * (1/exp(object$fit$corrSt$det * (1/object$fit$dims$n)))
+            scale_fct <- (1/exp(object$fit$corrSt$det * (1/object$fit$dims$n)))
+            Rinv <- Rinv * scale_fct
         }
     }
     
@@ -286,6 +288,10 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             })
             
         }else{
+            if(!is.data.frame(newdata) & !is.matrix(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree")
+            # force to a matrix
+            newdata <- as.matrix(newdata)
+            
             prediction <- sapply(index_B, function(i){
                 SB <- Rinv%*%B[i,]
                 const_prior <- -0.5*t(B[i,])%*%SB + log(prior[i])
@@ -337,7 +343,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         prediction <- sapply(predicted_names, function(x){
             sapply(1:nrow(B), function(i){
                 predicted <- X1%*%B[i,] + bias
-                -0.5*( t(as.numeric(newdata[x,] - predicted[x,]))%*%Rinv%*%as.numeric(newdata[x,] - predicted[x,])) + log(prior[i]) #eg eq 26 in Hastie et al. 1994 - PDA
+                        -0.5*( t(as.numeric(newdata[x,] - predicted[x,]))%*%Rinv%*%as.numeric(newdata[x,] - predicted[x,])) + log(prior[i]) #eg eq 26 in Hastie et al. 1994 - PDA
             })
         })
         

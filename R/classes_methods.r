@@ -792,7 +792,7 @@ predict.mvgls <- function(object, newdata, ...){
     # If error=TRUE, we add it to the covariance matrix here
     #if(!is.na(object$mserr)) diag(V) = diag(V) + object$mserr
     
-    # Build the covariance matrix
+    # Build the covariance matrices
     w <- V[sp_name, train_sample, drop=FALSE]
     Vt <- V[train_sample, train_sample, drop=FALSE]
     
