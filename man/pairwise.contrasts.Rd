@@ -52,8 +52,13 @@ data("phyllostomid")
 # model fit with mandible~"grp2"
 fit <- mvgls(mandible~grp2, data=phyllostomid, phyllostomid$tree, model="lambda", method="PL") 
 
-# pairwise tests 
-pairwise.contrasts(fit, term="grp2")
+# pairwise tests - note that the first group in lexicographic order (the "intercept") is
+# considered as the baseline in R
+pairwise.contrasts(fit, term="grp2") 
+
+# We can explicitly estimate each mean (rather than deviations to the baseline)
+fitb <- mvgls(mandible~grp2 + 0, data=phyllostomid, phyllostomid$tree, model="lambda", method="PL") 
+pairwise.contrasts(fitb, term="grp2") 
 }
 }
 
