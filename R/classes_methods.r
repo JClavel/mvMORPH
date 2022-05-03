@@ -853,3 +853,79 @@ print.effects.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), .
     }
     if(any(x$effect<0)) message("## Values < 0 represent no association    ##","\n")
 }
+
+# ------------------------------------------------------------------------- #
+# ancestral.mvgls                                                           #
+# options: object, ...                                                      #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+
+## S3 Method for ancestral states estimation
+ancestral <- function(object, ...) UseMethod("ancestral")
+
+# core function
+ancestral.mvgls <- function(object, ...){
+    
+    # arguments
+    args <- list(...)
+    
+    # extract objects
+    if(!inherits(object,"mvgls")){
+        
+        # wrapper to "estim"
+        if(is.null(args[["data"]]) | is.null(args[["tree"]])) stop("Need a \"tree\" object and a new \"data\" matrix to predict ancestral states. See ?estim")
+        estim(tree = args$tree, data = args$data, object = object, asr=TRUE)
+        
+    }else if(inherits(object,"mvgls")){
+        
+        # If regression, must provide a regressor for the ancestral (nodes) states
+        # check if newdata is provided
+        if(any(object$dims$assign>0)){
+            
+            if(is.null(args[["na.action"]])) na.action <- na.pass else na.action <- args$na.action
+            if(is.null(args[["newdata"]])) stop("Regression model. You must provide a new \"dataset\" of predictors for each nodes. See also ?predict")
+            
+            Terms <- delete.response(object$terms)
+            # as in "stats v3.3.0"
+            m <- model.frame(Terms, args$newdata, xlev = object$xlevels, na.action = na.action)
+            
+            # check the arguments
+            if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+            X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
+            predicted_fit <- X %*% object$coefficients
+            
+        }else{
+            # Just use the grand mean - i.e. the ancestral states at the root
+            predicted_fit <- object$variables$X %*% object$coefficients
+            predicted_fit <- predicted_fit[-1,,drop=TRUE]
+        }
+        
+        # start estimating ancestral states using GLS
+        n <- object$dims$n
+        p <- object$dims$p
+        
+        # covariance for the nodes
+        if(!is.null(object$corrSt$diagWeight)){
+            V<-.Call("mvmorph_covar_ou_fixed", A=.vcvPhyloInternal(object$variables$tree), alpha=as.double(object$param), sigma=1, PACKAGE="mvMORPH")
+        }else{
+            V <- .vcvPhyloInternal(object$corrSt$phy)
+        }
+        indice <- (1:n)
+        AY <- V[-indice,indice]
+        vY <- V[indice,indice]
+        
+        # states at the nodes
+        residuals_fit <- object$residuals
+        recons_t <- (AY%*%pseudoinverse(vY)%*%residuals_fit)+predicted_fit
+        colnames(recons_t) = colnames(object$variables$Y)
+        rownames(recons_t) = paste("node_",n+1:Nnode(object$variables$tree), sep="")
+        #class(recons_t) = "anc.mvgls"
+        return(recons_t)
+        
+    }else{
+        stop("only works with \"mvgls\" class objects. See ?mvgls, or use instead \"estim\" function")
+    }
+    
+}
+

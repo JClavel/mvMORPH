@@ -9,7 +9,7 @@ Returns the prediction(s) of DFA of class 'mvgls.dfa'.
 }
 \usage{
 
-\method{predict}{mvgls.dfa.predict}(object, newdata, prior, ...)
+\method{predict}{mvgls.dfa}(object, newdata, prior, ...)
 
 }
 \arguments{
@@ -24,7 +24,7 @@ Note: the predictions are performed on fitted values if "newdata" is not provide
 the group priors. If not provided, assumes equal prior.
 }
   \item{...}{
-other arguments for this generic function. If \code{tree} is provided (with tip name(s) matching rownames in newdata and in the training sample (model fit)), then the best unbiased linear predictions for the model is returned. Otherwise the GLS coefficients are used to predict "newdata", in this condition classification is less optimal than performing a regular DFA.
+further arguments for this generic function. If \code{tree} is provided (with tip name(s) matching rownames in newdata and in the training sample (model fit)), then the best unbiased linear prediction (BLUP) for the model is returned. Otherwise the GLS coefficients are used to predict "newdata", in this condition classification might be less optimal than performing a regular DFA (see \code{lda} from MASS).
 }
 
 }

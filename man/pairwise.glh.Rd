@@ -40,8 +40,8 @@ Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the 
   \item{test}{the multivariate test statistic used}
   \item{L}{the contrasts used for all the pairwise tests}
   \item{stat}{the statistic calculated for each pairwise comparisons}
-  \item{pvalue}{the pvalues calculated for each pairwise comparisons}
-  \item{adjust}{the adjusted (for multiple comparisons) pvalues calculated for each pairwise comparisons}
+  \item{pvalue}{the p-values calculated for each pairwise comparisons}
+  \item{adjust}{the adjusted (for multiple comparisons) p-values calculated for each pairwise comparisons}
  
   }
 
@@ -52,7 +52,7 @@ General Linear Hypothesis of the form:
 
 \bold{LB=O}
 
-is used internally with an \bold{L} matrix specifying linear combinations of the model coefficients (\bold{B}) for each pairwise comparisons. The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}.
+is used internally with an \bold{L} matrix specifying linear combinations ("contrasts") of the model coefficients (\bold{B}) for each pairwise comparisons. The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs} (to test specific values for instance).
 
 Permutations on high-dimensional datasets is time consuming. You can use the option \code{nbcores} to parallelize the calculus over several cores using forking in UNIX platforms (default is \code{nbcores=1L}). Estimated time to completion is displayed when \code{verbose=TRUE}.
 }
@@ -70,6 +70,7 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{pairwise.contrasts}},
 \code{\link{manova.gls}}
 }
 
@@ -82,6 +83,14 @@ fit <- mvgls(mandible~grp2, data=phyllostomid, phyllostomid$tree, model="lambda"
 
 # pairwise tests 
 pairwise.glh(fit, term="grp2", test="Pillai", adjust="holm", nperm=1000, verbose=TRUE)
+
+# fit the model by ML (p<n)
+fitb <- mvgls(mandible[,1:5]~grp2, data=phyllostomid, 
+              phyllostomid$tree, model="lambda", method="LL") 
+pairwise.glh(fitb, term="grp2", test="Pillai", adjust="holm", verbose=TRUE)
+
+# use permutations on ML fit
+pairwise.glh(fitb, term="grp2", test="Pillai", adjust="holm", nperm=1000,  parametric=FALSE)
 }
 }
 

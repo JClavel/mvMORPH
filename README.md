@@ -16,6 +16,8 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + mvqqplot for model diagnostics
   + multivariate association
   + pairwise comparison
+  + repeated measures design
+  + DFA
   
 
 2. _TODO_:
@@ -48,6 +50,5 @@ Any bugs encountered when using the package can be reported [here](https://githu
 
 ## **Package citation**
 
-**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.    DOI: 10.1111/2041-210X.12420
+**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.
 
-[Download version with appended supplementary material.](https://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)

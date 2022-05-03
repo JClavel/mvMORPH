@@ -1,5 +1,5 @@
-\name{pairs.contrasts}
-\alias{pairs.contrasts}
+\name{pairwise.contrasts}
+\alias{pairwise.contrasts}
 
 \title{
 Pairwise contrasts
@@ -9,7 +9,7 @@ Generates pairwise contrasts (for factor levels) from an object fitted by the \c
 
 \usage{
 
-pairs.contrasts(object, term=1, ...)
+pairwise.contrasts(object, term=1, ...)
   
 }
 \arguments{
@@ -31,7 +31,7 @@ Further arguments to be passed through. Not used.}
 
 
 \note{
-	The function assumes "effects" dummy coding for the factor levels (see ?contr.treatment)}
+	The function assumes "effect" dummy coding for the factor levels (see ?contr.treatment)}
 	
 \references{
 Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
@@ -53,7 +53,7 @@ data("phyllostomid")
 fit <- mvgls(mandible~grp2, data=phyllostomid, phyllostomid$tree, model="lambda", method="PL") 
 
 # pairwise tests 
-pairs.contrasts(fit, term="grp2")
+pairwise.contrasts(fit, term="grp2")
 }
 }
 

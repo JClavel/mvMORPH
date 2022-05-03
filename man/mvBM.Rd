@@ -68,7 +68,10 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvBM function fits a multivariate Brownian Motion (BM) process, with unique or multiple BM rates (see O'Meara et al., 2006; Revell and Collar, 2009). Note that the function uses the non-censored approach of O'Meara et al. (2006) by default (i.e., a common ancestral state is assumed for the different regimes), but it is possible to specify multiple ancestral states (i.e., one for each regimes) through the "smean" parameter (smean=FALSE) in the "param" list.
+The mvBM function fits a homogeneous multivariate Brownian Motion (BM) process:
+\deqn{dX(t) = \Sigma^{1/2}dW(t)}
+
+With possibly multiple rates (\eqn{\Sigma_i}) in different parts ("i" selective regimes) of the tree (see O'Meara et al., 2006; Revell and Collar, 2009, see also details of the implementation in Clavel et al. 2015). Note that the function uses the non-censored approach of O'Meara et al. (2006) by default (i.e., a common ancestral state is assumed for the different regimes), but it is possible to specify multiple ancestral states (i.e., one for each regime) through the "smean" parameter (smean=FALSE) in the "param" list.
 
 The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \code{"rpf"} and \code{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant involved in the log-likelihood estimation. The \code{"inverse"} approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \code{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. The \code{"pic"} method uses a very fast algorithm based on independent contrasts. It should be used with strictly dichotomic trees (i.e., no polytomies) and is currently not available for the multivariate "BMM" model. See ?mvLL for more details on these computational methods.
 

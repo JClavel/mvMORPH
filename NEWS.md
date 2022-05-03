@@ -1,10 +1,12 @@
 ## mvMORPH 1.1.5
-    + mvqqplot (multivariate normality and outliers assessment)
-    + effectsize (multivariate measures of association)
+    + mvqqplot (multivariate normality and outliers assessment - beta)
+    + effectsize (multivariate measures of association - beta)
     + pairs.contrasts (build a matrix of pairwise contrasts)
     + pairwise.glh (performs multivariate pairwises tests)
-    + predict.mvgls.dfa (predict option for DFA)
+    + predict.mvgls.dfa (predict option for DFA - beta)
     + manova.gls (implements now contrasts for repeated measures designs)
+    + fix error in estim
+    + add "ancestral" function to estimate ancestral states for mvgls objects
 ## mvMORPH 1.1.4
     + model BMM in mvgls
     + "predict" function for mvgls

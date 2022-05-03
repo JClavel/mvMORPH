@@ -20,7 +20,7 @@ An object of class "manova.gls"
 %%     ~~Describe \code{model2} here~~
 }
   \item{...}{
-One can specify \code{adjusted=TRUE} to obtain the Serlin adjustment to Pillai trace effect size, or Tatsuoka adjustment for Wilks' lambda. These adjustments are correcting positive bias with increasing number of variables.
+One can specify \code{adjusted=TRUE} to obtain Serlin' adjustment to Pillai trace effect size, or Tatsuoka' adjustment for Wilks' lambda. These adjustments are correcting positive bias with increasing number of variables.
 %%     ~~Describe \code{model1} here~~
 }
 }
@@ -36,9 +36,10 @@ Return the effect size for all the terms of the MANOVA or pairwise tests.
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
 }
-\references{
-%% ~put references to the literature/web site here ~
-}
+
+\note{
+	This function is still under development.}
+	
 \author{
 Julien Clavel
 %%  ~~who you are~~
@@ -72,6 +73,6 @@ effectsize(multivariate_test)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{ Estim }
-\keyword{ Imputation }
-\keyword{ Missing values }% __ONLY ONE__ keyword per line
+\keyword{ Effect size }
+\keyword{ R-squared }
+\keyword{ Multivariate measure of association }% __ONLY ONE__ keyword per line

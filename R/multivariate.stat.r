@@ -727,7 +727,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     if(!is.null(P))  rhs <- matrix(rhs, ncol=ncol(P), nrow=nrow(L))
   }
       
-  if(penalized==TRUE) penalized <- "approx"
+      if(penalized==TRUE) penalized <- "approx" #FIXME
   # QR decomposition
   Q_r <- qr(X)
   
@@ -1009,12 +1009,12 @@ effectsize <- function(x, ...){
 }
 
 # ------------------------------------------------------------------------- #
-# pairs.contrasts                                                           #
+# pairwise.contrasts                                                        #
 # options: object, term, ...                                                #
 #                                                                           #
 # ------------------------------------------------------------------------- #
 
-pairs.contrasts <- function(object, term=1, ...){
+pairwise.contrasts <- function(object, term=1, ...){
     if(object$contrasts[term]!="contr.treatment") stop("object fit must use dummy coding - see ?contr.treatment")
     names_variables <- paste(names(object$xlevels[term]), object$xlevels[[term]], sep="")
     indice_predictor <- attr(object$variables$X,"dimnames")[[2]]%in%c("(Intercept)",names_variables)
@@ -1064,7 +1064,7 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
     if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
     
     # build a contrast matrix
-    L <- pairs.contrasts(object, term=term)
+    L <- pairwise.contrasts(object, term=term)
     nb_contrasts <- nrow(L)
     
     # if ML we can use the parametric tests or permutations
@@ -1082,9 +1082,9 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
         
     }else{
         param = FALSE # we use permutation rather than parametric test
-        
+        penalized = if(object$method=="LL") "none" else TRUE
         permTests <- lapply(1:nb_contrasts, function(contx){
-            .linearhypothesis.gls(object, test, L=L[contx,,drop=FALSE], rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=param, penalized=TRUE, verbose=verbose)
+            .linearhypothesis.gls(object, test, L=L[contx,,drop=FALSE], rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=param, penalized=penalized, verbose=verbose)
         })
         
         # compute the p-values for the tests

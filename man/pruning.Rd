@@ -6,7 +6,7 @@ Pruning algorithm to compute the square root of the phylogenetic covariance matr
 %%  ~~function to do ... ~~
 }
 \description{
-This function use the pruning algorithm (Felsenstein 1973) to efficiently compute the determinant of the phylogenetic covariance matrix as well as the square root of this matrix (or its inverse; Stone 2011, Khabbazian et al. 2016). This algorithm is faster than using "eigen" or "cholesky" function to compute the determinant or the square root (see e.g., Clavel et al. 2015) and can be used to compute independent contrasts and the log-likelihood of a model in linear time.
+This function uses the pruning algorithm (Felsenstein 1973) to efficiently compute the determinant of the phylogenetic covariance matrix as well as the square root of this matrix (or its inverse; Stone 2011, Khabbazian et al. 2016). This algorithm is faster than using "eigen" or "cholesky" function to compute the determinant or the square root (see e.g., Clavel et al. 2015) and can be used to compute independent contrasts scores and the log-likelihood of a model in linear time.
 
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }

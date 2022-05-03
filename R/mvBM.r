@@ -92,7 +92,7 @@ if(is.null(param[["constraint"]])==TRUE){
 }
 
 ##------------------------Precalc---------------------------------------------##
-if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
     tree<-precalc$tree
     
     if(is.null(tree[["mapped.edge"]])==TRUE & model=="BMM"){

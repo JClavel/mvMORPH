@@ -208,7 +208,7 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     }
     
     ##-----------------------Precalc-on-------------------------------------------##
-    if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+    if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
         
         mt<-list(mDist=precalc$C1)
         root<-precalc$param$root

@@ -52,7 +52,7 @@ mvLL<-function(tree,data,error=NULL,method=c("pic","rpf","sparse","inverse","pse
             if(datatype=="tree"){ntip<-length(tree$tip.label)}else{ntip=nspvcv/ntrait}
             D<-multD(tree,ntrait,ntip,smean=TRUE)
         
-        }else if(class(precalc)=="precalc.mvmorph"){
+        }else if(inherits(precalc, "mvmorph.precalc")){
         
             D<-precalc$D
         }

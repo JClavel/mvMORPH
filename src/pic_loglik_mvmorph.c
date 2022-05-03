@@ -200,7 +200,7 @@ static void phylo_pic_single(int *ind, int *ntotal, int *numbnode, int *nsp, int
 
 SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP edgelength, SEXP times, SEXP rate, SEXP Tmax, SEXP Model, SEXP mu, SEXP sigma){
   int nodnbtr, numbnod, ntip, i, ntot, ntraits, dimrtrait, f, model, info = 0, neg = 0;
-  char transa = 'T', transb = 'N';
+  //char transa = 'T', transb = 'N';
   double one = 1.0, zero = 0.0;
   numbnod = INTEGER(Nnode)[0];
   ntip = INTEGER(nsp)[0];
@@ -319,7 +319,7 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
         for(i=0; i<dimrtrait; i++) REAL(Z)[i]=REAL(sigma)[i];
     }else{
     // crossproduct of contrast matrix
-	F77_CALL(dgemm)(&transa, &transb, &ntraits, &ntraits, &numbnod, &one, REAL(contr), &numbnod, REAL(contr), &numbnod, &zero, REAL(Z), &ntraits);
+	F77_CALL(dgemm)("T", "N", &ntraits, &ntraits, &numbnod, &one, REAL(contr), &numbnod, REAL(contr), &numbnod, &zero, REAL(Z), &ntraits FCONE FCONE);
 	// Division par le nombre de taxons (ou taxon -1 pour REML)
 		for(i =0; i<dimrtrait; i++) REAL(Z)[i] /= ntip;
     }

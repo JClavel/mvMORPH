@@ -1,5 +1,5 @@
 /* Solve linear system with RPF Cholesky - Julien Clavel - mvMORPH 1.0.3 - 2014 */
-/* Fast computation of the Cholesky factorization using BLAS 3 and half memmory */
+/* Fast computation of the Cholesky factorization using BLAS 3 and half memory  */
 /* storage (Rectangular Packed Format). The Cholesky factor is the used to      */
 /* solve the generalized least square system. "row-major order version"         */
 

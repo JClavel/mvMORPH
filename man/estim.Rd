@@ -42,7 +42,7 @@ Missing observations for species in a phylogenetic tree are estimated according 
 
 When \emph{asr=TRUE}, the estimates, their variances and standard errors are those of the ancestral states at each node of the tree (this option is not available for the time-series). Note that if there are missing cases, they are first imputed before estimating the ancestral states.
 
-
+Estimation of missing cases and ancestral states is performed using GLS (Generalized Least Squares) solution (See Cunningham et al. 1998).
 %%  ~~ If necessary, more details than the description above ~~
 }
 \value{

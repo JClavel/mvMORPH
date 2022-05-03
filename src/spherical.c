@@ -47,7 +47,7 @@ SEXP spherical(SEXP param, SEXP variance, SEXP dim){
     }
     
     // Do the matrix crossproduct of the Cholesky factors U to compute the correlation matrix R
-    F77_CALL(dgemm)(&transa,&transb,&p,&p,&p,&one,REAL(U),&p,REAL(U),&p,&zero,REAL(R),&p);
+    F77_CALL(dgemm)(&transa,&transb,&p,&p,&p,&one,REAL(U),&p,REAL(U),&p,&zero,REAL(R),&p FCONE FCONE);
     
     // Scale the correlation matrix R with the variance terms to obtain V
     for(i=0;i<p;i++){

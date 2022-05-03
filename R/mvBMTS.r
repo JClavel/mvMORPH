@@ -242,7 +242,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     sizeD<-p
 
     ##-----------------------Precalc-on-------------------------------------------##
-    if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+    if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
         
         mt<-list(mDist=precalc$C1)
         root<-precalc$param$root

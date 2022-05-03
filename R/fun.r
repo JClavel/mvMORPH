@@ -20,6 +20,16 @@ vcv.ts <- function(times){
    return(V)
 }
 
+# Build a matrix with tip and internal covariances
+.vcvPhyloInternal <- function(tree){
+    nbtip <- Ntip(tree)
+    dis <- dist.nodes(tree)
+    MRCA <- mrca(tree, full = TRUE)
+    M <- dis[as.character(nbtip + 1), MRCA]
+    dim(M) <- rep(sqrt(length(M)), 2)
+    return(M)
+}
+
 ## Matrices parameterizations
 
 # Calcul d'une matrice positive semi-definie (Choleski transform) modified from OUCH by A. King

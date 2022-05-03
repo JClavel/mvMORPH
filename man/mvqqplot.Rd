@@ -36,12 +36,14 @@ The empirical quantiles of standardized Mahalanobis distances (Caroni 1987) esti
 
 
 \note{
-	Chi square Q-Q plots may be outperformed by F based Q-Q plots for identifying outliers (Hardin & Rocke 2005).}
+	Chi square Q-Q plots may be outperformed by F based Q-Q plots for identifying outliers (Hardin & Rocke 2005). The function is still under development.}
 	
 \references{
+Caroni, C. 1987. Residuals and Influence in the multivariate linear model. Journal of the Royal Statistical Society 36(4): 365-370.
+
 Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
 
-Caroni, C. 1987. Residuals and Influence in the multivariate linear model. Journal of the Royal Statistical Society 36(4): 365-370.
+Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
 }
 
 \author{J. Clavel}
