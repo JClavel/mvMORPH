@@ -243,7 +243,7 @@ mvOU(tree, data, model="OUM", method="rpf", scale.height=FALSE,
 
 # Add measurement error
  error=rnorm(500,sd=0.1)
- mvOU(tree, data, error=error^2, model="OUM", method="univarpf",
+ mvOU(tree, data+error, error=rep(0.1^2,500), model="OUM", method="univarpf",
     param=list(root="stationary"))
 
 	}
