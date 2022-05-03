@@ -482,14 +482,14 @@ if(asr==TRUE){
     varAY<-V[Indice_NA,-Indice_NA, drop=FALSE]
     varA<-V[Indice_NA,Indice_NA, drop=FALSE]
     # Prepare the data
-    anc<-anc[Indice_NA]
+    anc_complete<-anc[-Indice_NA]
     data_complete<-data[-Indice_NA]
     
     
     # Invert the covariance matrix
     invY<-solve(varY)
     ## Estimating missing cases; follow Cunningham et al. 1998
-    data_estim <- as.numeric(varAY%*%invY%*%(data_complete-anc))+anc
+    data_estim <- as.numeric(varAY%*%invY%*%(data_complete-anc_complete))+anc[Indice_NA]
 }
 
 

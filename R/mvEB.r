@@ -90,7 +90,7 @@ if(is.null(param[["decomp"]])){
 # function for sigma parameterization
 sigmafun <- function(par) {symPar(par, decomp=decomp, p=k)}
 
-if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
     
     tree<-precalc$tree
     C<-precalc$C1

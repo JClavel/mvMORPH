@@ -70,7 +70,7 @@ mvSHIFT<-function(tree,data,error=NULL,param=list(age=NULL,sigma=NULL,alpha=NULL
     }else{
 ##---------------------------Precalc-parameters-----------------------------##
 
-if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
     tree<-precalc$tree
     if(is.null(tree[["mapped.edge"]])){
     stop("The tree is not in SIMMAP format with mapped time slices")

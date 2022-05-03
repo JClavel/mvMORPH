@@ -343,7 +343,7 @@ switch(vcvtype,
 
 ##-----------------------Precalc-on-------------------------------------------##
 # precalc
-if(is.null(precalc)==FALSE & class(precalc)=="mvmorph.precalc"){
+if(is.null(precalc)==FALSE & inherits(precalc, "mvmorph.precalc")){
     tree<-precalc$tree
     mt<-list(mDist=precalc$C1)
     root<-precalc$param$root

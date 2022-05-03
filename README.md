@@ -10,12 +10,14 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.1.4**
+**mvMORPH 1.1.5**
 
-1. This is the version 1.1.4:
-  + add the BMM model in mvgls
-  + predict option for mvgls objects
-  + DFA on mvgls objects
+1. This is the version 1.1.5:
+  + mvqqplot for model diagnostics
+  + multivariate association
+  + pairwise comparison
+  + repeated measures design
+  + DFA
   
 
 2. _TODO_:
@@ -41,13 +43,12 @@ install_github("JClavel/mvMORPH", build_vignettes = TRUE)
 ```
 
 
-(The installation may crash if your dependencies are not up to date. Note that you may also need to install Rtools to compile the C codes included in the package. For [Windows] (https://cran.r-project.org/bin/windows/Rtools/) and for [Mac] (http://r.research.att.com) (and [Tools] (https://r.research.att.com/tools/) )
+(The installation may crash if your dependencies are not up to date. Note that you may also need to install Rtools to compile the C codes included in the package. For [Windows] (https://cran.r-project.org/bin/windows/Rtools/) and for [Mac] (https://mac.r-project.org/) (and [Tools] (https://mac.r-project.org/tools/) )
 
 ## **Report an issue**
 Any bugs encountered when using the package can be reported [here](https://github.com/JClavel/mvMORPH/issues)
 
 ## **Package citation**
 
-**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.    DOI: 10.1111/2041-210X.12420
+**Clavel, J., Escarguel, G., Merceron, G. 2015.** mvMORPH: an R package for fitting multivariate evolutionary models to morphometric data. Methods in Ecology and Evolution, 6(11):1311-1319.
 
-[Download version with appended supplementary material.](https://www.researchgate.net/publication/277711429_mvMORPH_an_R_package_for_fitting_multivariate_evolutionary_models_to_morphometric_data)

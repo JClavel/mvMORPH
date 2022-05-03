@@ -38,7 +38,7 @@ Options to be passed through. (e.g., \code{term="the term corresponding to the f
   }
 
 \details{
-\code{mvgls.dfa} allows computing a discriminant analysis based on a GLS estimate of a regression model (see \code{mvgls}). Discriminant functions can be used for dimensionality reduction, to follow up a MANOVA analysis by inspecting how the grouping best separate, or for group prediction.
+\code{mvgls.dfa} allows computing a discriminant analysis based on a GLS estimate of a regression model (see \code{mvgls}). Discriminant functions can be used for dimensionality reduction, to follow up a MANOVA analysis to describe group separation, or for group prediction.
 }
 
 \note{
@@ -57,6 +57,7 @@ Clavel, J., Morlon, H., 2020. Reliable phylogenetic regressions for multivariate
 \code{\link{mvgls}},
 \code{\link{manova.gls}},
 \code{\link{mvgls.pca}},
+\code{\link{predict.mvgls.dfa}},
 }
 
 \examples{

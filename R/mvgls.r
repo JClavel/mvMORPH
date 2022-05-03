@@ -71,6 +71,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!inherits(tree, "phylo")) stop("object \"tree\" is needed if no custom correlation structure provided.")
     if(method%in%c("H&L","Mahalanobis") & penalty%in%c("RidgeAlt","LASSO")) stop("\"H&L\" and \"Mahalanobis\" works only with \"RidgeArch\" penalization")
     if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
+    if(isTRUE(mserr) & model=="lambda") warning("Pagel's lambda and measurement error cannot be distinguished.\n")
    
     # further checks
     qrx <- qr(X)

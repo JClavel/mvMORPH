@@ -6,7 +6,7 @@ Multivariate Ornstein-Uhlenbeck model of continuous traits evolution
 %%  ~~function to do ... ~~
 }
 \description{
-This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU) model by allowing a given tree branch to be subdivided into multiple selective regimes using SIMMAP-like mapping of ancestral states.
+This function allows the fitting of a multivariate Ornstein-Uhlenbeck (OU1) model with possibly multiple optima (OUM) for different "selective regimes". A "phylo" object with SIMMAP-like mapping of ancestral states is required to subdivise the tree (or branches) into "selective regimes".
 Species measurement errors or dispersions can also be included in the model.
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
@@ -21,8 +21,8 @@ mvOU(tree, data, error = NULL, model = c("OUM", "OU1"), param = list(sigma = NUL
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{tree}{
-Phylogenetic tree with mapped ancestral states in SIMMAP format.
-(See make.simmap function from phytools package). A "phylo" object can be used with model "OU1".
+Phylogenetic tree with mapped ancestral states in phytools' SIMMAP format for "OUM" model.
+(See make.simmap, paintBranches, paintSubTree, and make.era.map functions from the phytools package). A "phylo" object can be used with model "OU1".
 %%     ~~Describe \code{tree} here~~
 }
   \item{data}{
@@ -72,34 +72,38 @@ Whether the results must be returned or not.
 }
 }
 \details{
-The mvOU function fits a multivariate model of evolution according to an Ornstein-Uhlenbeck process. The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states (phytools objects of class "simmap"). SIMMAP mapping allows one to assign parts of branchs to different selective regimes, and allows testing for change in trait variance that is not synchronous with the species divergence events. See the package vignette: browseVignettes("mvMORPH").
+The mvOU function fits a multivariate model of evolution according to an Ornstein-Uhlenbeck process:
+
+\deqn{dX(t) = A(\Theta - X(t))dt + \Sigma^{1/2}dW(t)}
+
+The user can incorporate measurement errors and uses SIMMAP-like mapping of ancestral states (phytools objects of class "simmap"). SIMMAP mapping allows one to assign parts of branches to different selective regimes for estimating regime-specific evolutionary optima. See the package vignette: browseVignettes("mvMORPH").
 
 Mapping of ancestral states can be done using the "make.simmap", "make.era.map" or "paintSubTree" functions from the "phytools" package.
 
-The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \code{"rpf"}, \code{"univarpf"} (for univariate analysis) and \code{"sparse"} methods use fast GLS algorithms based on factorization for avoiding the computation of the inverse of the variance-covariance matrix and its determinant for the log-likelihood estimation. The \code{"inverse"} approach uses the "stable" standard explicit computation of the inverse and determinant of the matrix and is therefore slower. The \code{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. See ?mvLL for details.
+The "method" argument allows the user to try different algorithms for computing the log-likelihood. The \code{"rpf"}, \code{"univarpf"} (for univariate analysis) and \code{"sparse"} methods use fast GLS algorithms based on factorization to avoid explicit computation of the inverse of the variance-covariance matrix and its determinant during log-likelihood estimation. The \code{"inverse"} approach uses a "stable" (based on QR decomposition) explicit computation of the inverse and determinant of the matrix and is therefore slower. The \code{"pseudoinverse"} method uses a generalized inverse that is safer for matrix near singularity but highly time consuming. See ?mvLL for details.
 
 Arguments in the \bold{"param"} \code{list} are:
 
 \bold{"sigma"} or \bold{"alpha"} - Starting values for the likelihood search can be specified through the "alpha" and "sigma" arguments in the param list. It is also possible to test for the significance of the off-diagonal sigma (scatter) and alpha (drift) matrix in the full model by making comparison with a constrained model (using sigma="constraint", or alpha="constraint") in the "param" argument list. You can also provide starting values for the constrained model. For instance, for two traits use sigma=list("constraint", c(0.5,0.5))  (or alpha=list("constraint", c(0.5,0.5))).
 
-\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. Indeed, the multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. Thus it is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012). For a symmetric matrix parameterization the user can choose the \code{"cholesky"}, \code{"eigen"}, or \code{"spherical"} option. 
+\bold{"decomp"} - You can further constrain the alpha matrix by specifying the decomposition of the matrix through the "decomp" argument in the "param" list. The multivariate Ornstein-Uhlenbeck model is described by the spectral decomposition of the alpha matrix. It is possible to parameterize the alpha matrix to be decomposable using various parameterizations (e.g., on its eigenvalues with different biological interpretations; Sy et al. 1997, Bartoszek et al. 2012; Clavel et al. 2015). For a symmetric matrix parameterization, the user can choose the \code{"cholesky"}, \code{"eigen"}, or \code{"spherical"} option. 
 
-For general square (non-symmetric) matrices the \code{"svd"}, \code{"qr"} and \code{"schur"} parameterizations can be used. The \code{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \code{"svd+"}, \code{"qr+"} or \code{"eigen+"} options forces the eigenvalues to be positives by taking their logarithm. It is also possible to specify \code{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \code{"equal"} and \code{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \code{"upper"} or \code{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH").
+For general square (non-symmetric) matrices the \code{"svd"}, \code{"qr"} and \code{"schur"} parameterizations can be used. The \code{"schur"} parameterization constrains the eigenvalues of the alpha matrix to be real numbers. The \code{"svd+"}, \code{"qr+"} or \code{"eigen+"} options force the eigenvalues to be positives by taking their logarithm. It is also possible to specify \code{"diagonal"} which is similar to the use of the "constraint" argument for "alpha" argument, or to use \code{"equal"} and \code{"equaldiagonal"}. Finally, one can specify that the alpha matrix is \code{"upper"} or \code{"lower"} triangular (i.e., one process affect the other unilateraly). Details can be found in the package vignette: browseVignettes("mvMORPH") and on Clavel et al. 2015.
 
 \bold{"decompSigma"} - The sigma matrix is parameterized by various methods to ensure its positive definiteness (Pinheiro and Bates, 1996). These methods can be accessed through the "decompSigma" argument and are the \code{"cholesky"}, \code{"eigen+"}, and \code{"spherical"} parameterization. The sigma matrix can also be forced to be diagonal using \code{"diagonal"} or \code{"equaldiagonal"} and forced to have the same variances using \code{"equal"}. Details can be found in the package vignette: browseVignettes("mvMORPH").
 
 \bold{"vcv"} - It is possible to specify in the "param" list what kind of variance-covariance matrix to use with the "vcv" argument, depending on how the root is treated. 
 The \code{vcv="randomRoot"} option assumes that the value at the root is a random variable with the stationary distribution of the process. It cannot be used with the "sparse" method to speed up the computations. The \code{vcv="fixedRoot"} option assumes that the root is a fixed parameter. On ultrametric trees both approaches should converge on the same results when the OU process is stationary.
 
-\bold{"root"} - This argument allows the user to specify if the ancestral state at the root (theta 0) should be estimated (\code{root=TRUE}), or assumed to be at the oldest regime state stationary distribution (\code{root=FALSE}). An alternative is to follow Beaulieu et al. (2012) and explicitly drop the root state influence (\code{root="stationary"}). The first option should be used with non-ultrametric trees (i.e., with fossil species; e.g., Hansen 1997) where information on the ancestral state is directly available from the data. Indeed, estimating shifts in the ancestral state from extant species could be problematic and it seems preferable to assume each regime optimum to be at the stationary distribution.
+\bold{"root"} - This argument allows the user to specify if the ancestral state at the root (theta 0) should be estimated (\code{root=TRUE}), or assumed to be at the oldest regime state stationary distribution (\code{root=FALSE}). An alternative is to follow Beaulieu et al. (2012) and explicitly drop the root state influence (\code{root="stationary"}). The first option should be used with non-ultrametric trees (i.e., with fossil species; e.g., Hansen 1997) where information on the ancestral state is directly available from the data. Note that estimating shifts from the ancestral state to the optimum(s) from extant species can be problematic and it can be preferable to assume each regime optimum(s) to be at the stationary distribution.
 
-For the \bold{"decomp"} and \bold{"decompSigma} arguments, an user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided. See ?mvBM and ?mvRWTS.
+For the \bold{"decomp"} and \bold{"decompSigma} arguments, a user-defined matrix with integer values taken as indices of the parameters to be estimated can be provided. See ?mvBM and ?mvRWTS.
 
 
 Note on the returned Hessian matrix in the result list (param$opt$hessian):
 
-The hessian is the matrix of second order partial derivatives of the likelihood function with respect to the maximum likelihood parameter values. This matrix provides a measure of the steepness of the likelihood surface in the vicinity of the optimum. The eigen-decomposition of the hessian matrix returned by the optimizing function allows assessing the reliability of the fit of the model (even if the optimizer has converged).
-When the optimization function does not converge on a stable result, the user may consider increasing the "maxit" argument in the "control" option, or try a simpler model with fewer parameters to estimate. Changing the starting values ("alpha" and "sigma" options in the param list) as well as the optimizing method ("optimization" options) may help sometimes (e.g., alpha=runif(3) for a two-trait analysis with random starting values - i.e., the lower triangular alpha matrix). Note that the number of starting values to provide depends on the matrix decomposition chosen for the alpha parameter (p*(p+1)/2 values for symmetric alpha matrix, but p*p values for non-symmetric ones - with p the number of traits).
+The hessian is the matrix of second order partial derivatives of the likelihood function with respect to the maximum likelihood parameter values. This matrix provides a measure of the steepness of the likelihood surface in the vicinity of the optimum. The eigen-decomposition of the hessian matrix allows assessing the reliability of the model fit (even if the optimizer has converged).
+When the optimization function does not converge on a stable result, the user may consider increasing the "maxit" argument in the "control" option, or try a simpler model with fewer parameters to estimate. Changing the starting values ("alpha" and "sigma" options in the param list) as well as the optimizing method ("optimization" option) may helps sometimes (e.g., alpha=runif(3) for a two-trait analysis with random starting values - i.e., the lower triangular alpha matrix). Note that the number of starting values to provide depends on the matrix decomposition chosen for the alpha parameter (p*(p+1)/2 values for symmetric alpha matrix, but p*p values for non-symmetric ones - with p the number of traits).
 
 %%  ~~ If necessary, more details than the description above ~~
 }

@@ -12,7 +12,7 @@ Fits of multivariate evolutionary models on trees (with one or multiple selectiv
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.1.4\cr
+Version: \tab 1.1.5\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }
@@ -30,6 +30,8 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
   Clavel & Morlon (2020). Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in Phyllostomid bats. Systematic Biology 69(5): 927-943.
 }
 \keyword{ mvgls }
+\keyword{ manova }
+\keyword{ pairwise tests }
 \keyword{ OU }
 \keyword{ BM }
 \keyword{ EB }
@@ -43,6 +45,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \code{\link{mvgls.pca}}
 \code{\link{mvgls.dfa}}
 \code{\link{manova.gls}}
+\code{\link{pairwise.glh}}
 \code{\link{mvOU}}
 \code{\link{mvBM}}
 \code{\link{mvEB}}
@@ -58,6 +61,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \code{\link{aicw}}
 \code{\link{GIC}}
 \code{\link{EIC}}
+\code{\link{mvqqplot}}
 }
 
 

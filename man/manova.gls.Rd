@@ -5,7 +5,7 @@
 Multivariate Analysis of Variance
 }
 \description{
-Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} function. With the regularized methods by penalized likelihood implemented in \code{mvgls} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variable is larger than the number of observations).}
+Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} function. With the regularized methods by penalized likelihood implemented in \code{mvgls} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variables is larger than the number of observations). When model fit is performed by maximum likelihood, both parametric and permutation tests are possible.}
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
@@ -14,8 +14,8 @@ manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.
-}
+A model fit obtained by the \code{mvgls} function.}
+
   \item{test}{
 The multivariate test statistic to compute - "Wilks", "Pillai", "Hotelling-Lawley", or "Roy"}
 
@@ -29,7 +29,7 @@ The number of permutations used for building the null distribution of the chosen
 A (contrasts) matrix or a vector giving linear combinations of the coefficients rows.}
 
  \item{...}{
-Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the number of cores used for parallel calculus; \code{parametric=FALSE} to obtain permutation instead of parametric tests for maximum likelihood fit; \code{verbose=TRUE} to display a progress bar during permutations; \code{rhs=0} the "right-hand-side" vector for general linear hypothesis testing. See details)}
+Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the number of cores used for parallel calculus; \code{parametric=FALSE} to obtain permutation instead of parametric tests for maximum likelihood fit; \code{verbose=TRUE} to display a progress bar during permutations; \code{rhs=0} the "right-hand-side" vector for general linear hypothesis testing; \code{P} can be used to specify a matrix of contrasts giving linear combinations of the coefficient columns. See details)}
 }
 
 
@@ -48,15 +48,17 @@ Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the 
 
 General Linear Hypothesis of the form:
 
-\bold{LB=O}
+\bold{LB=O} or \bold{LBP=O}
 
-an \bold{L} matrix specifying linear combinations of the model coefficients (\bold{B}) can be provided through the argument \code{L}. The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}.
+an \bold{L} matrix specifying linear combinations of the model coefficients (\bold{B}) can be provided through the argument \code{L}. This type of "contrasts" matrix allows testing specific hypotheses (for instance pairwise differences - see \code{?pairwise.contrasts} and \code{?pairwise.glh}). The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}. \bold{P} is a matrix specifying linear combinations of the model coefficients (\bold{B}) estimated for each responses (usually used in repeated measures designs or for testing linear, quadratic, etc. relationships between successive responses).
 
 Permutations on high-dimensional datasets is time consuming. You can use the option \code{nbcores} to parallelize the calculus over several cores using forking in UNIX platforms (default is \code{nbcores=1L}. Estimated time to completion is displayed when \code{verbose=TRUE}.
 }
 
 \note{
-	For PL methods, only the "RidgeArch" penalty is allowed for now.}
+	For PL methods, only the "RidgeArch" penalty is allowed for now.
+	A tutorial is available from Dryad: https://doi.org/10.5061/dryad.jsxksn052
+	}
 	
 \references{
 Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
@@ -68,7 +70,8 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \seealso{
 \code{\link{mvgls}},
-\code{\link{GIC}}
+\code{\link{pairwise.glh}},
+\code{\link{GIC}},
 \code{\link{EIC}}
 }
 
@@ -98,6 +101,12 @@ model2 <- mvgls(y~grp, data=dataset, tree=tree, model="lambda", method="LOO")
 
 # Multivariate test
 (multivariate_test <- manova.gls(model2, nperm=999, test="Pillai", verbose=TRUE))
+
+
+# When p<n we can use non-penalized approaches and parametric tests
+model2b <- mvgls(y[,1:2]~grp, data=dataset, tree=tree, model="lambda", method="LL")
+(multivariate_test <- manova.gls(model2b, test="Pillai"))
+
 }
 }
 

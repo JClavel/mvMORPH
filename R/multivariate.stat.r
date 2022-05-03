@@ -82,7 +82,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     }
   
   class(summary_tests) = "manova.mvgls"
-  invisible(summary_tests)
+  return(summary_tests)
 }
 
 
@@ -727,7 +727,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     if(!is.null(P))  rhs <- matrix(rhs, ncol=ncol(P), nrow=nrow(L))
   }
       
-  if(penalized==TRUE) penalized <- "approx"
+      if(penalized==TRUE) penalized <- "approx" #FIXME
   # QR decomposition
   Q_r <- qr(X)
   
@@ -900,3 +900,250 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   return(0.5*sum(res))
 }
 
+# ------------------------------------------------------------------------- #
+# effectsize - multivariate measures of association                         #
+# options: x, ...                                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+effectsize <- function(x, ...){
+    # Multivariate measures of association
+    args <- list(...)
+    if(is.null(args[["normalized"]])) normalized <- TRUE else normalized <- args$normalized
+    if(is.null(args[["adjusted"]])) adjusted <- FALSE else adjusted <- args$adjusted
+    if(is.null(args[["tatsuoka"]])) tatsuoka <- FALSE else tatsuoka <- args$tatsuoka
+    
+    # check that an object of class manova.mvgls is provided
+    if(!inherits(x,c("manova.mvgls","pairs.mvgls"))) stop("effectsize() can be used only with objects of class \"manova.mvgls\" or \"pairs.mvgls\"")
+    
+    if(x$param){
+        s = x$Df #min(vh,p)
+        switch(x$test,
+        "Wilks"={
+            N <- x$dims$n
+            if(tatsuoka){
+                # Tatsuoka 1973 w^2
+                mult <- abs( 1 - N*x$stat/((N - s - 1) + x$stat))
+                if(adjusted) mult <- (mult - ((x$Df^2 + x$dims$p^2)/(3*N))*(1-mult))
+                row_names <- paste("\U03C9^2 [",x$test,"]",sep = "")
+            }else{
+                # generalized eta^2 - Cramer-Nicewander 1979
+                mult <- 1 - x$stat^(1/s)
+                # Serlin (1982) adjustment
+                if(adjusted) mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
+                row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
+            }
+        },
+        "Pillai"={
+            mult <- x$stat/s
+            row_names <- paste("\U03BE^2 [",x$test,"]",sep = "")
+            if(adjusted){
+                # Serlin (1982) adjustment
+                N <- x$dims$n
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 - mult))
+            }
+        },
+        "Hotelling-Lawley"={
+            mult <- (x$stat/s)/(1 + x$stat/s)
+            row_names <- paste("\U03B6^2 [",x$test,"]",sep = "")
+            if(adjusted){
+                # Serlin adjustment (see Kim & Olejnik 2005, Huberty & Olejnik 2006)
+                N <- x$dims$n
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+            }
+        },
+        "Roy"={
+            mult <- x$stat/(1+x$stat)
+            row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
+            if(adjusted){
+                # Serlin adjustment for Roy > correspond to H&L with s=1
+                N <- x$dims$n
+                mult <- (1 - ((N-1)/(N - max(x$Df,x$dims$p) - 1))*(1 -mult))
+            }
+        })
+        mult <- matrix(mult,nrow=1)
+        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        rownames(mult) = row_names # paste("A(",x$test,")",sep = "")
+    }else{
+        
+        # retrieve expectations and theoretical bounds
+        Anull <- colMeans(x$nullstat)
+        if(x$type=="III") s <- table(x$dims$assign) else s <- table(x$dims$assign)[-1L]
+        
+        switch(x$test,
+        "Wilks"={
+            
+            if(normalized){ # Kramer-Nicewander 1979 > default as for the parametric case?
+                mult <- (1 - (x$stat/tanh(colMeans(atanh(x$nullstat))))^(1/s))
+                row_names <- paste("\U03C4^2 [",x$test,"]",sep = "")
+            }else{
+                mult <- (1 - x$stat/tanh(colMeans(atanh(x$nullstat))))
+                row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
+            }
+            
+        },
+        "Pillai"={
+            mult <- ((x$stat - Anull)/(s - Anull))
+            row_names <- paste("\U03BE^2 [",x$test,"]",sep = "")
+        },
+        "Hotelling-Lawley"={
+            rootb <- (x$stat - Anull)
+            mult <- rootb/(s + rootb)
+            row_names <- paste("\U03B6^2 [",x$test,"]",sep = "")
+        },
+        "Roy"={
+            rootb <- (x$stat - Anull)
+            mult <- rootb/(1 + rootb)
+            row_names <- paste("\U03B7^2 [",x$test,"]",sep = "")
+        })
+        
+        # We return the chance-corrected metrics. Should we return 0 when mult <0?
+        mult <- matrix(mult, nrow=1)
+        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        rownames(mult) = row_names #paste("Aperm.(",x$test,")",sep = "")
+    }
+    if(x$test=="Wilks") attr(adjusted, "tatsuoka") <- tatsuoka else attr(adjusted, "tatsuoka") <- FALSE
+    results = list(effect=mult, adjusted=adjusted, parametric=x$param)
+    class(results) = "effects.mvgls"
+    return(results)
+}
+
+# ------------------------------------------------------------------------- #
+# pairwise.contrasts                                                        #
+# options: object, term, ...                                                #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+pairwise.contrasts <- function(object, term=1, ...){
+    if(object$contrasts[term]!="contr.treatment") stop("object fit must use dummy coding - see ?contr.treatment")
+    names_variables <- paste(names(object$xlevels[term]), object$xlevels[[term]], sep="")
+    indice_predictor <- attr(object$variables$X,"dimnames")[[2]]%in%c("(Intercept)",names_variables)
+    names_pred <- attr(object$variables$X,"dimnames")[[2]][indice_predictor]
+    combinations <- combn(unique(names_pred),2)
+    combinations_names <- combn(unique(object$xlevels[[term]]),2)
+    nb_comb <- ncol(combinations)
+    
+    # prepare the contrasts matrix
+    matrices_residuals <- matrix(0, nrow=nb_comb, ncol=object$dims$m)
+    colnames(matrices_residuals) <- attr(object$variables$X,"dimnames")[[2]]
+    names_contrasts <- vector()
+    for(i in 1:nb_comb) names_contrasts[i] <- paste(combinations_names[1,i], combinations_names[2,i], sep=" - ")
+    rownames(matrices_residuals) <- names_contrasts
+    for(i in 1:nb_comb){
+        if(combinations[1,i]=="(Intercept)"){
+            matrices_residuals[i,combinations[2,i]] <- 1
+        }else{
+            matrices_residuals[i,combinations[1,i]] <- 1
+            matrices_residuals[i,combinations[2,i]] <- -1
+        }
+    }
+    return(matrices_residuals)
+}
+
+# ------------------------------------------------------------------------- #
+# pairwise.glh                                                              #
+# options: object, term, test, adjust, nperm, ...                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"), adjust="holm", nperm=1000L, ...){
+    
+    # options
+    test <- match.arg(test)[1]
+    args <- list(...)
+    if(is.null(args[["nbcores"]])) nbcores <- 1L else nbcores <- args$nbcores
+    if(is.null(args[["parametric"]])) param <- TRUE else param <- args$parametric
+    if(is.null(args[["permutation"]])) penalized <- NULL else penalized <- args$permutation
+    if(is.null(args[["rhs"]])) rhs <- NULL else rhs <- args$rhs
+    if(is.null(args[["verbose"]])) verbose <- FALSE else verbose <- args$verbose
+    
+    # Performs the tests
+    if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\", see ?mvgls ")
+    
+    # TEMPORARY?
+    if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
+    
+    # build a contrast matrix
+    L <- pairwise.contrasts(object, term=term)
+    nb_contrasts <- nrow(L)
+    
+    # if ML we can use the parametric tests or permutations
+    if(object$method=="LL" & param==TRUE){
+        
+        permTests <- sapply(1:nb_contrasts, function(contx){
+            .linearhypothesis.gls(object, test, L=L[contx,,drop=FALSE], rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=TRUE, penalized=FALSE)
+        })
+        
+        terms <- attr(terms(object$formula),"term.labels")
+        
+        summary_tests <- list(test=test, stat=permTests[2,], approxF=permTests[3,],
+        Df=permTests[1,], NumDf=permTests[4,], DenDf=permTests[5,], pvalue=permTests[6,],  param=param, terms=terms,
+        dims=object$dims, adjust=p.adjust(permTests[6,], method = adjust), L=L)
+        
+    }else{
+        param = FALSE # we use permutation rather than parametric test
+        penalized = if(object$method=="LL") "none" else TRUE
+        permTests <- lapply(1:nb_contrasts, function(contx){
+            .linearhypothesis.gls(object, test, L=L[contx,,drop=FALSE], rhs=rhs, nperm=nperm, nbcores=nbcores, parametric=param, penalized=penalized, verbose=verbose)
+        })
+        
+        # compute the p-values for the tests
+        if(test=="Wilks"){ # Wilks's lambda is an inverse test (reject H0 for small values of lambda)
+            p_val <- sapply(1:nb_contrasts, function(i) sum(permTests[[i]]$observed>=c(permTests[[i]]$simulated,permTests[[i]]$observed))/(nperm+1) )
+        }else{
+            p_val <- sapply(1:nb_contrasts, function(i) sum(permTests[[i]]$observed<=c(permTests[[i]]$simulated,permTests[[i]]$observed))/(nperm+1) )
+        }
+        
+        # terms labels
+        terms <- attr(terms(object$formula),"term.labels")
+        
+        # statistic
+        stats <- sapply(1:nb_contrasts, function(i) permTests[[i]]$observed)
+        
+        # retrieve the statistic
+        summary_tests <- list(test=test, stat=stats, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests, dims=object$dims,
+        adjust=p.adjust(p_val, method = adjust), L=L)
+    }
+    
+    # retrieve results
+    class(summary_tests) <- "pairs.mvgls"
+    return(summary_tests)
+}
+
+# ------------------------------------------------------------------------- #
+# print option for MANOVA tests  (output borrowed from "car" package)       #
+# options: x, digits, ...                                                   #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+print.pairs.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
+    
+    # select the appropriate output
+    if(x$param){
+        cat("General Linear Hypothesis Test:",x$test,"test statistic","\n")
+        signif <- sapply(x$adjust, function(i) if(i<0.001){"***"}else if(i<0.01){
+        "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
+        
+        table_results <- data.frame(Df=x$Df, stat=x$stat, approxF=x$approxF, numDf=x$NumDf, denDf=x$DenDf, pval=x$pvalue, p.adj=x$adjust, signif=signif)
+        if(is.null(rownames(x$L))) rownames(table_results) <- "Contrasts L" else rownames(table_results) <- rownames(x$L)
+        colnames(table_results) <- c("Df", "test stat", "approx F", "num Df", "den Df", "Pr(>F)","adjusted", "")
+        print(table_results, digits = digits, ...)
+        cat("---","\n")
+        cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1","\n")
+        
+    }else{ # permutation methods
+        
+        cat("General Linear Hypothesis Test with",x$nperm,"permutations:",x$test,"test statistic","\n")
+        signif <- sapply(x$adjust, function(i) if(i<0.001){"***"}else if(i<0.01){
+        "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
+        
+        table_results <- data.frame(stat=x$stat, pval=x$pvalue, p.adj=x$adjust, signif=signif)
+        if(is.null(rownames(x$L))) rownames(table_results) <- "Contrasts L" else rownames(table_results) <- rownames(x$L)
+        colnames(table_results) <- c("Test stat", "Pr(>Stat)", "adjusted", "")
+        print(table_results, digits = digits, ...)
+        cat("---","\n")
+        cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1","\n")
+        
+    }
+    
+}
