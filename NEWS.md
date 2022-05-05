@@ -1,3 +1,5 @@
+## mvMORPH 1.1.6
+    + fix error in the estimation of GIC with "BMM" model in mvgls. Now the 'mvgls' function uses a more robust parameterization of BMM which ease the computation of GIC.
 ## mvMORPH 1.1.5
     + mvqqplot (multivariate normality and outliers assessment - beta)
     + effectsize (multivariate measures of association - beta)

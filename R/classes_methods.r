@@ -60,7 +60,7 @@ GIC.mvgls <- function(object, ...){
     if(object$model=="BM"){
        mod.par=0
     }else if(object$model=="BMM"){
-        mod.par=(ncol(object$corrSt$phy$mapped.edge))
+       mod.par=(ncol(object$corrSt$phy$mapped.edge)-1) # should we consider k parameters or k-1 (i.e. relative scaling to the first group)
     }else{
        mod.par=1
     }
@@ -787,6 +787,8 @@ predict.mvgls <- function(object, newdata, ...){
     },
     "EB"={ V <- vcv.phylo(.transformPhylo(tree, model="EB", param=object$param)) },
     "lambda"={ V <- vcv.phylo(.transformPhylo(tree, model="lambda", param=object$param)) },
+    #FIXME -- add BMM
+    "BMM"={stop("BMM model is not handled yet. Please contact the author for further assistance.")},
     )
     
     # If error=TRUE, we add it to the covariance matrix here

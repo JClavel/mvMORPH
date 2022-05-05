@@ -138,11 +138,6 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # convergence & bounds checks?
     .check_par_results(corrModel, mod_par, penalized);
     
-    # Multiple rates BMM
-    if(inherits(tree, "simmap") && model=="BMM"){
-        names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM. we remove the first one which is used as reference
-    }
-    
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     
@@ -164,12 +159,11 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     S <- crossprod(residuals)/ndimCov
     R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
     
-    # scale relative to an average covariance of 1
-    if(model=="BMM" & method!="LL"){
-        scaling_factor <- mean(diag(R$Pinv))
-        mod_par <- mod_par*scaling_factor
-        R$Pinv <- R$Pinv/scaling_factor
-        R$P <- R$P*scaling_factor
+    # Multiple rates BMM - we scale the average rate (mean of the diagonal of the covariance matrix)
+    if(inherits(tree, "simmap") && model=="BMM"){
+        avg_rate <- mean(diag(R$Pinv))
+        mod_par <- c(avg_rate, avg_rate*mod_par)
+        names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM. we remove the first one which is used as reference
     }
     
     # number of dimensions

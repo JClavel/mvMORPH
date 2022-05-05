@@ -35,7 +35,7 @@ The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB
 }
 
 \item{method}{
-The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (see details).
+The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (i.e. of the form Y~1, see also details).
 }
 
 \item{REML}{
@@ -84,10 +84,10 @@ An object of class '\code{mvgls}'. It contains a list including the following co
 \item{residuals     }{the residuals ("raw") of the model. That is response minus fitted values. Use the \code{residuals(x, type="normalized")} function to obtain the normalized residuals.}
 \item{fitted.values }{the fitted values}
 \item{variables     }{the variables used for model fit}
-\item{sigma         }{the estimated covariance (Pi) and precision (P) matrix, as well as the sample estimate (S)}
+\item{sigma         }{the estimated covariance (Pinv) and precision (P) matrix, as well as the sample estimate (S)}
 \item{model         }{the evolutionary model. But more generally, the model used to specify the structure within the residuals}
 \item{logLik	    	}{either the (negative) log-likelihood when \code{method="LL"} or the cross-validated penalized likelihood}
-\item{param			    }{the (evolutionary) model parameter estimates}
+\item{param			    }{the (evolutionary) model parameter estimates. For "BMM" this corresponds to the average rate (mean of the diagonal elements of the covariance matrix (Pinv)).}
 \item{tuning		    }{the regularization/tuning parameter estimated for the penalized likelihood}
 \item{mserr		    	}{the estimated standard error when \code{error=TRUE}}
 \item{start_values  }{the starting parameters used for the optimization of the LL or PL}

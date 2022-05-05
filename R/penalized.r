@@ -96,11 +96,6 @@
         
     },
     "LL"={
-        # Constraints
-        if(corrStr$model=="BMM"){ # constraint on the relative rates
-            scaling <- mean(diag(Sk))
-             Sk <- Sk*(1/scaling)
-        }
         
         # Maximum Likelihood
         Gi <- try(chol(Sk), silent=TRUE)
@@ -190,7 +185,8 @@
     
     if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM", "OUM", "OU1")){
         # Tree transformation
-        struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr, Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML, precalc=timeObject$precalc)
+        struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr,
+                                Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML, precalc=timeObject$precalc)
     }else{
         stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\", \"BMM\", \"OUM\" and \"lambda\"  only...")
     }
@@ -527,8 +523,9 @@
        stop("Not yet implemented. The time-series models are coming soon, please be patient")
     },
     "BMM"={
-        # multirates model - I remove the first column because it's a proportional scaling? or just phy$mapped.edge%*%c(1,param)?
-        phy$edge.length <- phy$mapped.edge %*% param
+        # multirates model - proportional scaling or explicit estimation?
+        #phy$edge.length <- phy$mapped.edge %*% param
+        phy$edge.length <- phy$mapped.edge %*% c(1,param)
     })
     
     # Add measurment error
@@ -570,7 +567,7 @@
         "OUM"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
         "lambda"={up <- 1},
         "BM"={up <- Inf},
-        "BMM"={up <- rep(Inf,k)},
+        "BMM"={up <- rep(Inf,k-1)},
         up <- Inf)
     }else{
         up <- upper
@@ -584,7 +581,7 @@
         "OUM"={low <- 1e-10},
         "lambda"={low <- 1e-8},
         "BM"={low <- -Inf},
-        "BMM"={low <- rep(-Inf,k)},
+        "BMM"={low <- rep(-Inf,k-1)},
         low <- -Inf)
     }else{
         low <- lower
@@ -611,13 +608,13 @@
         
         # parameters
         if(model=="BMM"){
-            id1 <- 1; id2 <- 2:(k+1); id3 <- k+2
+            #id1 <- 1; id2 <- 2:(k+1); id3 <- k+2
+            id1 <- 1; id2 <- 2:k; id3 <- k+1
         }else if(model=="BM"){
             id1 <- id2 <- 1; id3 <- 2
         }else{
             id1 <- 1; id2 <- 2; id3 <- 3
         }
-        
         
     }else{
         upperBound <- up
@@ -625,7 +622,8 @@
         
         # parameters
         if(model=="BMM"){
-            id1 <- 1; id2 <- 1:k; id3 <- k+1
+            #id1 <- 1; id2 <- 1:k; id3 <- k+1
+            id1 <- 1; id2 <- 1:(k-1); id3 <- k
         }else if(model=="BM"){
             id1 <- id2 <- id3 <- 1
         }else{
@@ -746,7 +744,7 @@
                 return(guesses)
             }
             
-            mod_val <- start_values(corrModel$structure, corrModel$Y)
+            mod_val <- start_values(corrModel$structure, corrModel$Y)[-1]
             list_param <- c(list(range_val), mod_val)
             index_err <- length(list_param) + 1
         },
