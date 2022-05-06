@@ -1,8 +1,8 @@
-\name{fitted.mvgls}
+\name{fitted}
 \alias{fitted.mvgls}
 
 \title{
-Extract multivariate gls model fitted values
+Extract multivariate gls (or ols) model fitted values
 }
 \description{
 Returns the fitted values of a linear model of class 'mvgls'.
@@ -14,7 +14,7 @@ Returns the fitted values of a linear model of class 'mvgls'.
 }
 \arguments{
   \item{object}{
-an object of class 'mvgls' obtained from a \code{mvgls} fit.
+an object of class 'mvgls' obtained from a \code{mvgls} or \code{mvols} fit.
 }
   
   \item{...}{
@@ -36,5 +36,6 @@ other arguments (not used).
 \code{\link{residuals.mvgls}}
 \code{\link{coef.mvgls}}
 \code{\link{mvgls}}
+\code{\link{mvols}}
 }
 

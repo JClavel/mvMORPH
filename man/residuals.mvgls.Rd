@@ -1,8 +1,8 @@
-\name{residuals.mvgls}
+\name{residuals}
 \alias{residuals.mvgls}
 
 \title{
-Extract gls model residuals
+Extract gls (or ols) model residuals
 }
 \description{
 Returns the residuals of a linear model of class 'mvgls'.
@@ -14,7 +14,7 @@ Returns the residuals of a linear model of class 'mvgls'.
 }
 \arguments{
   \item{object}{
-an object of class 'mvgls' obtained from a \code{mvgls} fit.
+an object of class 'mvgls' obtained from a \code{mvgls} or \code{mvols} fit.
 }
   \item{type}{
 an optional character string specifying the type of residuals to be used. To match conventions used in the \emph{nlme} package: if "\code{response}", the "raw" residuals (observed-fitted) are used; else, if "normalized", the normalized residuals (the residuals pre-multiplied by the inverse square-root factor of the estimated (between observations) covariance matrix) are used. Note however that there is still between variables correlations with both types.
@@ -28,7 +28,7 @@ other arguments for this generic function (not used).
 
 
 \value{
-	A matrix with the residuals for the linear model fitted by \code{mvgls}.
+	A matrix with the residuals for the linear model fitted by \code{mvgls} or \code{mvols}.
 }
 
 
@@ -40,5 +40,6 @@ other arguments for this generic function (not used).
 \code{\link{residuals.mvgls}}
 \code{\link{coef.mvgls}}
 \code{\link{mvgls}}
+\code{\link{mvols}}
 }
 

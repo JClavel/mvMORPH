@@ -1,6 +1,6 @@
 useDynLib(mvMORPH, .registration = TRUE)
 export(mvOU,mvBM,mvEB,mvSHIFT,mv.Precalc,mvLL,mvSIM,LRT,halflife,stationary,estim,mvOUTS,mvRWTS,aicw,pruning)
-export(mvgls, GIC, EIC, mvgls.pca, manova.gls, mvgls.dfa, mvqqplot, pairwise.glh, pairwise.contrasts, effectsize, ancestral)
+export(mvgls, GIC, EIC, mvgls.pca, manova.gls, mvgls.dfa, mvqqplot, pairwise.glh, pairwise.contrasts, effectsize, ancestral, mvols)
 import(ape,phytools,corpcor,subplex,spam,glassoFast)
 importFrom("stats", AIC, simulate, logLik, pchisq, df, qf, rnorm, runif, optim, cov, residuals, fitted, vcov, coef, terms, formula, model.matrix, model.response, cov2cor, pf, sd, .getXlevels, na.pass, coefficients, .checkMFClasses, delete.response, model.frame, loess, predict, qchisq, dchisq, dgamma, p.adjust, ppoints, qnorm, var)
 importFrom("utils", combn)

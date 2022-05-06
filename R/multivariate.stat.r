@@ -18,7 +18,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   if(is.null(args[["P"]])) P <- NULL else P <- args$P
   
   # Performs the tests
-  if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\", see ?mvgls ")
+  if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\" or \"mvols\", see ?mvgls ")
     
     # TEMPORARY?
     if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
@@ -1058,7 +1058,7 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
     if(is.null(args[["verbose"]])) verbose <- FALSE else verbose <- args$verbose
     
     # Performs the tests
-    if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\", see ?mvgls ")
+    if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\" or \"mvols\", see ?mvgls ")
     
     # TEMPORARY?
     if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")

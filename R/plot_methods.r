@@ -93,6 +93,7 @@ mvqqplot <- function(object, conf=0.95, ...){
     })
     
     # calculate the chi2 distribution using moment matching (cf. Nomikos & McGregor 1995)
+    # replace s2 and m by robust estimates? FIXME
     s2 <- var(r2); m <- mean(r2)
     g1 <- s2/(2*m); g2 <- (2*m^2)/s2
     

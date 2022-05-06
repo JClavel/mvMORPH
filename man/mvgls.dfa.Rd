@@ -2,19 +2,19 @@
 \alias{mvgls.dfa}
 
 \title{
-Discriminant Function Analysis (DFA) - also called Linear Discriminant Analysis (LDA) or Canonical Variate Analysis (CVA) - based on multivariate GLS model fit 
+Discriminant Function Analysis (DFA) - also called Linear Discriminant Analysis (LDA) or Canonical Variate Analysis (CVA) - based on multivariate GLS (or OLS) model fit 
 }
 \description{
-Performs a discriminant analysis (DFA) on a regularized variance-covariance matrix obtained using the \code{mvgls} function.
+Performs a discriminant analysis (DFA) on a regularized variance-covariance matrix obtained using either the \code{mvgls} or \code{mvols} function.
 }
 \usage{
 
 mvgls.dfa(object, ...)
-  
+
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.
+A model fit obtained by the \code{mvgls} or the \code{mvols} function.
 }
 
  \item{...}{
@@ -29,7 +29,7 @@ Options to be passed through. (e.g., \code{term="the term corresponding to the f
   \item{coeffs}{a matrix containing the raw discriminants}
   \item{coeffs.std}{a matrix containing the standardized discriminants}
   \item{scores}{a matrix containing the discriminant scores [residuals X coeffs]}
-  \item{residuals}{the centered [with GLS] response variables}
+  \item{residuals}{the centered [with GLS or OLS] response variables}
   \item{H}{the hypothesis (or between group model matrix)}
   \item{E}{the error (or residual model matrix)}
   \item{rank}{the rank of HE^{-1}}
@@ -38,7 +38,7 @@ Options to be passed through. (e.g., \code{term="the term corresponding to the f
   }
 
 \details{
-\code{mvgls.dfa} allows computing a discriminant analysis based on a GLS estimate of a regression model (see \code{mvgls}). Discriminant functions can be used for dimensionality reduction, to follow up a MANOVA analysis to describe group separation, or for group prediction.
+\code{mvgls.dfa} allows computing a discriminant analysis based on GLS (or OLS) estimates from a regression model (see \code{mvgls} and \code{mvols}). Discriminant functions can be used for dimensionality reduction, to follow up a MANOVA analysis to describe group separation, or for group prediction.
 }
 
 \note{
@@ -55,6 +55,7 @@ Clavel, J., Morlon, H., 2020. Reliable phylogenetic regressions for multivariate
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{mvols}},
 \code{\link{manova.gls}},
 \code{\link{mvgls.pca}},
 \code{\link{predict.mvgls.dfa}},

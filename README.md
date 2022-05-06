@@ -14,7 +14,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
 1. This is the version 1.1.6:
   + fix issue in the estimation of GIC with "BMM" model in mvgls. The GIC was lower than expected due to formatting issues in the scaling of the rates.
-  
+  + implements the 'mvols' function, a wrapper to the more general 'mvgls' function to fit ordinary multivariate regressions (possibly regularized).
 
 2. _TODO_:
   + Incorporation of a tests-suite

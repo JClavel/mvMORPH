@@ -5,7 +5,7 @@
 Pairwise contrasts
 }
 \description{
-Generates pairwise contrasts (for factor levels) from an object fitted by the \code{mvgls} function. This function is used internally in \code{pairwise.glh} for the generalized linear hypothesis tests (see also ?manova.gls).}
+Generates pairwise contrasts (for factor levels) from an object fitted by the \code{mvgls} or \code{mvols} function. This function is used internally in \code{pairwise.glh} for the generalized linear hypothesis tests (see also ?manova.gls).}
 
 \usage{
 
@@ -14,7 +14,7 @@ pairwise.contrasts(object, term=1, ...)
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.
+A model fit obtained by the \code{mvgls} or \code{mvols} function.
 }
   \item{term}{
 The factor term in the "object" model fit for which all the pairwise contrasts are built.
@@ -41,6 +41,7 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{mvols}},
 \code{\link{manova.gls}},
 \code{\link{pairwise.glh}}
 }
@@ -64,6 +65,7 @@ pairwise.contrasts(fitb, term="grp2")
 
 \keyword{ Contrasts }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ Pairwise }
 \keyword{ MANOVA }
 \keyword{ Multivariate tests }

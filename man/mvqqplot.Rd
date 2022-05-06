@@ -2,7 +2,7 @@
 \alias{mvqqplot}
 
 \title{
-Quantile-Quantile plots for multivariate models fit with \code{mvgls}
+Quantile-Quantile plots for multivariate models fit with \code{mvgls} or \code{mvols}
 }
 \description{
 The quantile-quantile plots of the Chi square distribution is used to assess multivariate normality and detect outliers using the squared Mahalanobis distances from the models residuals.
@@ -14,7 +14,7 @@ mvqqplot(object, conf=0.95, ...)
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.
+A model fit obtained by the \code{mvgls} or \code{mvols} function.
 }
   \item{conf}{
 Confidence interval for the approximate envelope. Default is 0.95.}
@@ -24,7 +24,7 @@ Graphical options.}
 }
 
 \details{
-The empirical quantiles of standardized Mahalanobis distances (Caroni 1987) estimated from models fit by \code{mvgls} are compared to the quantiles of a Chi square distribution with 'p' degrees of freedom (where 'p' is the number of dimensions) when models are fit by maximum likelihood (\code{method='LL'}). For penalized likelihood model fit (regularized covariance), a matching moments method is used to map the standardized Mahalanobis distances to the Chi square distribution (Clavel, in prep.).
+The empirical quantiles of standardized Mahalanobis distances (Caroni 1987) estimated from models fit by \code{mvgls} (or \code{mvols}) are compared to the quantiles of a Chi square distribution with 'p' degrees of freedom (where 'p' is the number of dimensions) when models are fit by maximum likelihood (\code{method='LL'}). For penalized likelihood model fit (regularized covariance), a matching moments method is used to map the standardized Mahalanobis distances to the Chi square distribution (Clavel, in prep.). This last option is experimental and still under development.
 }
 
 \value{
@@ -50,6 +50,7 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{mvols}},
 \code{\link{manova.gls}}
 }
 
@@ -67,6 +68,7 @@ mvqqplot(fit, lty=2, conf=0.99)
 
 \keyword{ QQ plots }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ Mahalanobis }
 \keyword{ Regularization }
 \keyword{ Penalized likelihood }

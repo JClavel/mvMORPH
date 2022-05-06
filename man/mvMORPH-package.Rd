@@ -6,13 +6,13 @@
 Multivariate Comparative Methods for Fitting Evolutionary Models to Morphometric Data
 }
 \description{
-Fits of multivariate evolutionary models on trees (with one or multiple selective regimes) and time-series dedicated to morphometrics or biometric continuous data with covariation. Testing for a phylogenetic signal in a multivariate dataset (including fossil and/or extant taxa), fitting linear models to high-dimensional multivariate comparative data, changes in rate or mode of evolution of continuous traits, simulating multivariate traits evolution, computing the likelihood of multivariate models, accounts for measurement errors and missing data, and other things...
+Fit of multivariate evolutionary models on trees (with one or multiple selective regimes) and time-series dedicated to morphometrics or biometric continuous data with covariation. Testing for a phylogenetic signal in a multivariate dataset (including fossil and/or extant taxa), fitting linear models to high-dimensional multivariate comparative data, changes in rate or mode of evolution of continuous traits, simulating multivariate traits evolution, computing the likelihood of multivariate models, accounts for measurement errors and missing data, and other things...
 }
 \details{
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.1.5\cr
+Version: \tab 1.1.6\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }
@@ -29,6 +29,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 
   Clavel & Morlon (2020). Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in Phyllostomid bats. Systematic Biology 69(5): 927-943.
 }
+\keyword{ mvols }
 \keyword{ mvgls }
 \keyword{ manova }
 \keyword{ pairwise tests }
@@ -41,6 +42,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 \keyword{ Evolutionary rates }
 \keyword{ SIMMAP }
 \seealso{
+\code{\link{mvols}}
 \code{\link{mvgls}}
 \code{\link{mvgls.pca}}
 \code{\link{mvgls.dfa}}

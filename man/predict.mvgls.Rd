@@ -1,8 +1,8 @@
-\name{predict.mvgls}
+\name{predict}
 \alias{predict.mvgls}
 
 \title{
-Predictions from (multivariate) gls model fit
+Predictions from (multivariate) gls or ols model fit
 }
 \description{
 Returns the prediction(s) of a linear model of class 'mvgls'.
@@ -14,7 +14,7 @@ Returns the prediction(s) of a linear model of class 'mvgls'.
 }
 \arguments{
   \item{object}{
-an object of class 'mvgls' obtained from a \code{mvgls} fit.
+an object of class 'mvgls' obtained from a \code{mvgls} or \code{mvols} fit.
 }
   \item{newdata}{
 a dataframe with new observation(s). The column names must match the names of the predictors in the model fit object. The type (e.g. factors, numeric) must also match the type of the predictors in the model fit object.
@@ -22,14 +22,14 @@ Note: the fitted values are simply returned if "newdata" is not provided.
 }
 
   \item{...}{
-further arguments for this generic function. If \code{tree} is provided (with tip name(s) matching rowname(s) in newdata and in the training (model fit) dataset), then the best unbiased linear prediction (BLUB) for the model is returned. Otherwise the GLS coefficients are used to predict "newdata".
+further arguments for this generic function. For models fit by \code{mvgls}, if \code{tree} is provided (with tip name(s) matching rowname(s) in newdata and in the training (model fit) dataset), then the best unbiased linear prediction (BLUB) for the model is returned. Otherwise the GLS coefficients are used to predict "newdata".
 }
 
 }
 
 
 \value{
-	A matrix with the predictions for the linear model fitted by \code{mvgls}.
+	A matrix with the predictions for the linear model fitted by \code{mvgls} or \code{mvols}.
 }
 
 
@@ -42,5 +42,6 @@ further arguments for this generic function. If \code{tree} is provided (with ti
 \code{\link{residuals.mvgls}}
 \code{\link{coef.mvgls}}
 \code{\link{mvgls}}
+\code{\link{mvols}}
 }
 

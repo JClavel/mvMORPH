@@ -5,7 +5,7 @@
 Multivariate Analysis of Variance
 }
 \description{
-Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} function. With the regularized methods by penalized likelihood implemented in \code{mvgls} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variables is larger than the number of observations). When model fit is performed by maximum likelihood, both parametric and permutation tests are possible.}
+Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} or the \code{mvols} function. With the regularized methods by penalized likelihood implemented in \code{mvgls} and \code{mvols} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variables is larger than the number of observations). When model fit is performed by maximum likelihood (\code{method="LL"}), both parametric and permutation tests are possible.}
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
@@ -14,7 +14,7 @@ manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.}
+A model fit obtained by the \code{mvgls} or \code{mvols} function.}
 
   \item{test}{
 The multivariate test statistic to compute - "Wilks", "Pillai", "Hotelling-Lawley", or "Roy"}
@@ -23,7 +23,7 @@ The multivariate test statistic to compute - "Wilks", "Pillai", "Hotelling-Lawle
 The type of test (sums of squares and cross-products) - "I", "II", or "III"}
 
   \item{nperm}{
-The number of permutations used for building the null distribution of the chosen statistic. Permutation is the only available approach for high-dimensional PL models, but either permutations or parametric tests can be used with maximum likelihood (method "LL" in \code{mvgls})}
+The number of permutations used for building the null distribution of the chosen statistic. Permutation is the only available approach for high-dimensional PL models, but either permutations or parametric tests can be used with maximum likelihood (method "LL" in \code{mvgls} and \code{mvols})}
 
   \item{L}{
 A (contrasts) matrix or a vector giving linear combinations of the coefficients rows.}
@@ -44,13 +44,13 @@ Further arguments to be passed through. (e.g., \code{nbcores=2L} to provide the 
   }
 
 \details{
-\code{manova.gls} allows performing multivariate tests (e.g. Pillai's, Wilks, Hotelling-Lawley and Roy largest root) on generalized least squares (GLS) linear model (objects of class "mvgls") fit by either maximum likelihood (\code{method="LL"}) or penalized likelihood (\code{method="PL-LOO"}) using the \code{mvgls} function. 
+\code{manova.gls} allows performing multivariate tests (e.g. Pillai's, Wilks, Hotelling-Lawley and Roy largest root) on generalized least squares (GLS) linear model (objects of class "mvgls", or OLS with objects of class "mvols") fit by either maximum likelihood (\code{method="LL"}) or penalized likelihood (\code{method="PL-LOO"}) using the \code{mvgls} or \code{mvols} function.
 
 General Linear Hypothesis of the form:
 
-\bold{LB=O} or \bold{LBP=O}
+\deqn{\bold{LB=O}} or \deqn{\bold{LBP=O}}
 
-an \bold{L} matrix specifying linear combinations of the model coefficients (\bold{B}) can be provided through the argument \code{L}. This type of "contrasts" matrix allows testing specific hypotheses (for instance pairwise differences - see \code{?pairwise.contrasts} and \code{?pairwise.glh}). The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}. \bold{P} is a matrix specifying linear combinations of the model coefficients (\bold{B}) estimated for each responses (usually used in repeated measures designs or for testing linear, quadratic, etc. relationships between successive responses).
+Where \bold{L} is a matrix specifying linear combinations of the model coefficients (\bold{B}) can be provided through the argument \code{L}. This type of "contrasts" matrix allows testing specific hypotheses (for instance pairwise differences - see \code{?pairwise.contrasts} and \code{?pairwise.glh}). The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}. \bold{P} is a matrix specifying linear combinations of the model coefficients (\bold{B}) estimated for each responses (usually used in repeated measures designs or for testing linear, quadratic, etc. relationships between successive responses).
 
 Permutations on high-dimensional datasets is time consuming. You can use the option \code{nbcores} to parallelize the calculus over several cores using forking in UNIX platforms (default is \code{nbcores=1L}. Estimated time to completion is displayed when \code{verbose=TRUE}.
 }
@@ -70,6 +70,7 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{mvols}},
 \code{\link{pairwise.glh}},
 \code{\link{GIC}},
 \code{\link{EIC}}
@@ -77,6 +78,11 @@ Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate 
 
 \examples{
 \donttest{
+
+# ---------------------------------------------------- #
+# Multivariate regression tests (continuous predictor) #
+# ---------------------------------------------------- #
+
 set.seed(1)
 n <- 32 # number of species
 p <- 30 # number of traits
@@ -96,22 +102,52 @@ model1 <- mvgls(y~x, data=dataset, tree=tree, model="BM", method="LOO")
 # Multivariate test
 (multivariate_test <- manova.gls(model1, nperm=999, test="Pillai"))
 
+# ---------------------------------------------------- #
+# Multivariate regression tests (discrete predictor)   #
+# ---------------------------------------------------- #
+
 # MANOVA on a binary predictor
 model2 <- mvgls(y~grp, data=dataset, tree=tree, model="lambda", method="LOO")
 
 # Multivariate test
 (multivariate_test <- manova.gls(model2, nperm=999, test="Pillai", verbose=TRUE))
 
+# ---------------------------------------------------- #
+# Parametric MANOVA tests                              #
+# ---------------------------------------------------- #
 
 # When p<n we can use non-penalized approaches and parametric tests
 model2b <- mvgls(y[,1:2]~grp, data=dataset, tree=tree, model="lambda", method="LL")
-(multivariate_test <- manova.gls(model2b, test="Pillai"))
+(multivariate_test2b <- manova.gls(model2b, test="Pillai"))
+
+# ---------------------------------------------------- #
+# Multivariate contrasts tests                         #
+# ---------------------------------------------------- #
+
+# Multivariate contrasts allow testing specific hypotheses 
+# (see also ?pairwise.glh and ?pairwise.contrasts)
+
+# We can replicate the above result by testing if the
+# group means are different using the following contrast:
+L = matrix(c(0,1), ncol=2)
+(manova.gls(model2b, test="Pillai", L=L))
+
+# ---------------------------------------------------- #
+# Repeated measures design tests                       #
+# ---------------------------------------------------- #
+
+# Contrasts can be used also to test if there's differences
+# between repeated measures (responses variables)
+# For instance, for comparing y[,1] and y[,2], define the contrast:
+P = matrix(c(1,-1), nrow=2)
+(manova.gls(model2b, test="Pillai", P=P, L=L))
 
 }
 }
 
 \keyword{ GIC }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ MANOVA }
 \keyword{ Multivariate tests }
 \keyword{ General Linear Hypothesis }

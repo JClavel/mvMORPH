@@ -1,4 +1,4 @@
-\name{vcov.mvgls}
+\name{vcov}
 \alias{vcov.mvgls}
 
 \title{
@@ -14,7 +14,7 @@ Returns the variance-covariance matrix of the coefficients or the traits.
 }
 \arguments{
   \item{object}{
-an object of class 'mvgls' obtained from a \code{mvgls} fit.
+an object of class 'mvgls' obtained from a \code{mvgls} or \code{mvols} fit.
 }
   
   \item{...}{
@@ -37,10 +37,11 @@ The \code{vcov} function returns by default the variance-covariance matrix of th
 \author{J. Clavel}
 
 \seealso{
-%% add later  \code{\link{simulate_t_env}}  
+%% add later 
 \code{\link{coef.mvgls}} 
 \code{\link{residuals.mvgls}}
 \code{\link{fitted.mvgls}}
 \code{\link{mvgls}}
+\code{\link{mvols}}
 }
 

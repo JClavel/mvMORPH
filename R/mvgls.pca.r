@@ -26,7 +26,7 @@ mvgls.pca <- function(object, plot=TRUE, ...){
     if(is.null(args[["mode"]])) mode <- "cov" else mode <- args$mode
     
     # if correlation matrix?
-    if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" class objects. See ?mvgls")
+    if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" or \"mvols\" class objects. See ?mvgls or ?mvols")
     covR <- object$sigma$Pinv
     if(mode=="corr") covR <- cov2cor(covR)
 

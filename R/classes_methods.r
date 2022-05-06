@@ -396,10 +396,10 @@ print.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ...){
     # loocv or LL
     meth <- ifelse(x$REML, "REML", "ML")
     if(x$method=="LL"){
-        cat("\nGeneralized least squares fit by",meth,"\n")
+        if(inherits(x, "mvols")) cat("\nOrdinary least squares fit by",meth,"\n") else cat("\nGeneralized least squares fit by",meth,"\n")
         if(x$REML) cat("Log-restricted-likelihood:",round(x$logLik, digits=digits), "\n\n") else cat("Log-likelihood:",round(x$logLik, digits=digits), "\n\n")
     }else{
-        cat("\nGeneralized least squares fit by penalized",meth,"\n")
+        if(inherits(x, "mvols")) cat("\nOrdinary least squares fit by penalized",meth,"\n") else cat("\nGeneralized least squares fit by penalized",meth,"\n")
         if(x$REML){
             cat("LOOCV of the log-restricted-likelihood:",round(x$logLik, digits=digits), "\n\n")
         }else{
@@ -455,11 +455,11 @@ print.summary.mvgls <- function(x, digits = max(3, getOption("digits") - 3), ...
     meth <- ifelse(x$REML, "REML", "ML")
     
     if(x$method=="LL"){
-        cat("\nGeneralized least squares fit by",meth,"\n")
+        if(x$GLS) cat("\nGeneralized least squares fit by",meth,"\n") else cat("\nOrdinary least squares fit by",meth,"\n")
         print(x$results.fit,  quote = FALSE )
     }else{
         
-        cat("\nGeneralized least squares fit by penalized",meth,"\n")
+        if(x$GLS) cat("\nGeneralized least squares fit by penalized",meth,"\n") else cat("\nOrdinary least squares fit by penalized",meth,"\n")
         print(x$results.fit,  quote = FALSE )
     }
     
@@ -537,6 +537,7 @@ summary.mvgls <- function(object, ...){
     
     
     object$results.fit <- results.fit
+    object$GLS <- if(inherits(object,"mvols")) FALSE else TRUE
     class(object) <- c("summary.mvgls","mvgls")
     object
 }

@@ -2,7 +2,7 @@
 \alias{GIC}
 
 \title{
-Generalized Information Criterion (GIC) to compare models fit with \code{mvgls} by Maximum Likelihood (ML) or Penalized Likelihood (PL).
+Generalized Information Criterion (GIC) to compare models fit with \code{mvgls} (or \code{mvols}) by Maximum Likelihood (ML) or Penalized Likelihood (PL)
 }
 \description{
 The GIC (Konishi & Kitagawa 1996) allows comparing models fit by Maximum Likelihood (ML) or Penalized Likelihood (PL).
@@ -16,7 +16,7 @@ GIC(object, ...)
 }
 \arguments{
   \item{object}{
-An object of class 'mvgls'. See ?mvgls}
+An object of class 'mvgls'. See ?mvgls or ?mvols}
   \item{...}{
 Options to be passed through.}
 }
@@ -32,8 +32,8 @@ Options to be passed through.}
 }
 
 \details{
-The Generalized Information Criterion (\code{GIC}) allows comparing the fit of various models estimated by Penalized Likelihood (see ?\code{mvgls}). See also the \code{gic_criterion} function in the RPANDA package.
-Note that the current implementation of the criterion has not been tested for multiple predictors comparison. Prefer simulation based comparisons instead.
+The Generalized Information Criterion (\code{GIC}) allows comparing the fit of various models estimated by Penalized Likelihood (see ?\code{mvgls} or ?\code{mvols}). See also the \code{gic_criterion} function in the RPANDA package. Under maximum likelihood (\code{method="LL"} in \code{mvgls} or \code{mvols}) and on large sample sizes, the GIC should converges to the classical AIC (Akaike Information Criterion).
+Note that the current implementation of the criterion has not been tested for multiple predictors comparison (especially under REML). Prefer simulation based comparisons or the \code{EIC} criterion instead.
 }
 
 	
@@ -49,7 +49,8 @@ Konishi S., Kitagawa G. 1996. Generalised information criteria in model selectio
 
 \seealso{
 \code{\link{mvgls}}
-\code{\link{mvgls.pca}}
+\code{\link{mvols}}
+\code{\link{manova.gls}}
 }
 
 \examples{
@@ -76,4 +77,5 @@ GIC(fit1); GIC(fit2)
 % R documentation directory.
 \keyword{ Model comparison }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ High dimensions }% __ONLY ONE__ keyword per line

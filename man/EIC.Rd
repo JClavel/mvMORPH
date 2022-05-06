@@ -2,7 +2,7 @@
 \alias{EIC}
 
 \title{
-Extended Information Criterion (EIC) to compare models fit with \code{mvgls} by Maximum Likelihood (ML) or Penalized Likelihood (PL).
+Extended Information Criterion (EIC) to compare models fit with \code{mvgls} (or \code{mvols}) by Maximum Likelihood (ML) or Penalized Likelihood (PL)
 }
 
 \description{
@@ -17,7 +17,7 @@ EIC(object, nboot=100L, nbcores=1L, ...)
 
 \arguments{
   \item{object}{
-An object of class 'mvgls'. See ?mvgls}
+An object of class 'mvgls'. See \code{?mvgls} or \code{?mvols}}
   \item{nboot}{
 The number of boostrap replicates used for estimating the EIC.}
   \item{nbcores}{
@@ -40,11 +40,11 @@ Options to be passed through.}
 \details{
 The Extended Information Criterion (\code{EIC}) allows comparing the fit of various models estimated by Penalized Likelihood or Maximum Likelihood (see ?\code{mvgls}). Similar to the GIC or the more common AIC, the EIC has the form:
 
-\emph{EIC = -2*(Likelihood) + 2*bias}
+\deqn{EIC = -2*(Likelihood) + 2*bias}
 
 Where \emph{Likelihood} corresponds to either the full or the restricted likelihood (see the note below), and the bias term is estimated by (semi-parametric) bootstrap simulations rather than by using analytical or approximate solutions (see for instance ?\code{GIC}). The smaller the EIC, the better is the model. With small sample sizes, the variability around the bootstrap estimate is expected to be high, and one must increase the number of bootstrap replicates. Parallel computation (argument \code{nbcores}) allows to speed-up the computations.
 
-Note: for models estimated by REML, it is generally not possible to compare the restricted likelihood when they have different fixed effects. However, it is possible to compare models with different fixed effects by using the full likelihood evaluated with the REML estimates (see e.g. Yafune et al. 2006, Verbyla 2019). Both options - evaluating the restricted likelihood or the full likelihood with parameters estimated by REML - are available through the \code{REML} argument in the \code{EIC} function. The default has been set to \code{REML=FALSE} to allow the comparison of models with different fixed effects using the full likelihood evaluated with the REML estimates (see Verbyla 2019).
+Note: for models estimated by REML, it is generally not possible to compare the restricted likelihoods when the models fit have different fixed effects. However, it is possible to compare models with different fixed effects by using the full likelihood evaluated with the REML estimates (see e.g. Yafune et al. 2006, Verbyla 2019). Both options - evaluating the restricted likelihood or the full likelihood with parameters estimated by REML - are available through the \code{REML} argument in the \code{EIC} function. The default has been set to \code{REML=FALSE} to allow the comparison of models with different fixed effects using the full likelihood evaluated with the REML estimates (see Verbyla 2019).
 }
 
 	
@@ -68,7 +68,8 @@ Yafune A., Funatogawa T., Ishiguro M., 2005. Extended information criterion (EIC
 \seealso{
 \code{\link{GIC}}
 \code{\link{mvgls}}
-\code{\link{mvgls.pca}}
+\code{\link{mvols}}
+\code{\link{manova.gls}}
 }
 
 \examples{
@@ -88,6 +89,10 @@ fit2 <- mvgls(Y~1, tree=tree, model="OU", method="H&L")
 
 
 EIC(fit1); EIC(fit2)
+
+# We can improve accuracy by increasing the number of bootstrap samples
+# EIC(fit1, nboot=5000, nbcores=8L)
+# EIC(fit2, nboot=5000, nbcores=8L)
 }
 }
 
@@ -95,4 +100,5 @@ EIC(fit1); EIC(fit2)
 % R documentation directory.
 \keyword{ Model comparison }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ High dimensions }% __ONLY ONE__ keyword per line

@@ -2,17 +2,17 @@
 \alias{mvgls}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-Fit linear model using Generalized Least Squares to multivariate (high-dimensional) data sets.
+Fit linear model using Generalized Least Squares to multivariate (high-dimensional) data sets
 %%  ~~function to do ... ~~
 }
 \description{
-This function use maximum likelihood (or restricted likelihood) and penalized likelihood approaches to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). \code{mvgls} uses a penalized-likelihood (PL) approach (see descriptions in Clavel et al. 2019) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). The PL approach generally provides improved estimates compared to ML.
+This function uses maximum likelihood (or restricted likelihood) and penalized likelihood approaches to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). \code{mvgls} uses a penalized-likelihood (PL) approach (see descriptions in Clavel et al. 2019) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). The PL approach generally provides improved estimates compared to ML.
 
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
 mvgls(formula, data, tree, model, method=c("PL-LOOCV","LL"),
-		REML=TRUE, ...)
+      REML=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{ 
@@ -35,7 +35,7 @@ The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB
 }
 
 \item{method}{
-The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (i.e. of the form Y~1, see also details).
+The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (i.e. of the form Y~1, see also details). In such a situation, we recommend the use of "H&L"" (which will coincide with "PL-LOOCV") over the "Mahalanobis" approach.
 }
 
 \item{REML}{
@@ -52,6 +52,8 @@ Options to be passed through. For instance the type of penalization:
 \code{mvgls} allows fitting various multivariate linear models to multivariate (possibly high-dimensional, i.e. where the number of variables \emph{p} is larger than \emph{n}) datasets for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU). Models estimated using penalized likelihood (e.g., method="PL-LOOCV") are generally more accurate than those estimated by maximum likelihood methods (method="LL") when the number of traits approach the number of species. PL is the only solution when \emph{p}>\emph{n}.  Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
 
 The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally. Note that for the "BMM" model, a tree of class "simmap" must be provided to scale the BM variance-covariance matrix in different parts of the tree (see also \code{mvBM}).
+
+To fit an ordinary multivariate linear model (possibly regularized), one can uses the \code{mvols} function instead.
 
 The various \emph{arguments} that can be passed through \bold{"..."}:
 
@@ -131,6 +133,7 @@ Julien Clavel
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
+\code{\link{mvgls}}
 \code{\link{manova.gls}}
 \code{\link{EIC}}
 \code{\link{GIC}}
@@ -145,6 +148,11 @@ Julien Clavel
 
 \examples{
 \donttest{
+
+# --------------------------- #
+# Model fit and comparison    #
+# --------------------------- #
+
 set.seed(1)
 n <- 32 # number of species
 p <- 50 # number of traits (p>n)
@@ -155,6 +163,7 @@ R <- crossprod(matrix(runif(p*p), ncol=p)) # a random covariance matrix
 Y <- mvSIM(tree, model="BM1", nsim=1, param=list(sigma=R, theta=rep(0,p))) 
 data=list(Y=Y)
 
+# Fit the 'BM', 'OU', and 'EB' models to 'Y'
 fit1 <- mvgls(Y~1, data=data, tree, model="BM", penalty="RidgeArch")
 fit2 <- mvgls(Y~1, data=data, tree, model="OU", penalty="RidgeArch")
 fit3 <- mvgls(Y~1, data=data, tree, model="EB", penalty="RidgeArch")
@@ -165,8 +174,30 @@ GIC(fit1); GIC(fit2); GIC(fit3) # BM have the lowest GIC value
 signal <- mvgls(Y~1, data=data, tree, model="lambda", penalty="RidgeArch")
 summary(signal)
 
+# --------------------------- #
+# Model fit by ML             #
+# --------------------------- #
 
-# A High-dimensional dataset
+# Fit a model by Maximum Likelihood (rather than Penalized likelihood) when p<<n
+fit_ml <- mvgls(Y[,1:2]~1, data=data, tree, model="BM", method="LL")
+summary(fit_ml)
+
+# --------------------------- #
+# Fit a regression model      #
+# --------------------------- #
+
+# simulate a 'fake' predictor for illustrative purpose
+X <- rTraitCont(tree)
+
+# we can add the predictors to the previous 'data' list
+data=list(Y=Y, X=X)
+
+fit_ml <- mvgls(Y~X, data=data, tree, model="lambda")
+summary(fit_ml)
+
+# --------------------------- #
+# A High-dimensional dataset  #
+# --------------------------- #
 p <- 200 # number of traits (p>n)
 
 R <- crossprod(matrix(runif(p*p), ncol=p)) # a random symmetric matrix (covariance)
@@ -177,10 +208,6 @@ data=list(Y=Y)
 # Fast LOOCV using "H&L" with RidgeArch penalization
 summary(mvgls(Y~1, data=data, tree, model="BM", penalty="RidgeArch", method="H&L"))
 
-
-## Fit a model by Maximum Likelihood (rather than Penalized likelihood) when p<<n
-fit_ml <- mvgls(Y[,1:2]~1, data=data, tree, model="BM", method="LL")
-summary(fit_ml)
 
 
 }

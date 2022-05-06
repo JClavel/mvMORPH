@@ -48,6 +48,7 @@ Julien Clavel
 \seealso{
 \code{\link{manova.gls}}
 \code{\link{mvgls}}
+\code{\link{mvols}}
 \code{\link{pairwise.glh}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }

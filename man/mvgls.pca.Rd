@@ -2,10 +2,10 @@
 \alias{mvgls.pca}
 
 \title{
-Principal Component Analysis (PCA) based on GLS estimate of the traits variance-covariance matrix (possibly regularized).
+Principal Component Analysis (PCA) based on GLS (or OLS) estimate of the traits variance-covariance matrix (possibly regularized)
 }
 \description{
-Performs a principal component analysis (PCA) on a regularized variance-covariance matrix obtained using the \code{mvgls} function. With "evolutionary" models, this performs the so-called phylogenetic PCA.}
+Performs a principal component analysis (PCA) on a regularized variance-covariance matrix obtained using the \code{mvgls} or the \code{mvols} function. With "evolutionary" models in \code{mvgls}, this performs the so-called phylogenetic PCA.}
 \usage{
 
 mvgls.pca(object, plot=TRUE, ...)
@@ -13,7 +13,7 @@ mvgls.pca(object, plot=TRUE, ...)
 }
 \arguments{
   \item{object}{
-A model fit obtained by the \code{mvgls} function.
+A model fit obtained by the \code{mvgls} or \code{mvols} function.
 }
   \item{plot}{
 Plot of the PC's axes. Default is TRUE (see details).'}
@@ -27,18 +27,18 @@ Options to be passed through. (e.g., \code{axes=c(1,2)}, \code{col}, \code{pch},
 	a list with the following components
   
   \item{scores}{the PC scores}
-  \item{values}{the eigenvalues of the variance-covariance matrix estimated by mvgls}
-  \item{vectors}{the eigenvectors of the variance-covariance matrix estimated by mvgls}
+  \item{values}{the eigenvalues of the variance-covariance matrix estimated by mvgls or mvols}
+  \item{vectors}{the eigenvectors of the variance-covariance matrix estimated by mvgls or mvols}
   \item{rank}{the rank of the estimated variance-covariance matrix}
   }
 
 \details{
-\code{mvgls.pca} allows computing a principal component analysis based on a GLS estimate of the covariance matrix (see \code{mvgls}). The phylogenetic PCA (following Revell 2009) is a special case obtained from the (possibly regularized) evolutionary variance-covariance matrix (see also the \code{phyl.pca_pl} function in RPANDA). In the high-dimensional case the contribution of the firsts PC axes tend to be overestimated with traditional maximum likelihood approaches. Penalized/regularized model fits reduce this bias and allow the estimation of various error structure models (see Clavel et al. 2018).
-Ploting options, the number of axes to display (\code{axes=c(1,2)} is the default), and whether the covariance (\code{mode="cov"}) or correlation (\code{mode="corr"}) should be used can be specified through the ellipsis "\code{...}" argument.
+\code{mvgls.pca} allows computing a principal component analysis based on a GLS (or OLS) estimate of the covariance matrix (see \code{mvgls} and \code{mvols}). The phylogenetic PCA (following Revell 2009) is a special case obtained from the (possibly regularized) evolutionary variance-covariance matrix (see also the \code{phyl.pca_pl} function in RPANDA). In the high-dimensional case the contribution of the firsts PC axes tend to be overestimated with traditional maximum likelihood approaches. Penalized/regularized model fit reduce this bias and allow incorporating various residuals structures (see Clavel et al. 2019).
+Plotting options, the number of axes to display (\code{axes=c(1,2)} is the default), and whether the covariance (\code{mode="cov"}) or correlation (\code{mode="corr"}) should be used can be specified through the ellipsis "\code{...}" argument.
 }
 
 \note{
-	Contrary to conventional PCA, the principal axes of the gls PCA are not orthogonal, they represent the main axes of independent (according to a given phylogenetic or time-series model) changes.}
+	Contrary to conventional PCA (for instance using \code{mvols} with "LL" method), the principal axes of the gls PCA are not orthogonal, they represent the main axes of independent (according to a given phylogenetic or time-series model) evolutionary changes.}
 	
 \references{
 Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
@@ -50,6 +50,7 @@ Revell, L.J., 2009. Size-correction and principal components for intraspecific c
 
 \seealso{
 \code{\link{mvgls}},
+\code{\link{mvols}},
 \code{\link{GIC}},
 \code{\link{EIC}}
 }
@@ -86,6 +87,7 @@ head(pca_results$scores)
 
 \keyword{ GIC }
 \keyword{ GLS }
+\keyword{ OLS }
 \keyword{ PCA }
 \keyword{ Regularization }
 \keyword{ Penalized likelihood }
