@@ -40,7 +40,7 @@ Options to be passed through. For instance the type of penalization:
 
 }
 \details{
-\code{mvols} allows fitting various multivariate linear models to multivariate (possibly high-dimensional, i.e. where the number of variables \emph{p} is larger than \emph{n}) datasets. Models estimated using penalized likelihood (e.g., method="PL-LOOCV") are generally more accurate than those estimated by maximum likelihood methods (method="LL") when the number of traits approach the number of species. PL is the only solution when \emph{p}>\emph{n}.  Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
+\code{mvols} allows fitting multivariate linear models to multivariate (possibly high-dimensional, i.e. where the number of variables \emph{p} is larger than \emph{n}) datasets. Models estimated using penalized likelihood (e.g., method="PL-LOOCV") are generally more accurate than those estimated by maximum likelihood methods (method="LL") when the number of traits approach the number of observations. PL is the only solution when \emph{p}>\emph{n}.  Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
 
 
 The various \emph{arguments} that can be passed through \bold{"..."}:
