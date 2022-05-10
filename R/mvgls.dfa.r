@@ -67,8 +67,8 @@ mvgls.dfa <- function(object, ...){
     # FIXME:  is producing two discriminants...
     warning("The function is not working yet for models without intercepts")
     Xdesign <- matrix(1,ncol=1, nrow=N)
-    if(!is.null(object$corrSt$diagWeight)) Xmean <- crossprod(pruning(object$corrSt$phy, trans=FALSE)$sqrtMat, Xdesign*(1/object$corrSt$diagWeight))
-    else Xmean <- crossprod(pruning(object$corrSt$phy, trans=FALSE)$sqrtMat, Xdesign)
+    if(!is.null(object$corrSt$diagWeight)) Xmean <- crossprod(.pruning_general(object$corrSt$phy, trans=FALSE)$sqrtMat, Xdesign*(1/object$corrSt$diagWeight))
+    else Xmean <- crossprod(.pruning_general(object$corrSt$phy, trans=FALSE)$sqrtMat, Xdesign)
     Ystand <- object$variable$Y - Xdesign%*%pseudoinverse(Xmean)%*%Y
   }
 
@@ -357,6 +357,11 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         names(classif) <- predicted_names
     }
     
+    # assign factor levels to the predicted classes
+    if(!is.null(object$fit$xlevels)){
+        classif = as.factor(classif)
+        levels(classif) = levels(as.factor(object$fit$xlevels[[object$term]]))
+    }
     
     # results
     if(missing(newdata)){

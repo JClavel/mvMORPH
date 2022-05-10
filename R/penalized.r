@@ -532,12 +532,26 @@
     if(is.numeric(mserr)) phy$edge.length[extern] = phy$edge.length[extern] + mserr
     
     # Compute the independent contrasts scores
-    if(model!="OUvcv") C <- pruning(phy, trans=FALSE)
-    X <- crossprod(C$sqrtM, X)
-    Y <- crossprod(C$sqrtM, Y)
-    
-    # Return the determinant
-    deterM <- C$det
+    if(inherits(phy, "phylOLS")){
+        if((sum(phy$edge.length) - n)<=.Machine$double.eps){
+            # Return the determinant
+            deterM <- 0
+        }else{
+            sqrtM <- 1/sqrt(phy$edge.length[extern])
+            X <- X*sqrtM
+            Y <- Y*sqrtM
+            # Return the determinant => variance terms  of the 'star' tree
+            deterM <- sum(log(phy$edge.length[extern]))
+        }
+        
+    }else{
+        if(model!="OUvcv") C <- pruning(phy, trans=FALSE) # FIXME -> to remove the call to OUvcv?
+        X <- crossprod(C$sqrtM, X)
+        Y <- crossprod(C$sqrtM, Y)
+        
+        # Return the determinant
+        deterM <- C$det
+    }
     
     # Adjust the determinant for non-ultrametric OU (see Ho & Ane 2014 - Syst. Bio., p. 401)
     if(flag) deterM <- deterM + 2*sum(log(diagWeight))

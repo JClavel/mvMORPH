@@ -107,7 +107,7 @@ generate_tree_structure <- function(n, names_tips=NULL, ...){
   # make the "tree" object
   phy_struct <- list(edge = edge, tip.label = names_tips)
   phy_struct$Nnode <- if (n == 1L)  1L else n - 1L
-  class(phy_struct) <- "phylo"
+  class(phy_struct) <- c("phylo", "phylOLS")
   attr(phy_struct, "order") <- "cladewise"
   
   # create branch lengths

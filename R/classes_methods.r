@@ -16,6 +16,29 @@ GIC <- function(object, ...) UseMethod("GIC")
 EIC <- function(object, nboot=100L, nbcores=1L, ...) UseMethod("EIC")
 
 # ------------------------------------------------------------------------- #
+# AIC.mvgls                                                                 #
+# options: object, ..., k = 2                                               #
+# S3 method - Akaike Information Criterion - generic from stats             #
+# ------------------------------------------------------------------------- #
+
+AIC.mvgls <- function(object, ..., k = 2){
+    if(object$method=="LL"){
+        p <- object$dims$p
+        LL = object$logLik
+        nparam = if(object$model=="BM") (length(object$start_values)-1) + length(object$coefficients) + p*(p + 1)/2 else length(object$start_values) + length(object$coefficients) + p*(p + 1)/2
+        # AIC
+        AIC = -2*LL+k*nparam
+    }else{
+        stop("AIC works only for models fit by Maximum Likelihood (method=\"LL\")")
+    }
+    
+    # return the results
+    results <- list(LogLikelihood=LL, AIC=AIC, nparam=nparam, k=k)
+    class(results) <- c("aic.mvgls","aic")
+    return(results)
+}
+
+# ------------------------------------------------------------------------- #
 # GIC.mvgls                                                                 #
 # options: model,...                                                        #
 # S3 method from "RPANDA"  package                                          #
@@ -186,11 +209,11 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         diagWeight <- object$corrSt$diagWeight; is_weight = TRUE
         diagWeightInv <- 1/diagWeight
     }
-    Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
+    Dsqrt <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM # return warning message if n-ultrametric tree is used with OU?
     # TODO (change to allow n-ultrametric and OU) > just need to standardize the data by the weights
     # if(object$model=="OU" & !is.ultrametric(object$variables$tree)) stop("The EIC method does not handle yet non-ultrametric trees with OU processes")
     
-    DsqrtInv <- pruning(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
+    DsqrtInv <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
@@ -240,7 +263,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         
         # Y|param*
         if(!restricted) {
-            sqM_temp <- pruning(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
+            sqM_temp <- .pruning_general(objectBoot$corrSt$phy, trans=FALSE, inv=TRUE)$sqrtM
             if(is_weight){
                 residualsBoot <- try(crossprod(sqM_temp, (objectFit$variables$Y - objectFit$variables$X%*%objectBoot$coefficients)/objectBoot$corrSt$diagWeight), silent=TRUE)
             } else {
@@ -286,6 +309,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         d1res <- D1(objectBoot=estimModelNull, objectFit=object, ndimCov=ndimCov, p=p, sqM=DsqrtInv, Ccov2=Ccov)
         d3res <- D3(objectBoot=estimModelNull, objectFit=object, loglik=llik, ndimCov=ndimCov, p=p)
         d1res+d3res
+        
     }, 1:nboot, mc.cores = getOption("mc.cores", nbcores))
     
     # check for errors first?
@@ -542,6 +566,13 @@ summary.mvgls <- function(object, ...){
     object
 }
 
+# AIC printing options
+print.aic.mvgls<-function(x,...){
+    cat("\n")
+    message("-- Akaike Information Criterion --","\n")
+    cat("AIC:",x$AIC,"| Log-likelihood",x$LogLikelihood,"\n")
+    cat("\n")
+}
 
 # GIC printing options
 print.gic.mvgls<-function(x,...){
@@ -576,6 +607,33 @@ print.eic.mvgls<-function(x,...){
     }else{
         return(mcmapply(FUN, ..., MoreArgs = MoreArgs, mc.cores = mc.cores,
                           mc.preschedule = mc.preschedule, mc.set.seed = mc.set.seed, mc.cleanup = mc.cleanup))
+    }
+}
+
+# ------------------------------------------------------------------------- #
+# .pruning_general wrapper switch options for OLS vs GLS and various models #
+# options: tree, inv, scaled, trans, check                                  #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+.pruning_general <- function(tree, inv=TRUE, scaled=TRUE, trans=TRUE, check=TRUE){
+    if(inherits(tree, "phylOLS")){
+        n <- Ntip(tree)
+        if((sum(tree$edge.length) - n)<=.Machine$double.eps){
+            # Return the determinant
+            det <- 0
+            sqrtMat <- diag(n)
+        }else{
+            descendent <- tree$edge[,2]
+            extern <- (descendent <= n)
+            if(inv) sqrt_phy <- 1/sqrt(tree$edge.length[extern]) else sqrt_phy <- sqrt(tree$edge.length[extern])
+            sqrtMat <- diag(sqrt_phy)
+            # Return the determinant => variance terms  of the 'star' tree
+            det <- sum(2*log(sqrt_phy))
+        }
+        return(list(sqrtMat=sqrtMat, det=det))
+    }else{
+        return(pruning(tree, inv=inv, scaled=scaled, trans=trans, check=check))
     }
 }
                         

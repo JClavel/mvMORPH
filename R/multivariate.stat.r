@@ -232,7 +232,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   
   
   if(penalized=="full"){
-    Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
+    Dsqrt <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
@@ -499,7 +499,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   
   
   if(penalized=="full"){
-    Dsqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
+    Dsqrt <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
