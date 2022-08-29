@@ -12,7 +12,7 @@ This function uses maximum likelihood (or restricted likelihood) and penalized l
 }
 \usage{
 mvols(formula, data, method=c("PL-LOOCV","LL"),
-		REML=TRUE, ...)
+      REML=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{ 

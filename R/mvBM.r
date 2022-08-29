@@ -160,11 +160,11 @@ if(method!="pic"){
  if(model=="BM1"){
     C1<-vcv.phylo(tree)
 	if(!is.null(rownames(data))) {
-	 if(any(tree$tip.label==rownames(data))){
-         C1<-C1[rownames(data),rownames(data)]
-     }else if(echo==TRUE){
-         cat("row names of the data matrix must match tip names of your phylogeny!","\n")
-     }
+        if(!any(tree$tip.label%in%rownames(data)!=TRUE) & n==Ntip(tree)){
+            C1<-C1[rownames(data),rownames(data)]
+        }else if(echo==TRUE){
+            cat("row names of the data matrix must match tip names of your phylogeny!","\n")
+        }
     }else if(echo==TRUE){
         cat("species in the matrix are assumed to be in the same order as in the phylogeny, otherwise specify rownames of 'data'","\n")
 	}

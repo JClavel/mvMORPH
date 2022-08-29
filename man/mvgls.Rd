@@ -75,6 +75,7 @@ The various \emph{arguments} that can be passed through \bold{"..."}:
 
 \bold{"tol"} - Minimum value for the regularization parameter. Singularities can occur with a zero value in high-dimensional cases. (default is \code{NULL})
 
+%%\bold{"randomRoot"} - For model "OU" with non-ultrametric trees (default is TRUE), uses a "randomRoot" parameterization (see Clavel et al. 2015 and \code{mvOU}).
 
 %%  ~~ If necessary, more details than the description above ~~
 }

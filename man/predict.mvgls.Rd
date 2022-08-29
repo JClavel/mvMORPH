@@ -22,7 +22,7 @@ Note: the fitted values are simply returned if "newdata" is not provided.
 }
 
   \item{...}{
-further arguments for this generic function. For models fit by \code{mvgls}, if \code{tree} is provided (with tip name(s) matching rowname(s) in newdata and in the training (model fit) dataset), then the best unbiased linear prediction (BLUB) for the model is returned. Otherwise the GLS coefficients are used to predict "newdata".
+further arguments for this generic function. For models fit by \code{mvgls}, if \code{tree} is provided (with tip name(s) matching rowname(s) in newdata and in the training (model fit) dataset), then the best unbiased linear prediction (BLUP) for the model is returned. Otherwise the GLS coefficients are used to predict "newdata".
 }
 
 }

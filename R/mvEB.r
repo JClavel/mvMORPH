@@ -55,11 +55,12 @@ if(!is.null(error)){
 
 
 # scale height of the tree
-maxHeight<-1
-if(scale.height==TRUE){
 maxHeight<-max(nodeHeights(tree))
-tree$edge.length<-tree$edge.length/maxHeight
+if(scale.height==TRUE){
+    tree$edge.length<-tree$edge.length/maxHeight
+    maxHeight <- 1
 }
+
 # number of traits
 k<-ncol(data)
 if(is.null(k)){
@@ -70,7 +71,7 @@ k<-1
 npar<-(k*(k+1)/2)
 
 if(is.null(param[["low"]])==TRUE){
-    if(scale.height==FALSE) maxHeight<-max(nodeHeights(tree))
+    #if(scale.height==FALSE) maxHeight<-max(nodeHeights(tree))
     low<-param$low<- log(10^-5)/maxHeight # Slater & Pennell 2013
    if(echo==TRUE) cat("No lower bound provided. Use of default setting \" ",low,"\"")
 
@@ -226,10 +227,10 @@ if(is.null(param[["beta"]])==TRUE){
 
 # initial values for the optimizer
 if(is.null(param[["sigma"]])==TRUE){
-sig1<-varBM(tree,data,n,k)
-sig1<-sym.unpar(sig1)
+    sig1<-varBM(tree,data,n,k)
+    sig1<-sym.unpar(sig1)
 }else{
-sig1<-param$sigma
+    sig1<-param$sigma
 }
 
 ## Check first if we want to return the log-likelihood function only

@@ -628,7 +628,7 @@ print.eic.mvgls<-function(x,...){
             extern <- (descendent <= n)
             if(inv) sqrt_phy <- 1/sqrt(tree$edge.length[extern]) else sqrt_phy <- sqrt(tree$edge.length[extern])
             sqrtMat <- diag(sqrt_phy)
-            # Return the determinant => variance terms  of the 'star' tree
+            # Return the determinant => variance terms of the 'star' tree
             det <- sum(2*log(sqrt_phy))
         }
         return(list(sqrtMat=sqrtMat, det=det))
