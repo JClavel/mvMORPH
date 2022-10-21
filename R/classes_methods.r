@@ -737,6 +737,56 @@ plot.manova.mvgls <- function(x,...){
 }
 
 # ------------------------------------------------------------------------- #
+# plot option for Pairwise tests  (distribution of the test statistic)      #
+# options: x, ...                                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+plot.pairs.mvgls <- function(x,...){
+  
+  args <- list(...)
+  if(is.null(args[["density"]])) density = FALSE else density = args$density
+  if(is.null(args[["breaks"]])) breaks = 50 else breaks = args$breaks
+  
+  nterms <- nrow(x$L)
+  if(is.null(rownames(x$L))) namesContrasts <- "contrasts L" else namesContrasts <- rownames(x$L)
+  
+  if(x$param==TRUE){
+    
+    for(i in 1:nterms){
+      df_mod <- x
+      d1=df_mod$NumDf[i]
+      d2=df_mod$DenDf[i]
+      
+      curve(df(x, df1=d1, df2=d2), 0, qf(0.9999, d1, d2), las=1,
+            main=paste("F test:", namesContrasts[i]),
+            xlab=paste("F value","(",round(x$approxF[i],3),")","p-value :", round(x$pvalue[i],3)), ylab="density" );
+      abline(v=x$approxF[i], col="red")
+    }
+    
+  }else{
+    
+    
+    # plot histogram with permuted statistics
+    for(i in 1:nterms){
+      
+      if(density){
+        plot(density(x$nullstat[,i]), main=paste("Statistic distribution:",x$terms[i]),xlab=paste(x$test,"(",round(x$stat[i],3),")","p-value :",
+                                                                                                  round(x$pvalue[i],3)), las=1, xlim=range(c(x$nullstat[,i],x$stat[i])))
+      }else{
+        hist(x$nullstat[,i], main=paste("Statistic distribution:",namesContrasts[i]),
+             xlab=paste(x$test,"(",round(x$stat[i],3),")","p-value :",
+                        round(x$pvalue[i],3)), las=1, breaks=breaks, border=NA, col="lightgrey", xlim=range(c(x$nullstat[,i],x$stat[i])));
+      }
+      abline(v=x$stat[i], col="red", lwd=2)
+    }
+  }
+  
+}
+
+
+
+# ------------------------------------------------------------------------- #
 # plot.mvgls                                                                #
 # options: x, term, ..., fitted=TRUE                                        #
 #                                                                           #

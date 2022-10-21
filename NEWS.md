@@ -1,3 +1,8 @@
+## mvMORPH 1.1.7
+    + fix error in handling pairwise glh tests with the "effectSize" function
+    + fix error in mvols with EIC - no use of the pruning algorithm now
+    + add ploting option for pairwise tests
+    + add AIC extractor
 ## mvMORPH 1.1.6
     + fix error in the estimation of GIC with "BMM" model in mvgls. Now the 'mvgls' function uses a more robust parameterization of BMM which ease the computation of GIC.
     + mvols function - wrapper to mvgls to fit OLS (or WLS) multivariate models (possibly regularized)

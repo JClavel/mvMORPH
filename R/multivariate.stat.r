@@ -962,13 +962,18 @@ effectsize <- function(x, ...){
             }
         })
         mult <- matrix(mult,nrow=1)
-        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        if(x$type=="glh" | x$type=="glhrm"){
+            if(!is.null(rownames(x$L))) colnames(mult) = paste(rownames(x$L), "|") else colnames(mult) = "contrast"
+        }else{
+            colnames(mult) = x$terms
+        }
         rownames(mult) = row_names # paste("A(",x$test,")",sep = "")
     }else{
         
         # retrieve expectations and theoretical bounds
         Anull <- colMeans(x$nullstat)
         if(x$type=="III") s <- table(x$dims$assign) else s <- table(x$dims$assign)[-1L]
+        if(x$type=="glh" | x$type=="glhrm") s <- 1 # Overwrite the previous estimate as Df = 1 for each contrasts (i.e. rank of individual contrasts)
         
         switch(x$test,
         "Wilks"={
@@ -999,7 +1004,11 @@ effectsize <- function(x, ...){
         
         # We return the chance-corrected metrics. Should we return 0 when mult <0?
         mult <- matrix(mult, nrow=1)
-        if(x$type=="glh") colnames(mult) = "contrast" else colnames(mult) = x$terms
+        if(x$type=="glh" | x$type=="glhrm"){
+            if(!is.null(rownames(x$L))) colnames(mult) = paste(rownames(x$L), "|") else colnames(mult) = "contrast"
+        }else{
+            colnames(mult) = x$terms
+        }
         rownames(mult) = row_names #paste("Aperm.(",x$test,")",sep = "")
     }
     if(x$test=="Wilks") attr(adjusted, "tatsuoka") <- tatsuoka else attr(adjusted, "tatsuoka") <- FALSE
@@ -1078,7 +1087,7 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
         
         summary_tests <- list(test=test, stat=permTests[2,], approxF=permTests[3,],
         Df=permTests[1,], NumDf=permTests[4,], DenDf=permTests[5,], pvalue=permTests[6,],  param=param, terms=terms,
-        dims=object$dims, adjust=p.adjust(permTests[6,], method = adjust), L=L)
+        dims=object$dims, adjust=p.adjust(permTests[6,], method = adjust), L=L, type="glh")
         
     }else{
         param = FALSE # we use permutation rather than parametric test
@@ -1100,9 +1109,12 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
         # statistic
         stats <- sapply(1:nb_contrasts, function(i) permTests[[i]]$observed)
         
+        # formating of the null distributions
+        permNulls <- sapply(permTests, function(x) x$simulated)
+        
         # retrieve the statistic
-        summary_tests <- list(test=test, stat=stats, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permTests, dims=object$dims,
-        adjust=p.adjust(p_val, method = adjust), L=L)
+        summary_tests <- list(test=test, stat=stats, pvalue=p_val, param=param, terms=terms, nperm=nperm, nullstat=permNulls, dims=object$dims,
+        adjust=p.adjust(p_val, method = adjust), L=L, type="glh")
     }
     
     # retrieve results
