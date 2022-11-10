@@ -659,7 +659,11 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
       "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
     
     table_results <- data.frame(Df=x$Df, stat=x$stat, approxF=x$approxF, numDf=x$NumDf, denDf=x$DenDf, pval=x$pvalue, signif=signif)
-    if(x$type!="glh" & x$type!="glhrm") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
+    if(x$type!="glh" & x$type!="glhrm"){
+        if(x$type=="III") rownames(table_results) <- x$terms[x$dims$assign+1] else rownames(table_results) <- x$terms[x$dims$assign]
+    }else{
+        rownames(table_results) <- "Contrasts L"
+    }
     colnames(table_results) <- c("Df", "test stat", "approx F", "num Df", "den Df", "Pr(>F)", "")
     print(table_results, digits = digits, ...)
     cat("---","\n")
@@ -678,7 +682,11 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
       "**"}else if(i<0.05){"*"}else if(i<0.1){"."}else{""})
     
     table_results <- data.frame(stat=x$stat, pval=x$pvalue, signif=signif)
-    if(x$type!="glh" & x$type!="glhrm") rownames(table_results) <- x$terms else rownames(table_results) <- "Contrasts L"
+    if(x$type!="glh" & x$type!="glhrm"){
+        if(x$type=="III") rownames(table_results) <- x$terms[x$dims$assign+1] else rownames(table_results) <- x$terms[x$dims$assign]
+    }else{
+        rownames(table_results) <- "Contrasts L"
+    }
     colnames(table_results) <- c("Test stat", "Pr(>Stat)", "")
     print(table_results, digits = digits, ...)
     cat("---","\n")
