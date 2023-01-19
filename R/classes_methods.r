@@ -22,6 +22,7 @@ EIC <- function(object, nboot=100L, nbcores=1L, ...) UseMethod("EIC")
 # ------------------------------------------------------------------------- #
 
 AIC.mvgls <- function(object, ..., k = 2){
+    
     if(object$method=="LL"){
         p <- object$dims$p
         LL = object$logLik

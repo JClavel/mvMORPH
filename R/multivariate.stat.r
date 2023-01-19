@@ -14,7 +14,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   if(is.null(args[["parametric"]])) param <- TRUE else param <- args$parametric
   if(is.null(args[["permutation"]])) penalized <- NULL else penalized <- args$permutation
   if(is.null(args[["rhs"]])) rhs <- NULL else rhs <- args$rhs
-  if(is.null(args[["verbose"]])) verbose <- FALSE else verbose <- args$verbose
+  if(is.null(args[["verbose"]])) verbose <- TRUE else verbose <- args$verbose
   if(is.null(args[["P"]])) P <- NULL else P <- args$P
   
   # Performs the tests

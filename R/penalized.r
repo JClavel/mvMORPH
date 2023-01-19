@@ -745,13 +745,13 @@
                 # check if any tips are missing?
                 k = ncol(tree$mapped.edge)
                 if(length(unique(maps))<k) {
-                    mod_val <- mean(diag(mvLL(tree, data, method="pic")$sigma))
+                    mod_val <- mean(diag(rate_pic(tree, data)))
                     guesses <- as.list(rep(sqrt(mod_val), k))
                 }else{
                     guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
                         dat_red <- which(maps==map_names)
                         tree_red=drop.tip(tree, tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]] )
-                        sqrt(mean(diag(mvLL(tree_red, data[tree_red$tip.label,], method="pic")$sigma)))
+                        sqrt(mean(diag(rate_pic(tree_red, data[tree_red$tip.label,]))))
                     })
                 }
                 

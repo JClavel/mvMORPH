@@ -30,7 +30,7 @@ Indicates whether the contrasts should be scaled with their expected variances (
 
 \item{trans}{
 Return the transpose (trans=TRUE) of the matrix square root/contrasts matrix.
-(i.e. by default it returns a matrix equivalent to the upper triangular Cholesky factor)
+(by default - i.e., trans=TRUE - it returns a matrix equivalent to the upper triangular Cholesky factor)
 }
 
 \item{check}{

@@ -886,6 +886,10 @@ build.chol<-function(b,p){
     return(na_rm)
 }
 
+# Function to return a rate matrix estimate (under BM) from independent contrasts
+rate_pic <- function(phy, data){
+    return(crossprod(apply(data,2,pic, phy=phy))/Ntip(phy))
+}
 
 ##----------------------mvfit_likelihood--------------------------------------##
 
