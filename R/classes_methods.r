@@ -661,7 +661,7 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     
     table_results <- data.frame(Df=x$Df, stat=x$stat, approxF=x$approxF, numDf=x$NumDf, denDf=x$DenDf, pval=x$pvalue, signif=signif)
     if(x$type!="glh" & x$type!="glhrm"){
-        if(x$type=="III") rownames(table_results) <- x$terms[x$dims$assign+1] else rownames(table_results) <- x$terms[x$dims$assign]
+        if(x$type=="III") rownames(table_results) <- x$terms[unique(x$dims$assign)+1] else rownames(table_results) <- x$terms[unique(x$dims$assign)]
     }else{
         rownames(table_results) <- "Contrasts L"
     }
@@ -684,7 +684,7 @@ print.manova.mvgls <- function(x, digits = max(3L, getOption("digits") - 3L), ..
     
     table_results <- data.frame(stat=x$stat, pval=x$pvalue, signif=signif)
     if(x$type!="glh" & x$type!="glhrm"){
-        if(x$type=="III") rownames(table_results) <- x$terms[x$dims$assign+1] else rownames(table_results) <- x$terms[x$dims$assign]
+        if(x$type=="III") rownames(table_results) <- x$terms[unique(x$dims$assign)+1] else rownames(table_results) <- x$terms[unique(x$dims$assign)]
     }else{
         rownames(table_results) <- "Contrasts L"
     }
