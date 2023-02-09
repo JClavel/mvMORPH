@@ -738,7 +738,7 @@
         "BMM"={
             
             # guess starting values
-            start_values <- function(tree, data){
+            start_values <- function(tree, data, predictors){
                 tip_values <- 1:Ntip(tree)
                 index_tips <- tree$edge[,2]%in%tip_values
                 maps <- sapply(tree$maps[index_tips], function(x) names(x[length(x)]))
@@ -751,14 +751,18 @@
                     guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
                         dat_red <- which(maps==map_names)
                         tree_red=drop.tip(tree, tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]] )
-                        sqrt(mean(diag(rate_pic(tree_red, data[tree_red$tip.label,]))))
+                        if(Ntip(tree_red)<=1){
+                                 sqrt(mean(diag(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,])))) # simple estimate on the whole tree
+                             }else{
+                                 sqrt(mean(diag(.rate_guess(tree_red, data[tree_red$tip.label,], predictors[tree_red$tip.label,]))))
+                             }
                     })
                 }
                 
                 return(guesses)
             }
             
-            mod_val <- start_values(corrModel$structure, corrModel$Y)[-1]
+            mod_val <- start_values(corrModel$structure, corrModel$Y, corrModel$X)[-1]
             list_param <- c(list(range_val), mod_val)
             index_err <- length(list_param) + 1
         },
@@ -809,3 +813,24 @@
         },
     )
 }
+
+# ------------------------------------------------------------------------- #
+# .rate_guess                                                               #
+# options: phylo, Y, X                                                      #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+.rate_guess <- function(phylo, Y, X){
+    # model
+    C <- pruning(phylo, trans=FALSE)
+    X <- crossprod(C$sqrtM, X)
+    Y <- crossprod(C$sqrtM, Y)
+    
+    # GLS estimates
+    XtX <- pseudoinverse(X)
+    B <- XtX%*%Y
+    residuals <- Y - X%*%B
+    
+    # Covariance matrix
+    return(crossprod(residuals)/Ntip(phylo))
+    }
