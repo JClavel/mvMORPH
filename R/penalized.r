@@ -89,7 +89,7 @@
             # update the residuals
             residuals2 <- mod_par$Y - mod_par$X%*%Bx
             Skpartial <- crossprod(residuals2[-x,])/(n-1)
-            .regularizedLik(Skpartial, residuals[x,], alpha, targM, target, penalty, const)
+            .regularizedLik(Skpartial, residuals[x,], alpha, targM, target, penalty, const) # try instead with current residual observation?
         })
         
         ll <- 0.5 * (n*p*log(2*pi) + p*Ccov + sum(llik))
