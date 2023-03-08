@@ -1296,7 +1296,7 @@ AIC.mvmorph<-function(object,...,k){
 }
 
 ## Return the model AICc
-AICc <- function(x) UseMethod("AICc")
+AICc <- function(object) UseMethod("AICc")
 AICc.mvmorph<-function(object){
     return(object$AICc)
 }
