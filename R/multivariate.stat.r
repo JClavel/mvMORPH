@@ -1025,6 +1025,7 @@ effectsize <- function(x, ...){
 
 pairwise.contrasts <- function(object, term=1, ...){
     if(object$contrasts[term]!="contr.treatment") stop("object fit must use dummy coding - see ?contr.treatment")
+    if(length(object$xlevels)==0) stop("contrasts tests only apply to factors - you must provide a list or a dataframe containing your data to mvgls/mvols")
     names_variables <- paste(names(object$xlevels[term]), object$xlevels[[term]], sep="")
     indice_predictor <- attr(object$variables$X,"dimnames")[[2]]%in%c("(Intercept)",names_variables)
     names_pred <- attr(object$variables$X,"dimnames")[[2]][indice_predictor]

@@ -28,6 +28,9 @@ mvgls.pca <- function(object, plot=TRUE, ...){
     # if correlation matrix?
     if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" or \"mvols\" class objects. See ?mvgls or ?mvols")
     covR <- object$sigma$Pinv
+    
+    # for OU process, we should instead take the stationary covariance
+    if(object$model=="OU" & mode!="corr") covR <- covR/2*object$param # because alpha is scalar diagonal otherwise use "stationary"
     if(mode=="corr") covR <- cov2cor(covR)
 
     # compute the scores
