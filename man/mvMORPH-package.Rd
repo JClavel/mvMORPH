@@ -12,7 +12,7 @@ Fit of multivariate evolutionary models on trees (with one or multiple selective
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.1.6\cr
+Version: \tab 1.1.7\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }
@@ -27,7 +27,7 @@ Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
   
   Clavel et al. (2019). A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116. doi: 10.1093/sysbio/syy045.
 
-  Clavel & Morlon (2020). Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in Phyllostomid bats. Systematic Biology 69(5): 927-943.
+  Clavel & Morlon (2020). Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in Phyllostomid bats. Systematic Biology 69(5): 927-943. doi: 10.1093/sysbio/syaa010
 }
 \keyword{ mvols }
 \keyword{ mvgls }
