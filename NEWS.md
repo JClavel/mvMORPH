@@ -1,3 +1,5 @@
+## mvMORPH 1.1.8
+    + add the pcaShape and dfaShape functions
 ## mvMORPH 1.1.7
     + fix error in handling pairwise glh tests with the "effectSize" function
     + fix error in mvols with EIC - no use of the pruning algorithm now

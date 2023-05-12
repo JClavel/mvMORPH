@@ -82,6 +82,7 @@ mvgls.dfa <- function(object, ...){
     prior <-  rep(1/nclass, nclass)
   }else{
     prior <- args$prior
+    if(is.null(prior)) prior <-  rep(1/nclass, nclass) # if a null value is provided by the user, we set equal prior for each classes
   }
   
   # classes ID for covariate models

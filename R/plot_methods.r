@@ -176,3 +176,120 @@ mvqqplot <- function(object, conf=0.95, ...){
   
   return(rk)
 }
+
+
+# ------------------------------------------------------------------------ #
+#                                                                          #
+#  pcaShape: projection of shape changes along PC axes                     #
+#  J. Clavel - 2019                                                        #
+#                                                                          #
+# ------------------------------------------------------------------------ #
+
+# "object" is an object fit of class "mvgls"
+# "axis" is the PC axis chosen
+# "ndim" the number of dimension for each landmarks (2 or 3), or 1 if not a landmark...
+# "landmarks" the number of landmarks
+# "spp" the name of a given species, otherwise the min and max for the PC axis is used
+
+pcaShape <- function(object, axis=1, ndim=3, spp=NULL, plot=FALSE, ...){
+ 
+  if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" class objects. See ?mvgls or ?mvols")
+  par = list(...)
+  phyl_pca <- mvgls.pca(object, plot=FALSE)
+  pcscores <- phyl_pca$scores
+  ancestral <- coef(object)
+  if(is.null(par[["landmarks"]])) landmarks = ncol(pcscores)/ndim else landmarks = par$landmarks
+
+  if(is.null(spp)){
+    pc_axis_min <- min(pcscores[, axis])%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
+    pc_axis_max <- max(pcscores[, axis])%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
+    shape <- list()
+    shape$min <- matrix(pc_axis_min, ncol=ndim, nrow=landmarks, byrow = TRUE)
+    shape$max <- matrix(pc_axis_max, ncol=ndim, nrow=landmarks, byrow = TRUE)
+  }else{
+    shape <- lapply(spp, function(sp_name){
+        pc_specimen_shape <- pcscores[sp_name, axis]%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
+        shape <- matrix(pc_specimen_shape, ncol=ndim, nrow=landmarks, byrow=TRUE)
+    })
+    names(shape) = spp
+  }
+  
+  # plot the shape changes?
+  if(plot){
+      if(is.null(spp)){
+          plot(shape$min, pch=16, xlab="", ylab="", main=paste("Shapes changes along PC",axis))
+          points(shape$max, pch=16, col="red")
+          legend("bottomright", legend=c("max scores","min scores"), pch=16, col=c("red","black"))
+      }else{
+          plot(shape[[1]], pch=16, xlab="", ylab="", main=paste("Shapes changes along PC",axis))
+          if(length(spp)>1){
+              for(i in 2:length(spp)) points(shape[[i]], pch=16, col=i)
+              legend("bottomright", legend=spp, pch=16, col=1:length(spp))
+          }
+      }
+  }
+  
+  # return the shapes
+  return(shape)
+}
+
+## ------------------------------------------------------- ##
+##                                                         ##
+##  dfaShape: project shape changes along PC axes          ##
+##  J. Clavel - 2020 ; require mvMORPH 1.1.4               ##
+##                                                         ##
+## ------------------------------------------------------- ##
+
+# "object" is an object fit of class "mvgls"
+# "reference" the reference shape used to compare the deformations. Usually the mean shape
+# "axis" is the PC axis chosen
+# "ndim" the number of dimension for each landmarks (2 or 3), or 1 if not a landmark...
+# "landmarks" the number of landmarks
+# "spp" the name of a given species, otherwise the min and max for the PC axis is used
+# "scaling" is an arbitrary factor used to multiply the effects (for better visualization)
+
+dfaShape <- function(object, reference, axis=1, ndim=3, spp=NULL, scaling=1, plot=FALSE, ...){
+  
+  if(!inherits(object,"mvgls.dfa")) stop("only works with \"mvgls.dfa\" class objects. See ?mvgls.dfa")
+  par = list(...)
+  
+  pcscores <- object$scores
+  if(is.null(reference) | missing(reference)) reference <- coef(object$fit) # should instead fit an intercept only model
+  # we standardize the discriminant coefficients by the covariance because it has been used to standardize the between-group covariance
+  # see e.g. J. Claude 2008 - chapter 6
+  DF <- object$fit$sigma$Pinv%*%object$coeffs
+  
+  if(is.null(par[["landmarks"]])) landmarks = ncol(reference)/ndim else landmarks = par$landmarks
+  if(is.null(spp)){
+    pc_axis_min <- scaling*min(pcscores[, axis])%*%DF[,axis] + reference["(Intercept)",]
+    pc_axis_max <- scaling*max(pcscores[, axis])%*%DF[,axis] + reference["(Intercept)",]
+    shape <- list()
+    shape$min <- matrix(pc_axis_min, ncol=ndim, nrow=landmarks, byrow = TRUE)
+    shape$max <- matrix(pc_axis_max, ncol=ndim, nrow=landmarks, byrow = TRUE)
+  }else{
+    shape <- lapply(spp, function(sp_name){
+                        pc_specimen_shape <- scaling*pcscores[sp_name, axis]%*%DF[,axis] + reference["(Intercept)",]
+                        matrix(pc_specimen_shape, ncol=ndim, nrow=landmarks, byrow=TRUE)
+                    })
+    names(shape) = spp
+  }
+  
+  # plot the shape changes?
+  if(plot){
+      if(is.null(spp)){
+          plot(shape$min, pch=16, xlab="", ylab="", main=paste("Shapes changes along DF",axis))
+          points(shape$max, pch=16, col="red")
+          legend("bottomright", legend=c("max scores","min scores"), pch=16, col=c("red","black"))
+      }else{
+          plot(shape[[1]], pch=16, xlab="", ylab="", main=paste("Shapes changes along DF",axis))
+          if(length(spp)>1){
+              for(i in 2:length(spp)) points(shape[[i]], pch=16, col=i)
+              legend("bottomright", legend=spp, pch=16, col=1:length(spp))
+          }
+      }
+  }
+  
+  
+  # return the shapes
+  return(shape)
+}
