@@ -1311,6 +1311,52 @@ simulate.mvmorph<-function(object,nsim=1,seed=NULL,...){
     mvSIM(...,param=object,nsim=nsim)
 }
 
+## Wrapper to mvSIM for mvgls/mvols objects
+simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
+  
+  # parameters
+  param <- list(...)
+  p <- object$dims$p
+  n <- object$dims$n
+  theta <- numeric(p)
+  if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
+  
+  if(!is.ultrametric(object$variables$tree) & object$model=="OU"){
+    
+    C <- Call(mvmorph_covar_ou_fixed, A=vcv(object$variables$tree),
+              alpha=object$param, sigma=1)
+    if(!is.na(object$mserr)) C <- C+diag(object$mserr,n) # TO CHECK should be included in the precision matrix?
+    Croot <- chol(C); # the cholesky factor to correlate the data
+    
+    
+    if(nsim==1){
+      X <- rmvnorm_simul(n=n, mean=theta, var=object$sigma$Pinv, method=methodSim)
+      residuals_sim <- t(X%*%Croot)
+      
+    }else if(nsim>1){
+      residuals_sim <- lapply(1:nsim,function(x){
+        X <- rmvnorm_simul(n=n, mean=theta, var=object$sigma$Pinv, method=methodSim)
+        t(X%*%Croot);
+        })
+    }
+    
+  }else{
+    residuals_sim <- mvSIM(tree=object$corrSt$phy, model="BM1",
+                         param=list(sigma=object$sigma$Pinv, theta=theta), nsim=nsim)
+  }
+    
+  # Fixed effects
+  effects <- fitted(object)
+  
+  # Simulate
+  if(nsim>1){
+    new_dataset <- lapply(residuals_sim, function(resid) effects + resid )
+  }else{
+    new_dataset <- effects + residuals_sim
+  }
+  return(new_dataset)
+}
+
 ## Return the stationary variance for the multivariate Ornstein-Uhlenbeck
 
 stationary.mvmorph<-function(object){
