@@ -248,7 +248,8 @@ switch(model,
     }
     
     if(istrend==TRUE){
-        Vdiag<-rep(diag(C[1:n,1:n]),p)
+        Cc <- Reduce("+", C)
+        Vdiag<-rep(diag(Cc[1:n,1:n]),p)
         W<-W%*%as.numeric(mu) + Vdiag*(W%*%trend)
         mu<-as.numeric(1)
     }
