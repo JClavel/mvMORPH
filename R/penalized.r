@@ -546,6 +546,7 @@
         
     }else{
         if(model!="OUvcv") C <- pruning(phy, trans=FALSE) # FIXME -> to remove the call to OUvcv?
+        if(any(phy$edge.length>=.Machine$double.eps)) C<-list(sqrtM=t(.sqM1(phy)), det=determinant(vcv(phy))$modulus) # FIXME => remove problems with the pruning algorithms on zero branch lengths?
         X <- crossprod(C$sqrtM, X)
         Y <- crossprod(C$sqrtM, Y)
         
