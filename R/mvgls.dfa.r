@@ -360,8 +360,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     
     # assign factor levels to the predicted classes
     if(!is.null(object$fit$xlevels)){
-        classif = as.factor(classif)
-        levels(classif) = levels(as.factor(object$fit$xlevels[[object$term]]))
+        classif = factor(classif, levels=1:ncol(posterior), labels = as.factor(object$fit$xlevels[[object$term]]))
     }
     
     # results
