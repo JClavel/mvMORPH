@@ -1323,7 +1323,7 @@ simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
   
   if(!is.ultrametric(object$variables$tree) & object$model=="OU"){
     
-    C <- Call(mvmorph_covar_ou_fixed, A=vcv(object$variables$tree),
+    C <- .Call(mvmorph_covar_ou_fixed, A=vcv(object$variables$tree),
               alpha=object$param, sigma=1)
     if(!is.na(object$mserr)) C <- C+diag(object$mserr,n) # TO CHECK should be included in the precision matrix?
     Croot <- chol(C); # the cholesky factor to correlate the data
