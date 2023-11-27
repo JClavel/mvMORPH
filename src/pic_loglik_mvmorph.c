@@ -343,7 +343,7 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
 	SEXP WORK = PROTECT(allocVector(REALSXP,dimrtrait));
 	F77_CALL(dgetri)(&ntraits, REAL(iZ), &ntraits, INTEGER(IPIV), REAL(WORK), &dimrtrait, &info);
     if (info != 0) {
-        if (info > 0) error("The matrix of rates is singular",info);
+        if (info > 0) error("The matrix of rates is singular");
         error("argument %d had an illegal value",-info);
     }
 	// Calculating the matrix vector product

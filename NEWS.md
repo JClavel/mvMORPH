@@ -1,5 +1,10 @@
 ## mvMORPH 1.1.8
     + add the pcaShape and dfaShape functions
+    + add wrapper "simulate()" to simulate from 'mvgls' or 'mvols' fit
+    + fix error in "estim" for BM with trend
+    + fix issues with zero branch lengths in the pruning algorithm used in 'mvgls'
+    + fix typo on factor labels in DFA predictions
+    + fix CRAN requests (typo on Rd file and arguments in error function in C code)
 ## mvMORPH 1.1.7
     + fix error in handling pairwise glh tests with the "effectSize" function
     + fix error in mvols with EIC - no use of the pruning algorithm now

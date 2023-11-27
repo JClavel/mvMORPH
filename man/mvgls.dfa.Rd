@@ -32,7 +32,7 @@ Options to be passed through. (e.g., \code{term="the term corresponding to the f
   \item{residuals}{the centered [with GLS or OLS] response variables}
   \item{H}{the hypothesis (or between group model matrix)}
   \item{E}{the error (or residual model matrix)}
-  \item{rank}{the rank of HE^{-1}}
+  \item{rank}{the rank of \eqn{HE^{-1}}}
   \item{pct}{the percentage of the discriminant functions}
 
   }
