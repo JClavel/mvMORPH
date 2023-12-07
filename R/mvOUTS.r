@@ -54,7 +54,7 @@ mvOUTS <- function(times, data, error=NULL, param=list(sigma=NULL,alpha=NULL, vc
     }
     
     # Compute the covariance matrix for the time serie
-    vcv_time <- vcv.ts(times)
+    vcv_time <- vcvts(times)
     
     # decomposition of the pull matrix
     index.user<-NULL

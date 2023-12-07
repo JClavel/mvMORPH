@@ -46,7 +46,7 @@ mv.Precalc<-function(tree, nb.traits=1, scale.height=FALSE, param=list(pivot="MM
     #compute the variance-covariance matrix
     
     #if(model=="OUTS" | model=="RWTS"){
-    #    C1<-vcv.ts(tree)
+    #    C1<-vcvts(tree)
     #}else{
         C1<-vcv.phylo(tree)
     #}

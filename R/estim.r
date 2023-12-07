@@ -88,7 +88,7 @@ if(any(class(object)=="mvmorph")){
 
                 
         }else{
-                C <- vcv.ts(tree)
+                C <- vcvts(tree)
                 # number of specimens
                 n <- length(tree)
                 # species names

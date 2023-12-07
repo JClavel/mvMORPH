@@ -53,7 +53,7 @@ mvRWTS <- function(times, data, error=NULL, param=list(sigma=NULL, trend=FALSE, 
     }
     
     # Compute the covariance matrix for the time serie
-    vcv_time <- vcv.ts(times)
+    vcv_time <- vcvts(times)
     
     # define the default user constraint
     index.user <- NULL

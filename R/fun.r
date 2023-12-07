@@ -13,7 +13,7 @@
 ##------------------------Fonctions necessaires-------------------------------##
 
 ## vcv build for time-series
-vcv.ts <- function(times){
+vcvts <- function(times){
    vcv_mat <- outer(times,times, FUN=pmin)
    # avoid problems with integers
    V <- matrix(as.numeric(vcv_mat),length(times))

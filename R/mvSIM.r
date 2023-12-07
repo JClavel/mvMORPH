@@ -379,7 +379,7 @@ if(inherits(tree,"phylo")){
     }else{
         # to change?
             tree <- tree-min(tree)
-            C<-vcv.ts(tree)
+            C<-vcvts(tree)
             ## Nombre d'especes / number of species
             n<-length(tree)
             if(is.matrix(tree)){

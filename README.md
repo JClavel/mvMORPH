@@ -13,8 +13,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 **mvMORPH 1.1.8**
 
 1. This is the version 1.1.8:
-  + fix issue in the estimation of GIC with "BMM" model in mvgls. The GIC was lower than expected due to formatting issues in the scaling of the rates.
-  + implements the 'mvols' function, a wrapper to the more general 'mvgls' function to fit ordinary multivariate regressions (possibly regularized).
+  + Check the NEWS file for detailled updates
 
 2. _TODO_:
   + Incorporation of a tests-suite
@@ -24,7 +23,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Improved mvOU model
   + Threshold model for categorical data
 
-The current stable version of the mvMORPH package (1.1.7) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.1.8) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ## **Package Installation**
