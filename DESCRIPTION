@@ -1,7 +1,7 @@
 Package: mvMORPH
 Type: Package
 Title: Multivariate Comparative Tools for Fitting Evolutionary Models to Morphometric Data
-Version: 1.1.8
+Version: 1.1.9
 Date: 2023-11-27
 Author: Julien Clavel, with contributions from Aaron King, and Emmanuel Paradis
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>

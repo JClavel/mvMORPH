@@ -56,6 +56,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(method=="PL-LOOCV") method = "LOOCV" # to keep the explicit name with 'PL'
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
     if(!inherits(tree, "simmap") & (model=="BMM" | model=="OUM")) stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" and \"OUM\" models")
+    if(any(tree$edge.length<=.Machine$double.eps)) warning("There are zero branch lengths in the supplied tree. This may cause numerical issues")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
     if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", \"BMM\", \"OUM\" or \"lambda\" ")
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
