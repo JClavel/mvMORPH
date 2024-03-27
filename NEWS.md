@@ -1,5 +1,6 @@
 ## mvMORPH 1.1.9
-    + reverse change for zero branch lengths in "penalized" file. A typo was introduced. Now a check is performed first in the "mvgls" function
+    + reverse change for zero branch lengths in "penalized" file. A typo was introduced. Now a check is performed first in the "mvgls" function.
+    + add the wrapper to BIC
 ## mvMORPH 1.1.8
     + add the pcaShape and dfaShape functions
     + add wrapper "simulate()" to simulate from 'mvgls' or 'mvols' fit
