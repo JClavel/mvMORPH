@@ -112,7 +112,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # Starting values & parameters ID
     if(grid_search & is.null(start)){
       
-        start <- .startGuess(corrModel, cvmethod=method, mserr=mserr, target=target, penalty=penalty, echo=echo, penalized)
+        start <- .startGuess(corrModel, cvmethod=method, mserr=mserr, target=target, penalty=penalty, echo=echo, penalized, tol=tol)
         
     }else if(is.null(start)){
         if(method=="LL" | model=="BM") start <- 0.5 else start <- c(0.5,0.5)

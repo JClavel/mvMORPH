@@ -17,7 +17,7 @@ EIC <- function(object, nboot=100L, nbcores=1L, ...) UseMethod("EIC")
 
 # ------------------------------------------------------------------------- #
 # BIC.mvgls                                                                 #
-# options: object, ..., k = 2                                               #
+# options: object, ...                                                      #
 # S3 method - Bayesian Information Criterion - generic from stats           #
 # ------------------------------------------------------------------------- #
 

@@ -681,19 +681,22 @@
 # ------------------------------------------------------------------------- #
 # .startGuess                                                               #
 # options: corrModel, cvmethod, mserr, target, penalty, echo, penalized     #
-#                                                                           #
+# tol,                                                                      #
 # ------------------------------------------------------------------------- #
 
-.startGuess <- function(corrModel, cvmethod, mserr=NULL, target, penalty, echo=TRUE, penalized=TRUE,...){
+.startGuess <- function(corrModel, cvmethod, mserr=NULL, target, penalty, echo=TRUE, penalized=TRUE, tol=NULL,...){
     if(echo==TRUE) message("Initialization via grid search. Please wait...")
     # Penalization parameters guesses
     if(penalized){
         if(penalty=="RidgeArch"){
             range_val <- c(1e-6, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 0.9)
+            if(!is.null(tol)) range_val <- range_val[!(range_val<=tol)]
         }else if(penalty=="RidgeAlt"){
-            range_val <- log(c(1e-12, 1e-9, 1e-6, 0.01, 0.1, 1, 10, 100, 1000, 10000))
+            range_val <- log(c(1e-11, 1e-9, 1e-6, 0.01, 0.1, 1, 10, 100, 1000, 10000))
+            if(!is.null(tol)) range_val <- range_val[!(range_val<=log(tol))]
         }else{
             range_val <- log(c(1e-6, 0.01, 0.1, 1, 10, 100, 1000))
+            if(!is.null(tol)) range_val <- range_val[!(range_val<=log(tol))]
         }
     }else{
         range_val <- NULL
