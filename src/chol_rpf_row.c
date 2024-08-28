@@ -70,7 +70,7 @@ static void ms_error(double *A, double *mserr, int *n){
 SEXP   Chol_RPF(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SEXP ismserr){
     int n, nt, err, info, one = 1;
     double alpha = 1.;
-	char up = 'U', trans = 'T', diag = 'N', side = 'L'; 
+	const char up = 'U', trans = 'T', diag = 'N', side = 'L';
 	nt = INTEGER(nterm)[0];
 	n = INTEGER(ndimA)[0];
 	err = INTEGER(ismserr)[0];
@@ -86,22 +86,22 @@ SEXP   Chol_RPF(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SE
 	ms_error(REAL(A),REAL(mserr), &n);
 	}  
 	// preparation au format RPF
-	F77_CALL(dtrttf)(&trans,&up,&n,REAL(A),&n,REAL(ARF),&info);
+	F77_CALL(dtrttf)(&trans,&up,&n,REAL(A),&n,REAL(ARF),&info FCONE FCONE);
     if (info != 0){
         error("the %d argument had an illegal value",info);
     }
     
 	// decomposition de Cholesky
-	F77_CALL(dpftrf)(&trans,&up,&n, REAL(ARF),&info);
+	F77_CALL(dpftrf)(&trans,&up,&n, REAL(ARF),&info FCONE FCONE);
     if (info != 0) {
         if (info > 0) error("the leading minor of order %d is not positive definite",info);
         error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");
     }
 
 	// systeme lineaire U'x=D
-	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &nt, &alpha, REAL(ARF), REAL(DD), &n);
+	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &nt, &alpha, REAL(ARF), REAL(DD), &n FCONE FCONE FCONE FCONE FCONE);
 	// systeme lineaire U'x=dat
-	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &one, &alpha, REAL(ARF), REAL(Ddat), &n);
+	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &one, &alpha, REAL(ARF), REAL(Ddat), &n FCONE FCONE FCONE FCONE FCONE);
 
 	// Calcul du determinant
 	determinant(REAL(det),REAL(ARF),&n);
@@ -121,7 +121,7 @@ SEXP   Chol_RPF(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SE
 // Factorisation de Cholesky RPF - avoid explicit computation of U'x=D and U'x=dat
 SEXP   Chol_RPF_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
     int n, err, info;
-    char up = 'U', trans = 'T';
+    const char up = 'U', trans = 'T';
     
     n = INTEGER(ndimA)[0];
     err = INTEGER(ismserr)[0];
@@ -135,13 +135,13 @@ SEXP   Chol_RPF_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
         ms_error(REAL(A),REAL(mserr), &n);
     }
     // preparation au format RPF
-    F77_CALL(dtrttf)(&trans,&up,&n,REAL(A),&n,REAL(ARF),&info);
+    F77_CALL(dtrttf)(&trans,&up,&n,REAL(A),&n,REAL(ARF),&info FCONE FCONE);
     if (info != 0){
         error("the %d argument had an illegal value",info);
     }
     
     // decomposition de Cholesky
-    F77_CALL(dpftrf)(&trans,&up,&n,REAL(ARF),&info);
+    F77_CALL(dpftrf)(&trans,&up,&n,REAL(ARF),&info FCONE FCONE);
     if (info != 0) {
         if (info > 0) error("the leading minor of order %d is not positive definite",info);
         error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");

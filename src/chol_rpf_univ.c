@@ -87,7 +87,7 @@ static void ms_error(double *A, double *mserr, int *n){
 SEXP   Chol_RPF_univ(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mserr, SEXP ismserr){
     int n, info = 0, nt, err, one = 1;
     double alpha = 1.;
-    char up = 'U', trans = 'T', diag = 'N', side = 'L', norm = 'N';
+    const char up = 'U', trans = 'T', diag = 'N', side = 'L', norm = 'N';
     nt = INTEGER(nterm)[0];
     n = INTEGER(ndimA)[0];
     err = INTEGER(ismserr)[0];
@@ -103,15 +103,15 @@ SEXP   Chol_RPF_univ(SEXP A, SEXP D, SEXP dat, SEXP nterm, SEXP ndimA, SEXP mser
     }
 
     // decomposition de Cholesky
-    F77_CALL(dpftrf)(&norm,&up,&n, REAL(A),&info);
+    F77_CALL(dpftrf)(&norm,&up,&n, REAL(A),&info FCONE FCONE);
     if (info != 0) {
         if (info > 0) error("the leading minor of order %d is not positive definite",info);
         error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");
     }
     // systeme lineaire U'x=D
-    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &nt, &alpha, REAL(A), REAL(DD), &n);
+    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &nt, &alpha, REAL(A), REAL(DD), &n FCONE FCONE FCONE FCONE FCONE);
     // systeme lineaire U'x=dat
-    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &one, &alpha, REAL(A), REAL(Ddat), &n);
+    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &one, &alpha, REAL(A), REAL(Ddat), &n FCONE FCONE FCONE FCONE FCONE);
     
     // Calcul du determinant
     determinant(REAL(det),REAL(A),&n);
@@ -145,7 +145,7 @@ SEXP   Chol_RPF_univ_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
     }
     
     // decomposition de Cholesky
-    F77_CALL(dpftrf)(&norm,&up,&n, REAL(A),&info);
+    F77_CALL(dpftrf)(&norm,&up,&n, REAL(A),&info FCONE FCONE);
     if (info != 0) {
         if (info > 0) error("the leading minor of order %d is not positive definite",info);
         error("argument %d of Lapack routine %s had invalid value",-info, "dpftrf");
@@ -168,14 +168,14 @@ SEXP   Chol_RPF_univ_only(SEXP A, SEXP ndimA, SEXP mserr, SEXP ismserr){
 SEXP   Chol_RPF_quadprod_column(SEXP U, SEXP resid, SEXP nterm){
     int n, info = 0, one = 1;
     double alpha = 1.;
-    char up = 'U', trans = 'T', diag = 'N', side = 'L', norm = 'N';
+    const char up = 'U', trans = 'T', diag = 'N', side = 'L', norm = 'N';
     n = INTEGER(nterm)[0];
     PROTECT(U = coerceVector(U,REALSXP));
     SEXP Ddat = PROTECT(isReal(resid) ? duplicate(resid): coerceVector(resid, REALSXP));
     SEXP Bet = PROTECT(allocVector(REALSXP,1));
     double *beta = REAL(Bet), *data = REAL(Ddat), *chol = REAL(U);
     // systeme lineaire U'x=dat
-    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &one, &alpha, chol, data, &n);
+    F77_CALL(dtfsm)(&norm, &side, &up, &trans, &diag, &n, &one, &alpha, chol, data, &n FCONE FCONE FCONE FCONE FCONE);
     if (info != 0){
         error("the %d argument had an illegal value",info);
     }

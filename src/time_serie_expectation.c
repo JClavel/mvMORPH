@@ -10,7 +10,7 @@ static void multi_exp_matrix (int *nvar, int *npoints, double *time, double *lam
     double *expl;
     int n = *nvar, np = *npoints, s_a=*nvar* *nvar;
     int i, j, k, l, m;
-    expl = Calloc(np*n,double);
+    expl = calloc(np*n,sizeof(double));
     
     
     for(m = 0; m < np; m++){
@@ -34,7 +34,7 @@ static void multi_exp_matrix (int *nvar, int *npoints, double *time, double *lam
         
     }// end of m
     
-    Free(expl);
+    free(expl);
 }
 
 // function to compute the optimum expectation through the time serie
@@ -43,8 +43,8 @@ static void optimum(int *nvar, int *npoints,const double *time,const double *the
     int i, j, f, n=*nvar, nn=*npoints, s_a=*nvar* *nvar;
     double *res_theta0, *res_theta1, matexp_val;
     
-    res_theta0 = Calloc(n,double);
-    res_theta1 = Calloc(n,double);
+    res_theta0 = calloc(n,sizeof(double));
+    res_theta1 = calloc(n,sizeof(double));
     
     // Multiply the vector of optimums by the matrix
     // Multiply the vector of ancestral states by the matrix
@@ -73,8 +73,8 @@ static void optimum(int *nvar, int *npoints,const double *time,const double *the
    
     }
     
-    Free(res_theta0);
-    Free(res_theta1);
+    free(res_theta0);
+    free(res_theta1);
     
 }
 
@@ -83,9 +83,9 @@ static void multi_exp_matrix_complex (int *nvar, int *npoints, double *time, Rco
     double complex *expl, *tmp, *tmp2;
     int n = *nvar, np = *npoints, s_a=*nvar* *nvar;
     int i, j, k, l, m, ind, ind1, ind2, ind3, zero=0;
-    expl = Calloc(np*n,double complex);
-    tmp = Calloc(np*n,double complex);
-    tmp2 = Calloc(np*n,double complex);
+    expl = calloc(np*n,sizeof(double complex));
+    tmp = calloc(np*n,sizeof(double complex));
+    tmp2 = calloc(np*n,sizeof(double complex));
     
     for(m = 0; m < np; m++){
         
@@ -117,9 +117,9 @@ static void multi_exp_matrix_complex (int *nvar, int *npoints, double *time, Rco
         
     }// end of m
     
-    Free(expl);
-    Free(tmp);
-    Free(tmp2);
+    free(expl);
+    free(tmp);
+    free(tmp2);
 }
 
 // function to compute the optimum expectation through the time serie
@@ -128,8 +128,8 @@ static void optimum_complex(int *nvar, int *npoints, const double *time, const d
     int i, j, f, n=*nvar, nn=*npoints, s_a=*nvar* *nvar;
     double *res_theta0, *res_theta1, matexp_val;
     
-    res_theta0 = Calloc(n,double);
-    res_theta1 = Calloc(n,double);
+    res_theta0 = calloc(n,sizeof(double));
+    res_theta1 = calloc(n,sizeof(double));
     
     // Multiply the vector of optimums by the matrix
     // Multiply the vector of ancestral states by the matrix
@@ -155,8 +155,8 @@ static void optimum_complex(int *nvar, int *npoints, const double *time, const d
         }
     }
     
-    Free(res_theta0);
-    Free(res_theta1);
+    free(res_theta0);
+    free(res_theta1);
     
 }
 
@@ -195,7 +195,7 @@ SEXP Expect_matrix(SEXP S1, SEXP S, SEXP lambda, SEXP time, SEXP theta0, SEXP th
     PROTECT(S = coerceVector(S,CPLXSXP)); nprotect++;
         
     // alloc a complex vector in C rather than R structure...
-    matexp = Calloc(nvar*nvar*npoints,double complex);
+    matexp = calloc(nvar*nvar*npoints,sizeof(double complex));
         
     // Compute the exponential matrix
     multi_exp_matrix_complex (&nvar, &npoints, REAL(time), COMPLEX(lambda), COMPLEX(S), COMPLEX(S1), matexp);
@@ -204,7 +204,7 @@ SEXP Expect_matrix(SEXP S1, SEXP S, SEXP lambda, SEXP time, SEXP theta0, SEXP th
     optimum_complex(&nvar, &npoints, REAL(time), REAL(theta0), REAL(theta1), REAL(expectation), matexp, REAL(matdiag));
     // Done.
     // Free the memory
-    Free(matexp);
+    free(matexp);
     }
 
 
@@ -302,7 +302,7 @@ SEXP Weight_matrix(SEXP S1, SEXP S, SEXP lambda, SEXP time, SEXP matdiag){
         PROTECT(S = coerceVector(S,CPLXSXP)); nprotect++;
         
         // alloc a complex vector in C rather than R structure...
-        matexp = Calloc(nvar*nvar*npoints,double complex);
+        matexp = calloc(nvar*nvar*npoints,sizeof(double complex));
         
         // Compute the exponential matrix
         multi_exp_matrix_complex (&nvar, &npoints, REAL(time), COMPLEX(lambda), COMPLEX(S), COMPLEX(S1), matexp);
@@ -312,7 +312,7 @@ SEXP Weight_matrix(SEXP S1, SEXP S, SEXP lambda, SEXP time, SEXP matdiag){
         
         // Done.
         // Free the memory
-        Free(matexp);
+        free(matexp);
     }
 
 

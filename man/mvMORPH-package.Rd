@@ -12,7 +12,7 @@ Fit of multivariate evolutionary models on trees (with one or multiple selective
 \tabular{ll}{
 Package: \tab mvMORPH\cr
 Type: \tab Package\cr
-Version: \tab 1.1.9\cr
+Version: \tab 1.2.1\cr
 Date: \tab 2013-07-22\cr
 License: \tab GPL (>=2.0)\cr
 }

@@ -164,11 +164,11 @@ The "pic" method is not yet implemented for the multivariate "BMM" model.
 \code{\link{mvSIM}}
 \code{\link{LRT}}
 \code{\link{optim}}
-\code{\link{brownie.lite}}
-\code{\link{evol.vcv}}
-\code{\link{make.simmap}}
-\code{\link{make.era.map}}
-\code{\link{paintSubTree}}
+\code{\link[phytools]{brownie.lite}}
+\code{\link[phytools]{evol.vcv}}
+\code{\link[phytools]{make.simmap}}
+\code{\link[phytools]{make.era.map}}
+\code{\link[phytools]{paintSubTree}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{

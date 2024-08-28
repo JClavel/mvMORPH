@@ -10,16 +10,16 @@ static void mvmorph_covar_mat_nult_complex (int *nchar, int *nt, double *bt, Rco
     int i, j, k, l, s, r, kln, krn, rsn, sln;
     // complex version
     double complex *exp1, *exp2, *exp1l, *exp2l, *G, *U, *F, *lambda, *S, *S1, constzero = 0.0 + 0.0*I;
-    U = Calloc(n*n,double complex);
-    G = Calloc(n*n,double complex);
-    F = Calloc(n*n,double complex);
-    exp1l = Calloc(n*n,double complex);
-    exp2l = Calloc(n*n,double complex);
-    exp1 = Calloc(n*n,double complex);
-    exp2 = Calloc(n*n,double complex);
-    S = Calloc(n*n,double complex);
-    S1 = Calloc(n*n,double complex);
-    lambda = Calloc(n,double complex);
+    U = calloc(n*n,sizeof(double complex));
+    G = calloc(n*n,sizeof(double complex));
+    F = calloc(n*n,sizeof(double complex));
+    exp1l = calloc(n*n,sizeof(double complex));
+    exp2l = calloc(n*n,sizeof(double complex));
+    exp1 = calloc(n*n,sizeof(double complex));
+    exp2 = calloc(n*n,sizeof(double complex));
+    S = calloc(n*n,sizeof(double complex));
+    S1 = calloc(n*n,sizeof(double complex));
+    lambda = calloc(n,sizeof(double complex));
     
     for(i=0; i<n; i++){
         lambda[i]=comp(lambda_val[i]);
@@ -123,16 +123,16 @@ for (i = 0; i < nn; i++) {
          on libère la mémoire */
     }
 }
-Free(lambda);
-Free(S);
-Free(S1);
-Free(U);
-Free(G);
-Free(F);
-Free(exp1);
-Free(exp2);
-Free(exp1l);
-Free(exp2l);
+free(lambda);
+free(S);
+free(S1);
+free(U);
+free(G);
+free(F);
+free(exp1);
+free(exp2);
+free(exp1l);
+free(exp2l);
 }
 
 
@@ -142,13 +142,13 @@ static void mvmorph_covar_mat_nult (int *nchar, int *nt, double *bt, double *lam
   double sij, ti, tj, tmp;
   int n = *nchar, nn = *nt;
   int i, j, k, l, s, r, kln, krn, rsn, sln;
-  U = Calloc(n*n,double);
-  G = Calloc(n*n,double);
-  F = Calloc(n*n,double);
-  exp1 = Calloc(n*n,double);
-  exp2 = Calloc(n*n,double);
-  exp1l = Calloc(n*n,double);
-  exp2l = Calloc(n*n,double);
+  U = calloc(n*n,sizeof(double));
+  G = calloc(n*n,sizeof(double));
+  F = calloc(n*n,sizeof(double));
+  exp1 = calloc(n*n,sizeof(double));
+  exp2 = calloc(n*n,sizeof(double));
+  exp1l = calloc(n*n,sizeof(double));
+  exp2l = calloc(n*n,sizeof(double));
     //zeroing vectors
     memset(exp1l,0,n*n);
     memset(exp2l,0,n*n);
@@ -241,13 +241,13 @@ if(sij!=0.){
 on libère la mémoire */	  
 }
 }	  
-  Free(U);
-  Free(G);
-  Free(F);
-  Free(exp1);
-  Free(exp2);
-  Free(exp1l);
-  Free(exp2l);
+  free(U);
+  free(G);
+  free(F);
+  free(exp1);
+  free(exp2);
+  free(exp1l);
+  free(exp2l);
 }
 
 SEXP mvmorph_covar_mat (SEXP nterm, SEXP bt,SEXP lambda, SEXP S, SEXP sigmasq, SEXP S1) {

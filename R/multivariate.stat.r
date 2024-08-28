@@ -854,7 +854,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                  # HE matrix
                                  HE <- Hp%*%solve(Ep)
                                }else{
-                                 # Hypothesis SSCP matrix under RM deisgn
+                                 # Hypothesis SSCP matrix under RM design
                                  LBP <- L%*%Bp%*%P
                                  Hp <- t(LBP)%*%XCXC%*%(LBP)
                                  

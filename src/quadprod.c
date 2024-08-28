@@ -16,7 +16,7 @@ SEXP   Chol_RPF_quadprod(SEXP U, SEXP resid, SEXP nterm){
 	SEXP Bet = PROTECT(allocVector(REALSXP,1));
     double *beta = REAL(Bet), *data = REAL(Ddat), *chol = REAL(U);
    // systeme lineaire U'x=dat
-	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &one, &alpha, chol, data, &n);
+	F77_CALL(dtfsm)(&trans, &side, &up, &trans, &diag, &n, &one, &alpha, chol, data, &n FCONE FCONE FCONE FCONE FCONE);
     if (info != 0){
         error("the %d argument had an illegal value",info);
     }

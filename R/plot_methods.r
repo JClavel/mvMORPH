@@ -261,7 +261,7 @@ dfaShape <- function(object, reference, axis=1, ndim=3, spp=NULL, scaling=1, plo
   
   if(is.null(par[["landmarks"]])) landmarks = ncol(reference)/ndim else landmarks = par$landmarks
   if(is.null(spp)){
-    pc_axis_min <- scaling*min(pcscores[, axis])%*%DF[,axis] + reference["(Intercept)",]
+    pc_axis_min <- scaling*min(pcscores[, axis])%*%DF[,axis] + reference["(Intercept)",] # to replace by first line or provide an option here 
     pc_axis_max <- scaling*max(pcscores[, axis])%*%DF[,axis] + reference["(Intercept)",]
     shape <- list()
     shape$min <- matrix(pc_axis_min, ncol=ndim, nrow=landmarks, byrow = TRUE)

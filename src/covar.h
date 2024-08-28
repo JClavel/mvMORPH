@@ -1,6 +1,5 @@
 /* mvmorph.h 2015-01-01 */
 /* Julien Clavel        */
-
 #include <R.h>
 #include <Rinternals.h>
 #include <Rdefines.h>

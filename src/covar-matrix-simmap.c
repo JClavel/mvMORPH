@@ -22,14 +22,14 @@ static void simmap_covar_matrix_complex (int *nchar,
     int i, j, k, l, r, s;
     
     // alloc complex vectors
-    U = Calloc(n*n,double complex);
-    W = Calloc(n*n,double complex);
-    tmp1 = Calloc(n*n,double complex);
-    eltj = Calloc(n,double complex);
-    elti = Calloc(n,double complex);
-    S = Calloc(n*n,double complex);
-    S1 = Calloc(n*n,double complex);
-    lambda = Calloc(n,double complex);
+    U = calloc(n*n,sizeof(double complex));
+    W = calloc(n*n,sizeof(double complex));
+    tmp1 = calloc(n*n,sizeof(double complex) );
+    eltj = calloc(n,sizeof(double complex) );
+    elti = calloc(n,sizeof(double complex) );
+    S = calloc(n*n,sizeof(double complex) );
+    S1 = calloc(n*n,sizeof(double complex) );
+    lambda = calloc(n,sizeof(double complex) );
     
     //zeroing vectors & transform to C complex structure
     for(i = 0; i<n; i++){
@@ -101,14 +101,14 @@ static void simmap_covar_matrix_complex (int *nchar,
             // End
         }
     }
-    Free(lambda);
-    Free(S);
-    Free(S1);
-    Free(U);
-    Free(W);
-    Free(tmp1);
-    Free(elti);
-    Free(eltj);
+    free(lambda);
+    free(S);
+    free(S1);
+    free(U);
+    free(W);
+    free(tmp1);
+    free(elti);
+    free(eltj);
     
 }
 
@@ -128,10 +128,10 @@ static void simmap_covar_matrix (int *nchar,
   double tmp;
   int n = *nchar, nt = *nterm;
   int i, j, k, l, r, s;
-  U = Calloc(n*n,double);
-  W = Calloc(n*n,double);
-  elti = Calloc(n,double);
-  eltj = Calloc(n,double);
+  U = calloc(n*n,sizeof(double));
+  W = calloc(n*n,sizeof(double));
+  elti = calloc(n,sizeof(double));
+  eltj = calloc(n,sizeof(double));
   for (i = 0; i < n; i++) {
     for (j = 0; j < n; j++) {
       U[i+j*n] = 0;
@@ -174,10 +174,10 @@ static void simmap_covar_matrix (int *nchar,
       }
     }
   }
-  Free(U);
-  Free(W);
-  Free(elti);
-  Free(eltj);
+  free(U);
+  free(W);
+  free(elti);
+  free(eltj);
 }
 
 SEXP simmap_covar (SEXP nterm, SEXP bt, SEXP lambda, SEXP S, SEXP S1, SEXP sigmasq) {

@@ -16,9 +16,15 @@
 #define down(x,y) ((x) & ~((y)-1))
 #define square(x) (data[(x)]*data[(x)])
 
-extern void F77_CALL(dtrttf)(char *TRANSR, char *UPLO, int *N, double *A,int *LDA, double *ARF, int *INFO);
+La_extern void F77_NAME(dtrttf)(const char* transr, const char* uplo, const int* n,
+         const double* a, const int* lda,
+         double* arf, int* info FCLEN FCLEN);
 
-extern void F77_CALL(dpftrf)(char *TRANSR, char *UPLO, int *N, double *A,int *INFO);
+La_extern void F77_NAME(dpftrf)(const char* transr, const char* uplo, const int* n,
+         double* a, int* info FCLEN FCLEN);
 
-extern void F77_CALL(dtfsm)(char *TRANSR, char *SIDE, char *UPLO, char *TRANS, char *DIAG, int *M, int *N, double *ALPHA, double *A, double *B, int *LDB);
+La_extern void F77_NAME(dtfsm)(const char* transr, const char* side, const char* uplo, const char* trans, const char* diag,
+        const int* m, const int* n, const double* alpha, const double* a,
+        double* b, const int* ldb FCLEN FCLEN FCLEN FCLEN FCLEN);
+
 

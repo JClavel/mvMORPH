@@ -167,9 +167,9 @@ The "symmetric", "nsymmetric", "symmetricPositive", and "nsymPositive" options f
 \code{\link{mvSIM}}
 \code{\link{LRT}}
 \code{\link{optim}}
-\code{\link{make.simmap}}
-\code{\link{make.era.map}}
-\code{\link{paintSubTree}}
+\code{\link[phytools]{make.simmap}}
+\code{\link[phytools]{make.era.map}}
+\code{\link[phytools]{paintSubTree}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{

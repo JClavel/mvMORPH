@@ -133,9 +133,9 @@ Changes in rate of evolution and optima can also be fitted using the mvBM and mv
 \code{\link{mvRWTS}}
 \code{\link{mvSIM}}
 \code{\link{optim}}
-\code{\link{subplex}}
-\code{\link{paintSubTree}}
-\code{\link{make.era.map}}
+\code{\link[subplex]{subplex}}
+\code{\link[phytools]{paintSubTree}}
+\code{\link[phytools]{make.era.map}}
 %% ~~objects to See Also as \code{\link{help}}, ~~~
 }
 \examples{

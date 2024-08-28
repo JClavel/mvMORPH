@@ -14,8 +14,8 @@ static void weight_matrix_complex (int *nchar, int *neps, double *epochs, Rcompl
     double t;
     int n = *nchar, np = *neps;
     int i, j, k, r, ind, ind1, ind2, ind3, zero=0;
-    elt = Calloc(n*np,double complex);
-    tmp = Calloc(1,double complex);
+    elt = calloc(n*np,sizeof(double complex));
+    tmp = calloc(1,sizeof(double complex));
     
     // Prepare the exponentials for lambda
     for (i = 0; i < np; i++) {
@@ -53,8 +53,8 @@ static void weight_matrix_complex (int *nchar, int *neps, double *epochs, Rcompl
         }
     }
     
-    Free(elt);
-    Free(tmp);
+    free(elt);
+    free(tmp);
 }
 
 
@@ -66,7 +66,7 @@ static void multi_weight_matrix (int *nchar, int *neps, double *epochs, double *
   double t;
   int n = *nchar, np = *neps;
   int i, j, k, r;
-  elt = Calloc(np*n,double);
+  elt = calloc(np*n,sizeof(double));
   for (i = 0; i < np; i++) {
     t = epochs[0]-epochs[i];
     for (j = 0; j < n; j++)
@@ -89,7 +89,7 @@ static void multi_weight_matrix (int *nchar, int *neps, double *epochs, double *
     }
   }
     
-  Free(elt);
+  free(elt);
 }
 
 // row standardization
@@ -119,7 +119,7 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
   nchar = GET_LENGTH(lambda);  
   nt = INTEGER(nterm)[0];
   thetaO = INTEGER(root)[0];
-  nreg = Calloc(nchar,int);
+  nreg = calloc(nchar,sizeof(int));
   totreg = 0;
     
     for (i = 0; i < nchar; i++) {
@@ -136,7 +136,7 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
         
         for (i = 0; i < nt; i++) {
             np = GET_LENGTH(VECTOR_ELT(epochs,i));
-            y = Calloc(nchar*nchar*np,double);
+            y = calloc(nchar*nchar*np,sizeof(double));
             multi_weight_matrix(&nchar,&np,REAL(VECTOR_ELT(epochs,i)),REAL(lambda),REAL(S),REAL(S1),y);
             
             for (n = 0, ptr = 0; n < nchar; ptr += nt*nchar*nreg[n++]) {
@@ -153,7 +153,7 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
             }
             
             
-            Free(y);
+            free(y);
         }
     }else{
         double complex *y;
@@ -161,7 +161,7 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
         for (i = 0; i < nt; i++) {
             np = GET_LENGTH(VECTOR_ELT(epochs,i));
             // alloc a dynamic complex vector...
-            y = Calloc(nchar*nchar*np,double complex);
+            y = calloc(nchar*nchar*np,sizeof(double complex));
             weight_matrix_complex(&nchar,&np,REAL(VECTOR_ELT(epochs,i)),COMPLEX(lambda), COMPLEX(S), COMPLEX(S1), y);
             for (n = 0, ptr = 0; n < nchar; ptr += nt*nchar*nreg[n++]) {
                 wp = &(REAL(W))[ptr];
@@ -176,11 +176,11 @@ SEXP mvmorph_weights (SEXP nterm, SEXP epochs, SEXP lambda, SEXP S, SEXP S1, SEX
                     }
                 }
             }
-            Free(y);
+            free(y);
         }
 
     }
-        Free(nreg);
+        free(nreg);
     
     // Row standardize the matrix if the root is not estimated
     if(thetaO==1){

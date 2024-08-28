@@ -10,9 +10,9 @@ The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* 
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.1.9**
+**mvMORPH 1.2.1**
 
-1. This is the version 1.1.9:
+1. This is the version 1.2.1:
   + Check the NEWS file for detailled updates
 
 2. _TODO_:
@@ -23,7 +23,7 @@ See the packages vignettes for details and examples: browseVignettes("mvMORPH").
   + Improved mvOU model
   + Threshold model for categorical data
 
-The current stable version of the mvMORPH package (1.1.8) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.2.0) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ## **Package Installation**

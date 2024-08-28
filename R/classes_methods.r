@@ -310,7 +310,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
         detValue <- sum(2*log(diag(Gi1)))
         llik2 <- -0.5 * (ndimCov*p*log(2*pi) + p*Ccov1 + ndimCov*detValue + quadprod)
         
-        # Return the difference in LL for D1
+        # Return the difference in LL for D3
         return(loglik - llik2)
     }
     

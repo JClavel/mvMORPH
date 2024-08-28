@@ -22,7 +22,7 @@
     p = corrStr$p
     # parameters
     alpha = corrStr$bounds$trTun(par)
-    if(!is.null(error)) corrStr$mserr = corrStr$bounds$trSE(par)
+    if(!is.null(error)) corrStr$mserr = corrStr$bounds$trSE(par) # /(varData / height) TODO
     
     # model
     mod_par = .corrStr(corrStr$bounds$trPar(par), corrStr);

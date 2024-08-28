@@ -69,7 +69,7 @@ static void dotprodX(double *S, double *iZ, double *contr, int *ntraits, int *nu
 int i, j, f, n=*ntraits, nnod=*numbnod;
 double *res;
 
-res = Calloc(n,double);
+res = calloc(n,sizeof(double));
 
 for(f=0; f<nnod; f++){
 	//zeroing the temporary vector
@@ -83,7 +83,7 @@ for(f=0; f<nnod; f++){
 		S[0]+=res[i]*contr[f+i*nnod];
 	}
 }
-Free(res);
+free(res);
 }
 
  // calcul des contrastes pour chacun des traits (modifié d'après "pic" dans APE)
