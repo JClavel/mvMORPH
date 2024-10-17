@@ -754,7 +754,13 @@
                 }else{
                     guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
                         dat_red <- which(maps==map_names)
-                        tree_red=drop.tip(tree, tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]] )
+                        sp_to_remove <- tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]]
+                        # Sanity check => because errors with current phytools function | example reported by Jake
+                        if(Ntip(tree) - length(sp_to_remove) <= 1) {
+                                # select a second species at random
+                                sp_to_remove <- sp_to_remove[-sample(length(sp_to_remove), size = 1)]
+                              }
+                        tree_red=drop.tip(tree, sp_to_remove)
                         if(Ntip(tree_red)<=1){
                                  sqrt(mean(diag(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,])))) # simple estimate on the whole tree
                              }else{

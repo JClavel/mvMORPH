@@ -601,6 +601,14 @@ print.aic.mvgls<-function(x,...){
     cat("\n")
 }
 
+# BIC printing options
+print.bic.mvgls<-function(x,...){
+    cat("\n")
+    message("-- Bayesian Information Criterion --","\n")
+    cat("BIC:",x$AIC,"| Log-likelihood",x$LogLikelihood,"\n")
+    cat("\n")
+}
+
 # GIC printing options
 print.gic.mvgls<-function(x,...){
     cat("\n")
