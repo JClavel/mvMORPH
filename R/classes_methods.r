@@ -970,7 +970,7 @@ predict.mvgls <- function(object, newdata, ...){
     
     switch(model,
     "EB"={
-        if (param!=0){
+        if (abs(param)>=.Machine$double.eps){
             distFromRoot <- node.depth.edgelength(phy)
             phy$edge.length = (exp(param*distFromRoot[descendent])-exp(param*distFromRoot[parent]))/param
         }
