@@ -18,7 +18,7 @@
 
 .loocvPhylo <- function(par, cvmethod, targM, corrStr, penalty, error, nobs){
     
-    if(corrStr$REML) n <- nobs-ncol(corrStr$X) else n <- nobs
+    if(corrStr$REML) n <- nobs-corrStr$m else n <- nobs
     p = corrStr$p
     # parameters
     alpha = corrStr$bounds$trTun(par)
@@ -33,12 +33,13 @@
     residuals <- mod_par$Y - mod_par$X%*%B
     Ccov <- mod_par$det
     
-    # Covariance matrix
-    Sk <- crossprod(residuals)/n
     
     # Switch between LOOCV approaches
     switch(cvmethod,
     "H&L"={
+        
+        # Covariance matrix
+        Sk <- crossprod(residuals)/n
         
         # target matrix
         target <- .targetM(Sk, targM, penalty="RidgeArch")
@@ -59,6 +60,9 @@
     },
     "Mahalanobis"={
         
+        # Covariance matrix
+        Sk <- crossprod(residuals)/n
+        
         # target matrix
         target <- .targetM(Sk, targM, penalty="RidgeArch")
         
@@ -73,6 +77,9 @@
         n*log(1 - beta*r0) + n*(r0/(1 - beta*r0)))
     },
     "LOOCV"={
+        
+        # Covariance matrix
+        Sk <- crossprod(residuals)/n
         
         # target matrix
         target <- .targetM(Sk, targM, penalty)
@@ -95,7 +102,44 @@
         ll <- 0.5 * (n*p*log(2*pi) + p*Ccov + sum(llik))
         
     },
+    "EmpBayes"={
+        
+        v = p+1 # default df for now (TODO: optimize it?)
+        
+        ## use the smaller matrix for computing the determinant (benchmark which one is faster)
+        #if(nobs>p){
+        #  Ip <- diag(p)
+        #  SigS <- crossprod((mod_par$Y-mod_par$X%*%B)*sqrt(1/((v-p)*alpha)))
+        #  Kdet <- 0.5*(v+n+p-1)*determinant(Ip + SigS)$modulus
+        #}else{
+        #  In <- diag(nobs)
+        #  Kdet <- 0.5*(v+n+p-1)*determinant(In + tcrossprod((mod_par$Y-mod_par$X%*%B)*sqrt(1/((v-p)*alpha))))$modulus
+        #}
+        #
+        #
+        #ll <- -( lmvgamma((v+n+p-1)/2, p) - lmvgamma((v+p-1)/2, p) - 0.5*(n*p*log(pi)) -0.5*p*Ccov - 0.5*n*(p*log((v-p)*alpha)) - Kdet)
+        #
+        
+        if(targM=="Variance"){
+            target <- colSums(residuals^2)*(1/n)*alpha
+            SigS2 <- .fast_eigen_val(residuals*sqrt(1/(target*(v-p))))
+            detSig <- sum(log(target*(v-p)))
+        }else{
+            alpha = mean(colSums(residuals^2)*(1/n))*alpha
+            SigS2 <- .fast_eigen_val(residuals*sqrt(1/((v-p)*alpha)))
+            detSig <- p*log((v-p)*alpha) # note, with default df, v-p=1; but for the Matrix T formulation should be v-1
+        }
+        
+        Kdet <- 0.5*(v+n+p-1)*sum(log(1+SigS2))
+        
+        # Full likelihood
+        #ll <- -( lmvgamma((v+n+p-1)/2, p) - lmvgamma((v+p-1)/2, p) - 0.5*(n*p*log(pi)) - 0.5*p*Ccov - 0.5*n*detSig - Kdet)
+        ll <- 0.5*p*Ccov + 0.5*n*detSig + Kdet
+    },
     "LL"={
+        
+        # Covariance matrix
+        Sk <- crossprod(residuals)/n
         
         # Maximum Likelihood
         Gi <- try(chol(Sk), silent=TRUE)
@@ -105,7 +149,7 @@
         ll <- 0.5 * (n*p*log(2*pi) + p*Ccov + n*detValue + quadprod)
         
     },
-    stop("You must specify \"LOOCV\", \"H&L\" or \"Mahalanobis\" method for computing the LOOCV score and \"LL\" for the log-likelihood")
+    stop("You must specify \"LOOCV\", \"H&L\", \"EmpBayes\" or \"Mahalanobis\" method for computing the LOOCV score and \"LL\" for the log-likelihood")
     )
     
     if (!is.finite(ll)) return(1e6)
@@ -150,6 +194,8 @@
     p <- dim(S)[1]
     args <- list(...)
     if(is.null(args[["userMatrix"]])) userMatrix <- NULL else userMatrix <- args$userMatrix
+    if(is.null(args[["tuning"]])) tuning <- NULL else tuning <- args$tuning
+    
     # If the identity is not provided
     if(is.null(I)) I = diag(p)
     target = NULL
@@ -171,6 +217,13 @@
         "null" = {target <- matrix(0,p,p)},
         "user" = { target <- solve(userMatrix)} # TODO
         )
+    }else if(penalty=="EmpBayes"){
+        # TODO add option to switch between the unit and variance target in the Empirical Bayes; account for (v-p) factor?
+        switch(targM,
+        "Variance" = {target <- tuning*diag(diag(S))},
+        "unitVariance" = {target <- I*tuning*mean(diag(S))}, # scaling is either v-p in Collucia, or for Matrix T v-1 the scaling of the mean for the prior
+        "user" = { target <- userMatrix} # TODO
+        )
     }
     
     return(target)
@@ -183,12 +236,12 @@
 # ------------------------------------------------------------------------- #
 .corrStr <- function(par, timeObject){
     
-    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM", "OUM", "OU1")){
+    if(timeObject$model%in%c("EB", "BM", "lambda", "OU", "OUvcv", "BMM", "OUM", "OU1", "OUMvcv")){
         # Tree transformation
         struct = .transformTree(timeObject$structure, par, model=timeObject$model, mserr=timeObject$mserr,
                                 Y=timeObject$Y, X=timeObject$X, REML=timeObject$REML, precalc=timeObject$precalc)
     }else{
-        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\", \"BMM\", \"OUM\" and \"lambda\"  only...")
+        stop("Currently works for phylogenetic models \"BM\", \"EB\", \"OU\", \"BMM\", \"OUM\" \"OUMvcv\" and \"lambda\"  only...")
     }
     return(struct)
 }
@@ -299,16 +352,16 @@
 
 # ------------------------------------------------------------------------- #
 # .covPenalized                                                             #
-# options: S, penalty, targM="null", tuning=0                               #
+# options: S, penalty, targM="null", tuning=0, n                            #
 #                                                                           #
 # ------------------------------------------------------------------------- #
-.penalizedCov <- function(S, penalty, targM="null", tuning=0){
+.penalizedCov <- function(S, penalty, Target=NULL, targM="null", tuning=0, n){
     
     # dim of S
     p = ncol(S)
     
     # target matrix
-    Target <- .targetM(S, targM, penalty)
+    if(is.null(Target)) Target <- .targetM(S, targM, penalty, tuning=tuning)
     
     # Construct the penalty term
     switch(penalty,
@@ -329,6 +382,15 @@
         Pi <- LASSO$w
         P <- LASSO$wi
     },
+    "EmpBayes"={
+        # Compute the Empirical Bayes estimate of the covariance matrix
+        v = p+1
+        Pi <- (S*n + Target)/(v+n-2)
+        eig <- eigen(Pi)
+        V <- eig$vectors
+        d <- eig$values
+        P <- V%*%((1/d) * t(V))
+    },
     "LL"={
         Pi <- S
         eig <- eigen(Pi)
@@ -347,7 +409,7 @@
 #      precalc=NULL                                                         #
 # ------------------------------------------------------------------------- #
 
-.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "BMM", "OUM"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE, precalc=NULL){
+.transformTree <- function(phy, param, model=c("EB", "BM", "lambda", "OU", "BMM", "OUM","OUMvcv"), mserr=NULL, Y=NULL, X=NULL, REML=TRUE, precalc=NULL){
     
     # pre-compute and checks | TODO reduce computational burden by avoiding reordering and recomputing distances, ages...etc
     n <- Ntip(phy)
@@ -447,6 +509,18 @@
         if(!is.null(mserr)) mserr = mserr*exp(-2*param*D[descendent[extern]])
         
     },
+    "OUMvcv"={
+        # Weight matrix OUM
+        W <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(precalc$root_std))
+        
+        # REML "constant"
+        if(REML) const <- determinant(crossprod(W))$modulus # TODO: check for n-ultrametric trees
+      
+        V<-.Call("mvmorph_covar_ou_random", A=vcv.phylo(phy), alpha=param, sigma=1, PACKAGE="mvMORPH")
+        
+        C<-list(sqrtM=t(chol(solve(V))), det=determinant(V)$modulus, const=const)
+
+    },
     "OU1"={
         # Weight matrix OU1
         W <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(precalc$root_std))
@@ -499,7 +573,7 @@
         
     },
     "EB"={
-        if (abs(param)>=.Machine$double.eps){
+        if (param!=0){
             distFromRoot <- node.depth.edgelength(phy)
             phy$edge.length = (exp(param*distFromRoot[descendent])-exp(param*distFromRoot[parent]))/param
         }
@@ -545,7 +619,7 @@
         }
         
     }else{
-        if(model!="OUvcv") C <- pruning(phy, trans=FALSE) # FIXME -> to remove the call to OUvcv?
+        if(model!="OUvcv" & model!="OUMvcv") C <- pruning(phy, trans=FALSE) # FIXME -> to remove the call to OUvcv?
         #if(any(phy$edge.length<=.Machine$double.eps)) C<-list(sqrtM=t(.sqM1(phy)), det=determinant(vcv(phy))$modulus) # FIXME => remove problems with the pruning algorithms on zero branch lengths?
         X <- crossprod(C$sqrtM, X)
         Y <- crossprod(C$sqrtM, Y)
@@ -576,10 +650,11 @@
     
     if(is.null(upper)){
         switch(model,
-        "EB"={up <- 0},
+        "EB"={up <- 1e-10},
         "OU"={up <- 30/max(node.depth.edgelength(corrModel$structure))}, # ~ 30 half-lifes upper limit for phylogenetic trees. Should change the format for general models
         "OU1"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
         "OUM"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
+        "OUMvcv"={up <- 30/max(node.depth.edgelength(corrModel$structure))},
         "lambda"={up <- 1},
         "BM"={up <- Inf},
         "BMM"={up <- rep(Inf,k-1)},
@@ -590,10 +665,11 @@
     
     if(is.null(lower)){
         switch(model,
-        "EB"={low <- -10},
+        "EB"={low <- -(30/max(node.depth.edgelength(corrModel$structure)))},
         "OU"={low <- 1e-10},
         "OU1"={low <- 1e-10},
         "OUM"={low <- 1e-10},
+        "OUMvcv"={low <- 1e-10},
         "lambda"={low <- 1e-8},
         "BM"={low <- -Inf},
         "BMM"={low <- rep(-Inf,k-1)},
@@ -604,7 +680,7 @@
     
     # Default tolerance for the parameter search
     if(is.null(tol)){
-        if(penalty=="RidgeArch"){
+        if(penalty=="RidgeArch" || penalty=="EmpBayes"){
             tol = 1e-8
         }else{
             tol = 0
@@ -618,6 +694,9 @@
             lowerBound <- c(log(tol),low)
         }else if(penalty=="RidgeArch"){
             upperBound <- c(1,up)
+            lowerBound <- c(tol,low)
+        }else if(penalty=="EmpBayes"){
+            upperBound <- c(10e6,up)
             lowerBound <- c(tol,low)
         }
         
@@ -663,6 +742,7 @@
     # model parameter
     switch(model,
     "OU"={ transformPar <- function(x) (x[id2])},
+    "OUM"={ transformPar <- function(x) (x[id2])},
     "BM" ={ transformPar <- function(x) (x[id2])},
     "EB" ={ transformPar <- function(x) (x[id2])},
     "lambda" ={ transformPar <- function(x) (x[id2])},
@@ -690,6 +770,9 @@
     if(penalized){
         if(penalty=="RidgeArch"){
             range_val <- c(1e-6, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 0.9)
+            if(!is.null(tol)) range_val <- range_val[!(range_val<=tol)]
+        }else if(penalty=="EmpBayes"){
+            range_val <- c(1e-6, 0.01, 0.1, 1, 10, 100, 1000, 10000)
             if(!is.null(tol)) range_val <- range_val[!(range_val<=tol)]
         }else if(penalty=="RidgeAlt"){
             range_val <- log(c(1e-11, 1e-9, 1e-6, 0.01, 0.1, 1, 10, 100, 1000, 10000))
@@ -720,6 +803,11 @@
             index_err <- 3
         },
         "OUM"={
+            mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))
+            list_param[[2]] <- mod_val
+            index_err <- 3
+        },
+        "OUMvcv"={
             mod_val <- log(2)/(max(node.depth.edgelength(corrModel$structure))/c(0.1,0.5,1.5,3,8))
             list_param[[2]] <- mod_val
             index_err <- 3
@@ -762,9 +850,10 @@
                               }
                         tree_red=drop.tip(tree, sp_to_remove)
                         if(Ntip(tree_red)<=1){
-                                 sqrt(mean(diag(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,])))) # simple estimate on the whole tree
+                                 # simple estimate on the whole tree
+                                 sqrt(mean(apply(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,]) , 2, var)))
                              }else{
-                                 sqrt(mean(diag(.rate_guess(tree_red, data[tree_red$tip.label,], predictors[tree_red$tip.label,]))))
+                                 sqrt(mean(apply(.rate_guess(tree_red, data[tree_red$tip.label,], predictors[tree_red$tip.label,]) , 2, var)))
                              }
                     })
                 }
@@ -821,6 +910,9 @@
         "OUM"={
            if(par==corrModel$bounds$upper[indice]) warning("Parameter search reached the upper bound. You should consider increasing the \"upper\" argument value ")
         },
+        "OUMvcv"={
+           if(par==corrModel$bounds$upper[indice]) warning("Parameter search reached the upper bound. You should consider increasing the \"upper\" argument value ")
+        },
     )
 }
 
@@ -841,6 +933,6 @@
     B <- XtX%*%Y
     residuals <- Y - X%*%B
     
-    # Covariance matrix
-    return(crossprod(residuals)/Ntip(phylo))
+    # Return the residuals
+    return(residuals)
     }

@@ -1321,7 +1321,7 @@ simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
   theta <- numeric(p)
   if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
   
-  if(!is.ultrametric(object$variables$tree) & object$model=="OU"){
+  if(!is.ultrametric(object$variables$tree) & (object$model=="OU" | object$model=="OUM")){
     
     C <- .Call(mvmorph_covar_ou_fixed, A=vcv(object$variables$tree),
               alpha=object$param, sigma=1)
@@ -1386,4 +1386,50 @@ halflife.mvmorph<-function(object){
     }else{
         warning("The phylogenetic half-life is computed only for Ornstein-Uhlenbeck models.","\n")  
     }
+}
+
+# ------------------------------------------------------------------------- #
+# .fast_eigen_val                                                           #
+# options: x, ...                                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+.fast_eigen_val <- function(x, ...){
+  
+  # check the dimensions of x
+  n <- nrow(x)
+  p <- ncol(x)
+
+    # compute the svd of a p*p or n*n matrix
+  if(n > 2*p){
+    # if n >> p
+    xx <- crossprod(x)
+    sval <- svd(xx, nu=0, nv=0)$d
+  }else if(2*n < p){
+    # if p >> n
+    xx <- tcrossprod(x)
+    sval <- svd(xx, nu=0, nv=0)$d
+  }else{
+    # the matrix is almost square, we use the conventional svd
+    sval <- svd(x, nu=0, nv=0)$d^2
+  }
+  
+  tol <- max(n,p)*max(sval)*.Machine$double.eps
+  pos <- sval > tol
+    
+  # return the singular values
+  return(sval[pos])
+}
+
+
+# ------------------------------------------------------------------------- #
+# Multivariate Gamma function                                               #
+# options: x, ...                                                           #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+lmvgamma <- function(x, p){
+  if(p < 1) error("p must be >=1")
+  if(x <= 0) error("x must be >=0")
+  lmv = (p*(p-1)/4)*log(pi) + sum(lgamma(x + (1-(1:p))/2))
+  return(lmv)
 }

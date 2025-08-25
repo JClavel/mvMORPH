@@ -31,6 +31,10 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(is.null(args[["randomRoot"]])) randomRoot <- TRUE else randomRoot <- args$randomRoot
     if(is.null(args[["root"]])) root <- "stationary" else root <- args$root
     if(root=="stationary") root_std <- 1L else root_std <- 0L
+    if(is.null(args[["hessian"]])) hessian <- "FALSE" else hessian <- args$hessian
+    if(is.null(args[["MMSE"]])) MMSE <- "TRUE" else MMSE <- args$MMSE
+    if(is.null(args[["FCI"]])) FCI <- "FALSE" else FCI <- args$FCI
+    if(is.null(args[["comp_ll"]])) comp_ll <- "TRUE" else comp_ll <- args$comp_ll
     
     # check for coercion issues
     data_format = sapply(data, function(x) inherits(x,"phylo"))
@@ -42,6 +46,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     # retrieve data and formula as in lm
     model_fr = model.frame(formula=formula, data=data)
     X = model.matrix(attr(model_fr, "terms"), data=model_fr, contrasts.arg=contrasts.def)
+    X.formula = X
     Y = model.response(model_fr)
     assign <- attr(X, "assign")
     terms <- attr(model_fr, "terms")
@@ -52,15 +57,17 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     if(!is.null(args[["response"]])) Y <- args$response
     
     # Warnings & checks
-    method = match.arg(method[1], c("PL-LOOCV","LOOCV","LL","H&L","Mahalanobis"))
+    method = match.arg(method[1], c("PL-LOOCV","LOOCV","LL","H&L","Mahalanobis","EmpBayes"))
     if(method=="PL-LOOCV") method = "LOOCV" # to keep the explicit name with 'PL'
+    if(method=="EmpBayes" | penalty=="EmpBayes") penalty = "EmpBayes"; # To use the Empirical Bayes approach
+    if(penalty=="EmpBayes") method = "EmpBayes";
     if(missing(tree)) stop("Please provide a phylogenetic tree of class \"phylo\" ")
     if(!inherits(tree, "simmap") & (model=="BMM" | model=="OUM")) stop("Please provide a phylogenetic tree of class \"simmap\" for the \"BMM\" and \"OUM\" models")
    # if(any(tree$edge.length<=.Machine$double.eps)) warning("There are zero branch lengths in the supplied tree. This may cause numerical issues")
     if(any(is.na(Y))) stop("Sorry, the PL approach do not handle yet missing cases.")
     if(missing(model)) stop("Please provide a model (e.g., \"BM\", \"OU\", \"EB\", \"BMM\", \"OUM\" or \"lambda\" ")
     if(ncol(as.matrix(Y))==1) stop("mvgls can be used only with multivariate datasets. See \"gls\" function in \"nlme\" or \"phylolm\" package instead.")
-    if(!penalty%in%c("RidgeArch","RidgeAlt","LASSO")) stop("The penalization method must be \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"");
+    if(!penalty%in%c("RidgeArch","RidgeAlt","LASSO","EmpBayes")) stop("The penalization method must be \"RidgeArch\", \"RidgeAlt\", \"EmpBayes\", or \"LASSO\"");
     if(!target%in%c("unitVariance","Variance","null")) warning("Default target are \"unitVariance\", \"null\" or \"Variance\". Check the target matrix provided");
     if(nrow(model_fr)!=length(tree$tip.label)) stop("number of rows in the data does not match the number of tips in the tree.")
     if (all(rownames(model_fr) %in% tree$tip.label)){ # to be changed for TS
@@ -74,6 +81,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
    # if(!is.ultrametric(tree) & model=="OU" & !method%in%c("LOOCV","LL")) warning("The nominal LOOCV method should be preferred with OU on non-ultrametric trees.\n")
     if(isTRUE(mserr) & model=="lambda") warning("Pagel's lambda and measurement error cannot be distinguished.\n")
     if(isFALSE(mserr)) mserr = NULL
+    if(isTRUE(FCI)) hessian = TRUE
    
     # further checks
     qrx <- qr(X)
@@ -93,17 +101,21 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     precalc$randomRoot = randomRoot
     precalc$root_std = root_std
 
-    if(REML) ndimCov = n - m else ndimCov = n
     if(inherits(tree, "simmap")){
         if(model=="BMM") k <- ncol(tree$mapped.edge)
+        if(model=="OUM") m <- ncol(tree$mapped.edge)
+        # TODO handle cases with covariate for OUM
     }else k <- NULL
     if(method=="LL") penalized=FALSE else penalized=TRUE
     if(n<p & method=="LL") stop("There are more variables than observations. Please try instead the penalized methods \"RidgeArch\", \"RidgeAlt\" or \"LASSO\"")
     
+    if(root_std==0 & model=="OUM") m = m + 1
+    if(isTRUE(REML)) ndimCov = n - m else ndimCov = n
+    
     # CorrStruct object (include data, model, covariance...)
     if(scale.height) tree <- .scaleStruct(tree)
     corrModel <- list(Y=Y, X=X, REML=REML, mserr=mserr,
-                    model=model, structure=tree, p=p, nobs=nobs,
+                    model=model, structure=tree, p=p, nobs=nobs, m=m,
                     nloo=nloo, precalc=precalc)
     
     # Set bounds for parameter search
@@ -131,7 +143,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
                         corrStr=corrModel,
                         penalty=penalty,
                         error=mserr,
-                        nobs=nobs)
+                        nobs=nobs,
+                        hessian=hessian)
     
     # Estimates
     tuning <- bounds$trTun(estimModel$par)
@@ -142,6 +155,12 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     
     if(!is.null(mserr)) corrModel$mserr <- mserr_par <- bounds$trSE(estimModel$par) else mserr_par <- NA
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
+    const_mtdist = NA # Not efficient
+    if(method=="EmpBayes" & comp_ll==TRUE){
+        v = p + 1 # This needs to be modified if it is allowed to select different values for v
+        const_mtdist = -(lmvgamma((v+ndimCov+p-1)/2, p) - lmvgamma((v+p-1)/2, p) - 0.5*(ndimCov*p*log(pi)))
+        ll_value = -(estimModel$value + const_mtdist)
+    }
     
     # Exceptions [to improve]
     X <- .make.x(tree, mod_par, X, model, root, root_std)
@@ -158,19 +177,46 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     glsStruct <- corrSt
     method <- method
     numIter <- estimModel$count[1]
-    S <- crossprod(residuals)/ndimCov
-    R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning)
+    
+    # add an option to avoid the computation of the covariance matrix with EIC - EmpBayes method
+    if(MMSE==FALSE & method=="EmpBayes"){
+        R <- NULL
+    } else{
+        S <- crossprod(residuals)/ndimCov
+        R <- .penalizedCov(S, penalty=ifelse(method=="LL", method, penalty), targM=target, tuning=tuning, n=ndimCov) # change n for reml in EmpBayes
+    }
+    
+    # Computing confidence intervals using the Fisher information matrix. Only available for method='EmpBayes'
+    if(FCI){
+        if(method!="EmpBayes") warning("The CI are available only for the \"EmpBayes\" method") else if(method=="EmpBayes"){
+            if(model=="BM") fci = NA else{
+                fisher_information<-solve(estimModel$hessian) # it's already the negative of the Hessian since the negative ll is minimized
+                sigma_for_ci<-sqrt(diag(fisher_information)) # the first entry is for the "regularization" term. For ML optimization it will be the first term
+                
+                # Does this work for BMM model or should it be constrain?
+                upper_ci<-mod_par+1.96*sigma_for_ci[2]
+                lower_ci<-mod_par-1.96*sigma_for_ci[2]
+                fci = c('lw'=lower_ci, 'up'=upper_ci)
+            }
+        }
+    }
     
     # Multiple rates BMM - we scale the average rate (mean of the diagonal of the covariance matrix)
     if(inherits(tree, "simmap") && model=="BMM"){
-        avg_rate <- mean(diag(R$Pinv))
+        if(method=="EmpBayes"){
+            empvar <- colSums(residuals^2)/ndimCov
+            # in the PL we use the regularized estimate because it shrinks (for most of them) toward the mean or the diagonal of the empirical. The regularization of the MMSE Emp. Bayes will not.
+            avg_rate <- mean(empvar) # mean((empvar*ndimCov + tuning*mean(empvar))/(v+ndimCov-2))
+        }else{
+            avg_rate <- mean(diag(R$Pinv)) # we can make it more efficient for the other approaches, but should we? It's better to use the EmpBayes on very high-dimensionnal datasets
+        }
         mod_par <- c(avg_rate, avg_rate*mod_par)
         names(mod_par) <- attr(tree$mapped.edge,"dimnames")[[2]] # set the names of the groups for BMM. we remove the first one which is used as reference
     }
     
     # number of dimensions
     ndims <- list(n=n, p=p, m=m, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
-    
+    if(model=='OUM') variables <- list(Y=Y, X=X, tree=tree, regimes=X.formula) else variables <- list(Y=Y, X=X, tree=tree)
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")
     
@@ -181,7 +227,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
         terms=terms,
         xlevels=xlevels,
         contrasts=contrasts,
-        variables=list(Y=Y, X=X, tree=tree),
+        variables=variables,
         dims=ndims,
         fitted=fitted.values,
         logLik=ll_value,
@@ -198,6 +244,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
         penalty=if(method=="LL") "LL" else penalty,
         target=if(method=="LL") "LL" else target,
         REML=REML,
+        FCI=if(isTRUE(FCI)) fci else NA,
+        const_mtd = const_mtdist,
         opt=estimModel)
     
     class(results) <- "mvgls"

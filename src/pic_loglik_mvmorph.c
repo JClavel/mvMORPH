@@ -224,7 +224,7 @@ SEXP PIC_gen(SEXP x, SEXP n, SEXP Nnode, SEXP nsp, SEXP edge1, SEXP edge2, SEXP 
   SEXP V = PROTECT(allocVector(REALSXP,ntraits));
   SEXP root_v = PROTECT(allocVector(REALSXP,2));
   SEXP var = PROTECT(allocVector(REALSXP,1));
-  memset(REAL(pheno),0,(ntot)*sizeof(double));
+  memset(REAL(pheno),0,(ntot*ntraits)*sizeof(double));
 
  
   // Préparation du jeu de données
