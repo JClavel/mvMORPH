@@ -542,6 +542,41 @@ switch(model,
     epochs<-param_ou$epochs
     listReg<-param_ou$listReg
     bt<-param_ou$C1
+    
+    # If a scalar OU1 is used we switch to a simpler implementation
+    if(p!=1 & length(alpha)==1){
+        
+        if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed" | vcv=="sparse"){
+            V<-.Call(mvmorph_covar_ou_fixed,A=bt,alpha=alpha, sigma=1)
+        }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
+            V<-.Call(mvmorph_covar_ou_random,A=bt,alpha=alpha, sigma=1)
+        }
+        
+        Croot <- chol(V); # the cholesky factor to correlate the data
+        W<-.Call(mvmorph_weights,nterm=as.integer(n), epochs=epochs,lambda=alpha,S=1,S1=1,beta=listReg,root=as.integer(mod_stand))
+        if(ncol(W)!=(length(mu)/p)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
+        
+        if(nsim==1 & p!=1){
+            X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+            deviates <- t(X%*%Croot)
+            traits <- matrix(W%*%mu,ncol=p) + deviates
+            rownames(traits)<-names_rows
+            colnames(traits)<-names_traits
+             return(traits) # if we return we exit the function.
+        }else if(nsim>1 & p!=1){
+            traits<-lapply(1:nsim,function(x){
+                X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+                deviates<-t(X%*%Croot);
+                traits <- matrix(W%*%mu,ncol=p) + deviates;
+                rownames(traits)<-names_rows; colnames(traits)<-names_traits;
+                traits})
+             return(traits) # if we return we exit the function.
+        }
+    
+    } # end
+    
+    
     eig<-eigen(alpha)
     svec<-try(solve(eig$vectors), silent = TRUE)
     if(inherits(svec ,'try-error')){
@@ -568,8 +603,44 @@ switch(model,
     epochs<-param_ou$epochs
     listReg<-param_ou$listReg
     bt<-param_ou$C1
+    
+    # If a scalar OUM is used we switch to a simpler implementation
+    if(p!=1 & length(alpha)==1){
+        
+        if(vcv=="fixedRoot" | vcv=="univarpfFixed" | vcv=="univarFixed" | vcv=="sparse"){
+            V<-.Call(mvmorph_covar_ou_fixed,A=bt,alpha=alpha, sigma=1)
+        }else if(vcv=="randomRoot" | vcv=="univarpfRandom" | vcv=="univarRandom"){
+            V<-.Call(mvmorph_covar_ou_random,A=bt,alpha=alpha, sigma=1)
+        }
+        
+        Croot <- chol(V); # the cholesky factor to correlate the data
+        W<-.Call(mvmorph_weights,nterm=as.integer(n), epochs=epochs,lambda=alpha,S=1,S1=1,beta=listReg,root=as.integer(mod_stand))
+        if(ncol(W)!=(length(mu)/p)) stop("\n","The number of parameters for theta is wrong","\n",ncol(W)," values are expected")
+
+        
+        if(nsim==1 & p!=1){
+            X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+            deviates <- t(X%*%Croot)
+            traits <- matrix(W%*%mu,ncol=p) + deviates
+            rownames(traits)<-names_rows
+            colnames(traits)<-names_traits
+             return(traits) # if we return we exit the function.
+        }else if(nsim>1 & p!=1){
+            traits<-lapply(1:nsim,function(x){
+                X <- rmvnorm_simul(n=n, mean=rep(0,p), var=sigma, method=methodSim)
+                deviates<-t(X%*%Croot);
+                traits <- matrix(W%*%mu,ncol=p) + deviates;
+                rownames(traits)<-names_rows; colnames(traits)<-names_traits;
+                traits})
+             return(traits) # if we return we exit the function.
+        }
+    
+    } # end
+    
+    # eigen decomposition of the alpha matrix
     eig<-eigen(alpha)
     svec<-try(solve(eig$vectors), silent = TRUE)
+    
     if(inherits(svec ,'try-error')){
         warning("An error occured with the inverse of the orthogonal matrix, the \"pseudoinverse\" has been used instead")
         svec<- pseudoinverse(eig$vectors)
