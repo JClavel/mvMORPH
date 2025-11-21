@@ -21,12 +21,12 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\" or \"mvols\", see ?mvgls ")
     
     # TEMPORARY?
-    if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
+    if(object$penalty!="LL" & object$penalty!="RidgeArch" & object$penalty!="EmpBayes") stop("sorry, currently only the ML, the \"RidgeArch\", or the \"EmpBayes\" penalized methods are allowed")
     if(!is.null(L)){
         if(!is.null(P)) type <- "glhrm" else type <- "glh"
         if(!is.matrix(L)) warning("\n","The supplied contrasts vector L has been formatted to a matrix")
         L <- matrix(L, ncol=nrow(object$coefficients))
-    } 
+    }
     # check if P is provided but not L?
     if(!is.null(P) & is.null(L)){
       type <- "glhrm"
@@ -108,7 +108,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
              stats <- c(test, (tmp2/tmp1 * test)/(s - test), s * tmp1, s *
                           tmp2)
            }else{
-             stats = test 
+             stats = test
            }
          },
          "Wilks"={
@@ -192,7 +192,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           variables=which(asgn==i)
                           QQl <- Q[, variables] %*% t(Q[, variables])
                           S <- t(Y) %*% QQl %*% Y
-                          # Compute the test statistic. 
+                          # Compute the test statistic.
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
                           Stats <- .multivTests(Re(eig$values), length(variables), nb.resid, test=test)
@@ -229,16 +229,20 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   tuning <- object$tuning
   target <- object$target
   penalty <- object$penalty
-  
+  v <- p + 1
   
   if(penalized=="full"){
     Dsqrt <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
-  } 
+    if(penalty=="EmpBayes"){
+        modelPerm$MMSE <- quote(FALSE)
+        modelPerm$comp_ll <- quote(FALSE)
+    }
+  }
   
-  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf 
+  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf
   
   # QR decomposition of the Hypothesis matrix
   Q_r <- qr(X)
@@ -265,7 +269,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           variables=which(asgn==i)
                           QQl <- Q[, variables] %*% t(Q[, variables])
                           S <- t(Y) %*% QQl %*% Y
-                          # Compute the test statistic. 
+                          # Compute the test statistic.
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
                           Stats <- .multivTests(Re(eig$values), length(variables), nb.resid, test=test)
@@ -281,52 +285,58 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                            var_full=which(asgn<=k)
                            
                            # reduced model (test for intercept) = the null matrix is zero we are comparing the mean to zero
-                           if(!any(uasgn==0) & k==1) Proj_reduc <- matrix(0, nrow=N, ncol=N) else Proj_reduc <- X[,var_reduc] %*% pseudoinverse(X[,var_reduc, drop=FALSE])
+                           if(!any(uasgn==0) & k==1){ Proj_reduc <- matrix(0, nrow=N, ncol=N)} else{ Proj_reduc <- X[,var_reduc] %*% pseudoinverse(X[,var_reduc, drop=FALSE])}
                            Proj_full <-  X[,var_full] %*% pseudoinverse(X[,var_full, drop=FALSE])
                            
                            # compute the residuals under the reduced model
-                           if(!any(uasgn==0) & k==1) resnull <- (In - Proj_full)%*%Y  else resnull <- (In - Proj_reduc)%*%Y
+                           if(!any(uasgn==0) & k==1) resnull <- (In - Proj_full)%*%Y else resnull <- (In - Proj_reduc)%*%Y
                            
                            # Fitted values under the reduced model
-                           if(penalized=="full") MeanNull <- object$variables$X[,var_reduc] %*% pseudoinverse(X[,var_reduc, drop=FALSE]) %*% Y else MeanNull <- Proj_reduc%*%Y
+                           if(penalized=="full"){
+                               MeanNull <- object$variables$X[,var_reduc] %*% pseudoinverse(X[,var_reduc, drop=FALSE]) %*% Y} else{ MeanNull <- Proj_reduc%*%Y}
                            #MeanNull <- object$variables$X[,var_reduc] %*% pseudoinverse(X[,var_reduc, drop=FALSE]) %*% Y
                            
                            # Permutations
                            Null <- .parallel_mapply(function(i){
                              
-                             if(penalized=="approx"){ 
+                             if(penalized=="approx"){
                                
                                # randomize the residuals of the reduced model
                                Yp <- MeanNull + resnull[c(sample(N-1),N),]
                                
                                # residuals with permuted data for the error matrix
-                               XB <- Pf %*% Yp 
+                               XB <- Pf %*% Yp
                                residuals <- (Yp - XB)
                                
-                               # Preconditioning
-                               ZZD   <- Evalues <- matrix(nrow=p, ncol=(N-1))
-                               for(j in 1:(N-1)){
-                                 Bi <- pseudoinverse(X[-j,,drop=FALSE])%*%Yp[-j,,drop=FALSE]
-                                 resid_j <- Yp-X%*%Bi
-                                 S_j <- crossprod(resid_j[-j,])/(ndimCov-1)
-                                 # Rotate the results
-                                 eig <- eigen(S_j)
-                                 Pj <- eig$vectors
-                                 Zi <- (residuals[j,]%*%Pj)^2
-                                 Evalues[,j]  <- eig$values
-                                 ZZD[,j] <- Zi
+                               if(penalty=="RidgeArch"){
+                                   # Preconditioning
+                                   ZZD   <- Evalues <- matrix(nrow=p, ncol=(N-1))
+                                   for(j in 1:(N-1)){
+                                     Bi <- pseudoinverse(X[-j,,drop=FALSE])%*%Yp[-j,,drop=FALSE]
+                                     resid_j <- Yp-X%*%Bi
+                                     S_j <- crossprod(resid_j[-j,])/(ndimCov-1)
+                                     # Rotate the results
+                                     eig <- eigen(S_j)
+                                     Pj <- eig$vectors
+                                     Zi <- (residuals[j,]%*%Pj)^2
+                                     Evalues[,j]  <- eig$values
+                                     ZZD[,j] <- Zi
+                                   }
+                                   
+                                   # target (general but not optimized)
+                                   targetb <- diag(.targetM(crossprod(residuals)/ ndimCov, target, penalty=penalty))
+                                   #targetb <- mean(diag(crossprod(residuals)/ ndimCov ))
+                                   
+                                   ## Estim the regularization parameter (we reuse the "residuals" vector created here)
+                                   estimModelNull <- optim(par = tuning, fn = .loocvVect, gr=.derivllik, method="L-BFGS-B",
+                                                           upper=upPerm, lower=1e-8, Evalues=Evalues, ZZD=ZZD, target=targetb, const=ndimCov/(N-1), p=p)
+                                                           
+                               } else if(penalty=="EmpBayes"){
+                                   estimModelNull <- optim(par = tuning, fn = .llEmpBayes, residuals = residuals, p = p, n = ndimCov, v = v, targM = target, method="L-BFGS-B", upper=upPerm, lower=1e-8)
                                }
                                
-                               # target (general but not optimized)
-                               targetb <- diag(.targetM(crossprod(residuals)/ ndimCov, target, penalty=penalty))
-                               #targetb <- mean(diag(crossprod(residuals)/ ndimCov ))
-                               
-                               ## Estim the regularization parameter (we reuse the "residuals" vector created here)
-                               estimModelNull <- optim(par = tuning, fn = .loocvVect, gr=.derivllik, method="L-BFGS-B",
-                                                       upper=upPerm, lower=1e-8, Evalues=Evalues, ZZD=ZZD, target=targetb, const=ndimCov/(N-1), p=p)
-                               
                                # param if(penalty=="RidgeArch")
-                               tuningNull <- estimModelNull$par[1] 
+                               tuningNull <- estimModelNull$par[1]
                                
                                # Hypothesis SSCP matrix
                                Hp <- crossprod(Yp, (Proj_full - Proj_reduc) %*% Yp)
@@ -335,16 +345,22 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                SSCP <- crossprod(residuals)
                                  
                                # Error matrix - Shrinkage estimator
-                               targetE <- .targetM(SSCP, target, penalty)
-                               Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
+                               targetE <- .targetM(SSCP, target, penalty, tuning=tuningNull)
                                
-                               # HE matrix
-                               HE <- Hp%*%solve(Ep)
+                               switch(penalty,
+                               "RidgeArch"={ Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
+                                   # HE matrix
+                                   HE <- Hp%*%solve(Ep)
+                               },
+                               "EmpBayes"={ Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuningNull, n=ndimCov)$P
+                                   # HE matrix
+                                   HE <- Hp%*%Ep
+                               })
                                
                              }else if(penalized=="full"){
                                
                                # randomize the residuals of the reduced model and transform it with the appropriate structure
-                               Yp <- MeanNull + Dsqrt%*%(resnull[c(sample(N-1),N),]) 
+                               Yp <- MeanNull + Dsqrt%*%(resnull[c(sample(N-1),N),])
                                rownames(Yp) <- rownames(object$variables$Y)
                                
                                # retrieve the model and refit with successive eval... time consuming but it's the more general and convenient way...
@@ -354,7 +370,9 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                
                                # Hypothesis SSCP
                                # we have to recompute the projection matrices with new X matrix
-                               if(!any(uasgn==0) & k==1) Proj_reduc <- matrix(0, nrow=N, ncol=N) else Proj_reduc <- estimModelNull$corrSt$X[,var_reduc] %*% pseudoinverse(estimModelNull$corrSt$X[,var_reduc, drop=FALSE])
+                               if(!any(uasgn==0) & k==1) Proj_reduc <- matrix(0, nrow=N, ncol=N) else{
+                                   Proj_reduc <- estimModelNull$corrSt$X[,var_reduc] %*% pseudoinverse(estimModelNull$corrSt$X[,var_reduc, drop=FALSE])
+                               }
                                Proj_full <-  estimModelNull$corrSt$X[,var_full] %*% pseudoinverse(estimModelNull$corrSt$X[,var_full, drop=FALSE])
                                
                                Hp <- crossprod(estimModelNull$corrSt$Y, (Proj_full - Proj_reduc) %*% estimModelNull$corrSt$Y)
@@ -362,12 +380,13 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                # Error SSCP matrix
                                SSCP <- crossprod(residuals)
                                # Error matrix - Shrinkage estimator
-                               targetE <- .targetM(SSCP, target, penalty)
+                               targetE <- .targetM(SSCP, target, penalty, tuning=tuning)
                                
                                switch(penalty,
-                                      "RidgeAlt"={Ep <- .makePenaltyQuad(SSCP,estimModelNull$tuning,targetE,target)$P},
-                                      "RidgeArch"={Ep <- solve((1-estimModelNull$tuning)*SSCP + estimModelNull$tuning*targetE)},
-                                      "LASSO"={ Ep <- glassoFast(SSCP,tuning)$wi})
+                                      "RidgeAlt"={ Ep <- .makePenaltyQuad(SSCP,estimModelNull$tuning,targetE,target)$P},
+                                      "RidgeArch"={ Ep <- solve((1-estimModelNull$tuning)*SSCP + estimModelNull$tuning*targetE)},
+                                      "LASSO"={ Ep <- glassoFast(SSCP,tuning)$wi},
+                                      "EmpBayes"={ Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuning, n=ndimCov)$P})
                                
                                # HE matrix
                                HE <- Hp%*%Ep
@@ -433,8 +452,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     facTerms <- crossprod(attr(model_terms, "factors"))
     facTerms <- facTerms[,asgn,drop=FALSE]
   }else{
-    intercept = NULL  
-  } 
+    intercept = NULL
+  }
   nb.resid <- N - Q_r$rank
   nterms <- length(unique(asgn))
   
@@ -458,7 +477,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           Proj_reduc <- X[,c(intercept,var_reduc)] %*% pseudoinverse(X[,c(intercept,var_reduc), drop=FALSE])
                           # Hypothesis SSCP matrix
                           S <- crossprod(Y, (Proj_full - Proj_reduc) %*% Y)
-                          # Compute the test statistic. 
+                          # Compute the test statistic.
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)
                           df <- ifelse(type=="III", length(which(asgn==(k-1))), length(which(asgn==k)))
@@ -496,16 +515,21 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   tuning <- object$tuning
   target <- object$target
   penalty <- object$penalty
-  
+  Ccov <- object$corrSt$det
+  v <- p + 1
   
   if(penalized=="full"){
     Dsqrt <- .pruning_general(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
     modelPerm <- object$call
     modelPerm$grid.search <- quote(FALSE)
     modelPerm$start <- quote(object$opt$par)
-  } 
+    if(penalty=="EmpBayes"){
+        modelPerm$MMSE <- quote(FALSE)
+        modelPerm$comp_ll <- quote(FALSE)
+    }
+  }
   
-  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf 
+  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf
   
   # QR decomposition
   Q_r <- qr(X)
@@ -527,8 +551,8 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     facTerms <- crossprod(attr(model_terms, "factors"))
     facTerms <- facTerms[,asgn,drop=FALSE]
   }else{
-    intercept = NULL  
-  } 
+    intercept = NULL
+  }
   uasgn <- unique(asgn)
   nterms <- length(uasgn)
   nb.resid <- N - Q_r$rank
@@ -553,7 +577,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                           Proj_reduc <- X[,c(intercept,var_reduc)] %*% pseudoinverse(X[,c(intercept,var_reduc), drop=FALSE])
                           # Hypothesis SSCP matrix
                           S <- crossprod(Y, (Proj_full - Proj_reduc) %*% Y)
-                          # Compute the test statistic. 
+                          # Compute the test statistic.
                           HE=S%*%WW
                           eig=eigen(HE, only.values = TRUE)$values
                           Stats <- .multivTests(Re(eig), test=test, stat=TRUE)
@@ -589,39 +613,43 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                            # Permutations
                            Null <- .parallel_mapply(function(i){
                              
-                             if(penalized=="approx"){ 
+                             if(penalized=="approx"){
                                
                                # randomize the residuals of the reduced model
                                Yp <- MeanNull + resnull[c(sample(N-1),N),]
                                
                                # residuals with permuted data for the error matrix
-                               XB <- Proj_full %*% Yp 
+                               XB <- Proj_full %*% Yp
                                residuals <- (Yp - XB)
                                
-                               # Preconditioning
-                               ZZD   <- Evalues <- matrix(nrow=p, ncol=(N-1))
-                               for(j in 1:(N-1)){
-                                 Bi <- pseudoinverse(X[-j,,drop=FALSE])%*%Yp[-j,,drop=FALSE]
-                                 resid_j <- Yp-X%*%Bi
-                                 S_j <- crossprod(resid_j[-j,])/(ndimCov-1)
-                                 # Rotate the results
-                                 eig <- eigen(S_j)
-                                 Pj <- eig$vectors
-                                 Zi <- (residuals[j,]%*%Pj)^2
-                                 Evalues[,j]  <- eig$values
-                                 ZZD[,j] <- Zi
+                               if(penalty=="RidgeArch"){
+                                   # Preconditioning
+                                   ZZD   <- Evalues <- matrix(nrow=p, ncol=(N-1))
+                                   for(j in 1:(N-1)){
+                                       Bi <- pseudoinverse(X[-j,,drop=FALSE])%*%Yp[-j,,drop=FALSE]
+                                       resid_j <- Yp-X%*%Bi
+                                       S_j <- crossprod(resid_j[-j,])/(ndimCov-1)
+                                       # Rotate the results
+                                       eig <- eigen(S_j)
+                                       Pj <- eig$vectors
+                                       Zi <- (residuals[j,]%*%Pj)^2
+                                       Evalues[,j]  <- eig$values
+                                       ZZD[,j] <- Zi
+                                   }
+                                   
+                                   # target (general but not optimized)
+                                   targetb <- diag(.targetM(crossprod(residuals)/ ndimCov, target, penalty=penalty))
+                                   #targetb <- mean(diag(crossprod(residuals)/ ndimCov ))
+                                   
+                                   ## Estim the regularization parameter (we reuse the "residuals" vector created here)
+                                   estimModelNull <- optim(par = tuning, fn = .loocvVect, gr=.derivllik, method="L-BFGS-B",
+                                   upper=upPerm, lower=1e-8, Evalues=Evalues, ZZD=ZZD, target=targetb, const=ndimCov/(N-1), p=p)
+                               } else if(penalty=="EmpBayes"){
+                                   estimModelNull <- optim(par = tuning, fn = .llEmpBayes, residuals = residuals, p = p, n = ndimCov, v = v, targM = target, method="L-BFGS-B", upper=upPerm, lower=1e-8)
                                }
                                
-                               # target (general but not optimized)
-                               targetb <- diag(.targetM(crossprod(residuals)/ ndimCov, target, penalty=penalty))
-                               #targetb <- mean(diag(crossprod(residuals)/ ndimCov ))
-                               
-                               ## Estim the regularization parameter (we reuse the "residuals" vector created here)
-                               estimModelNull <- optim(par = tuning, fn = .loocvVect, gr=.derivllik, method="L-BFGS-B",
-                                                       upper=upPerm, lower=1e-8, Evalues=Evalues, ZZD=ZZD, target=targetb, const=ndimCov/(N-1), p=p)
-                               
                                # param if(penalty=="RidgeArch")
-                               tuningNull <- estimModelNull$par[1] 
+                               tuningNull <- estimModelNull$par[1]
                                
                                # Hypothesis SSCP matrix
                                Hp <- crossprod(Yp, (Proj_full - Proj_reduc) %*% Yp)
@@ -630,16 +658,22 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                SSCP <- crossprod(residuals)
                                
                                # Error matrix - Shrinkage estimator
-                               targetE <- .targetM(SSCP, target, penalty)
-                               Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
+                               targetE <- .targetM(SSCP, target, penalty, tuning=tuningNull)
                                
-                               # HE matrix
-                               HE <- Hp%*%solve(Ep)
+                               switch(penalty,
+                               "RidgeArch"={ Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
+                                   # HE matrix
+                                   HE <- Hp%*%solve(Ep)
+                               },
+                               "EmpBayes"={ Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuningNull, n=ndimCov)$P
+                                   # HE matrix
+                                   HE <- Hp%*%Ep
+                               })
                                
                              }else if(penalized=="full"){
                                
                                # randomize the residuals of the reduced model and transform it with the appropriate structure
-                               Yp <- MeanNull + Dsqrt%*%(resnull[c(sample(N-1),N),]) 
+                               Yp <- MeanNull + Dsqrt%*%(resnull[c(sample(N-1),N),])
                                rownames(Yp) <- rownames(object$variables$Y)
                                
                                # retrieve the model and refit with successive eval... time consuming but it's the more general and convenient way...
@@ -655,12 +689,13 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                # Error SSCP matrix
                                SSCP <- crossprod(residuals)
                                # Error matrix - Shrinkage estimator
-                               targetE <- .targetM(SSCP, target, penalty)
+                               targetE <- .targetM(SSCP, target, penalty, tuning=tuning)
                                
                                switch(penalty,
                                       "RidgeAlt"={Ep <- .makePenaltyQuad(SSCP,estimModelNull$tuning,targetE,target)$P}, # to standardize to the SSCP for futur developments
                                       "RidgeArch"={Ep <- solve((1-estimModelNull$tuning)*SSCP + estimModelNull$tuning*targetE)},
-                                      "LASSO"={ Ep <- glassoFast(SSCP,tuning)$wi})
+                                      "LASSO"={ Ep <- glassoFast(SSCP,tuning)$wi},
+                                      "EmpBayes"={ Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuning, n=ndimCov)$P})
                                
                                # HE matrix
                                HE <- Hp%*%Ep
@@ -717,8 +752,9 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   tuning <- object$tuning
   target <- object$target
   penalty <- object$penalty
+  v <- p + 1
   
-  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf 
+  if(penalty=="RidgeArch") upPerm <-  1 else upPerm <- Inf
   if(is.null(rhs)){
     rhs <- matrix(0, ncol=p, nrow=nrow(L))
     if(!is.null(P)) rhs <- matrix(0, ncol=ncol(P), nrow=nrow(L))
@@ -755,7 +791,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   eig=eigen(HE, only.values = TRUE)$values
   if(!is.null(P)) nb.df <- min(qr(L)$rank, qr(P)$rank) else nb.df <- qr(L)$rank
   nb.resid <- N - Q_r$rank
-  Stats <- .multivTests(Re(eig), nb.df, nb.resid, test=test) 
+  Stats <- .multivTests(Re(eig), nb.df, nb.resid, test=test)
     
   if(parametric){
       # Perform parametric test
@@ -783,9 +819,12 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                Yp <- (Rz[c(sample(N-1),N),] + Pz)%*%Y
                                 
                                # residuals with permuted data for the error matrix
-                               Bp <- XtX1Xt %*% Yp 
+                               Bp <- XtX1Xt %*% Yp
                                residuals <- (Yp - X%*%Bp)
                                
+                               if(penalty=="EmpBayes"){
+                                   estimModelNull <- optim(par = tuning, fn = .llEmpBayes, residuals = residuals, p = p, n = ndimCov, v = v, targM = target, method="L-BFGS-B", upper=upPerm, lower=1e-8)
+                               } else{
                                # Preconditioning
                                ZZD   <- Evalues <- matrix(nrow=p, ncol=(N-1))
                                for(j in 1:(N-1)){
@@ -807,24 +846,28 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                ## Estim the regularization parameter (we reuse the "residuals" vector created here)
                                estimModelNull <- optim(par = tuning, fn = .loocvVect, gr=.derivllik, method="L-BFGS-B",
                                                        upper=upPerm, lower=1e-8, Evalues=Evalues, ZZD=ZZD, target=targetb, const=ndimCov/(N-1), p=p)
+                               }
                                
                                # param if(penalty=="RidgeArch")
-                               tuningNull <- estimModelNull$par[1] 
+                               tuningNull <- estimModelNull$par[1]
                               
                                # SSCP matrix
                                SSCP <- crossprod(residuals)
                                
                                # Error matrix - Shrinkage estimator
-                               targetE <- .targetM(SSCP, target, penalty)
+                               targetE <- .targetM(SSCP, target, penalty, tuning=tuningNull)
+                               
+                               switch(penalty,
+                               "RidgeArch"={
                                Ep <- (1-tuningNull)*SSCP + tuningNull*targetE
                                
-                              if(is.null(P)){
-                                  # Hypothesis SSCP matrix
-                                  LB <- L%*%Bp
-                                  Hp <- t(LB)%*%XCXC%*%(LB)
-                               
-                                  # HE matrix
-                                  HE <- Hp%*%solve(Ep)
+                               if(is.null(P)){
+                                   # Hypothesis SSCP matrix
+                                   LB <- L%*%Bp
+                                   Hp <- t(LB)%*%XCXC%*%(LB)
+                                   
+                                   # HE matrix
+                                   HE <- Hp%*%solve(Ep)
                                }else{
                                   # Hypothesis SSCP matrix under RM deisgn
                                   LBP <- L%*%Bp%*%P
@@ -832,8 +875,27 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                   
                                   # HE matrix
                                   HE <- Hp%*%solve(t(P)%*%Ep%*%P)
-                               } 
-
+                               }
+                            },
+                               "EmpBayes"={
+                                   if(is.null(P)){
+                                       Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuningNull, n=ndimCov)$P
+                                       # Hypothesis SSCP matrix
+                                       LB <- L%*%Bp
+                                       Hp <- t(LB)%*%XCXC%*%(LB)
+                                    
+                                       # HE matrix
+                                       HE <- Hp%*%Ep
+                                    }else{
+                                        Ep <- .penalizedCov(SSCP, penalty, Target=targetE, tuning=tuningNull, n=ndimCov)$Pinv
+                                       # Hypothesis SSCP matrix under RM deisgn
+                                       LBP <- L%*%Bp%*%P
+                                       Hp <- t(LBP)%*%XCXC%*%(LBP)
+                                       
+                                       # HE matrix
+                                       HE <- Hp%*%solve(t(P)%*%Ep%*%P)
+                                    }
+                               })
                                
                              }else if(penalized=="none"){
                                
@@ -860,7 +922,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
                                  
                                  # HE matrix
                                  HE <- Hp%*%solve(t(P)%*%Ep%*%P)
-                               } 
+                               }
                              }
                              
                              # compute the statistic
@@ -875,7 +937,7 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
     
     
     return(results)
-}                        
+}
 
 # ------------------------------------------------------------------------- #
 # .loocvVect (vectorized log-likelihood) with the RidgeArch penalty         #
@@ -888,6 +950,32 @@ manova.gls <- function(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Ro
   LL <- 0.5 * sum(res)
   return(LL)
 }
+
+
+# ------------------------------------------------------------------------- #
+# .loglikEmpBayes     #
+# options: alpha, Evalues, ZZD, target, nobs, p                             #
+#                                                                           #
+# ------------------------------------------------------------------------- #
+
+.llEmpBayes = function(alpha,residuals,p,n,v,targM){
+        if(targM=="Variance"){
+            target <- colSums(residuals^2)*(1/n)*alpha
+            SigS2 <- .fast_eigen_val(residuals*sqrt(1/(target*(v-p))))
+            detSig <- sum(log(target*(v-p)))
+        }else{
+            alpha = mean(colSums(residuals^2)*(1/n))*alpha
+            SigS2 <- .fast_eigen_val(residuals*sqrt(1/((v-p)*alpha)))
+            detSig <- p*log((v-p)*alpha) # note, with default df, v-p=1; but for the Matrix T formulation should be v-1
+        }
+        Kdet <- 0.5*(v+n+p-1)*sum(log(1+SigS2))
+        
+        ll = 0.5*n*detSig + Kdet
+        
+    #ll = -(- 0.5*n*detSig - Kdet)
+    return(ll)
+}
+
 
 # ------------------------------------------------------------------------- #
 # .derivllik (vectorized derivatives) with the RidgeArch penalty            #
@@ -1071,7 +1159,7 @@ pairwise.glh <- function(object, term=1, test=c("Pillai", "Wilks", "Hotelling-La
     if(!inherits(object, "mvgls")) stop("Please provide an object of class \"mvgls\" or \"mvols\", see ?mvgls ")
     
     # TEMPORARY?
-    if(object$penalty!="LL" & object$penalty!="RidgeArch") stop("sorry, currently only the ML method or the \"RidgeArch\" penalized method is allowed")
+    if(object$penalty!="LL" & object$penalty!="RidgeArch" & object$penalty!="EmpBayes") stop("sorry, currently only the ML method, the \"RidgeArch\" penalized or \"EmpBayes\" methods are allowed")
     
     # build a contrast matrix
     L <- pairwise.contrasts(object, term=term)

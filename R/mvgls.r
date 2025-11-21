@@ -188,17 +188,16 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     
     # Computing confidence intervals using the Fisher information matrix. Only available for method='EmpBayes'
     if(FCI){
-        if(method!="EmpBayes") warning("The CI are available only for the \"EmpBayes\" method") else if(method=="EmpBayes"){
-            if(model=="BM") fci = NA else{
-                fisher_information<-solve(estimModel$hessian) # it's already the negative of the Hessian since the negative ll is minimized
-                sigma_for_ci<-sqrt(diag(fisher_information)) # the first entry is for the "regularization" term. For ML optimization it will be the first term
-                
-                # Does this work for BMM model or should it be constrain?
-                upper_ci<-mod_par+1.96*sigma_for_ci[2]
-                lower_ci<-mod_par-1.96*sigma_for_ci[2]
-                fci = c('lw'=lower_ci, 'up'=upper_ci)
-            }
-        }
+      if(method!="EmpBayes") warning("The CI are available only for the EmpBayes method") else if(method=="EmpBayes"){
+        fisher_information<-solve(estimModel$hessian) # it's already the negative of the Hessian since the negative ll is minimized
+        sigma_for_ci<-sqrt(diag(fisher_information)) # the first entry is for the "regularization" term. For ML optimization it will be the first term
+        
+        # Does this work for BMM model or should it be constrain?
+        npar_for_ci = 2+(length(mod_par)-1)
+        upper_ci<-mod_par+1.96*sigma_for_ci[2:npar_for_ci]
+        lower_ci<-mod_par-1.96*sigma_for_ci[2:npar_for_ci]
+        fci = c('lw'=lower_ci, 'up'=upper_ci)
+      }
     }
     
     # Multiple rates BMM - we scale the average rate (mean of the diagonal of the covariance matrix)

@@ -390,7 +390,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
     
     
     # Estimate parameters on bootstrap samples
-    bias <- pbmcmapply(function(i){
+    bias <- .parallel_mapply(function(i){
       
       # generate bootstrap sample: TODO check degenerate case when all the resampled values are identical?
       Yp <- MeanNull + Dsqrt%*%(residuals[sample(N, replace=TRUE),])*diagWeight # sampling with replacement for bootstrap
@@ -840,12 +840,27 @@ print.eic.mvgls<-function(x,...){
                        ignore.interactive = getOption("ignore.interactive", F),
                        mc.preschedule = TRUE, mc.set.seed = TRUE, mc.cleanup = TRUE, verbose=TRUE){
     
-    if(verbose){
-        return(pbmcmapply(FUN, ..., MoreArgs = MoreArgs, mc.style = mc.style, mc.substyle = mc.substyle, mc.cores = mc.cores,
-                          ignore.interactive = ignore.interactive, mc.preschedule = mc.preschedule, mc.set.seed = mc.set.seed, mc.cleanup = mc.cleanup))
+    # Check if MacOS with new silicon chip is used to turn to safer socket parallel computing rather than forking
+    is_macos <- Sys.info()[["sysname"]] == "Darwin"
+    is_apple_silicon <- is_macos && grepl("arm64|aarch64", R.version$arch)
+    
+    # switch depending on the options
+    if(is_apple_silicon & verbose==TRUE){
+        # Should switch to pbapply in the long term ? TODO
+        cl <- makeCluster(mc.cores)
+        result <- pblapply(..., FUN, cl=cl)
+        stopCluster(cl)
+        return(simplify2array(result))
+        
     }else{
-        return(mcmapply(FUN, ..., MoreArgs = MoreArgs, mc.cores = mc.cores,
-                          mc.preschedule = mc.preschedule, mc.set.seed = mc.set.seed, mc.cleanup = mc.cleanup))
+    
+        if(verbose){
+            return(pbmcmapply(FUN, ..., MoreArgs = MoreArgs, mc.style = mc.style, mc.substyle = mc.substyle,    mc.cores = mc.cores,
+                              ignore.interactive = ignore.interactive, mc.preschedule = mc.preschedule,     mc.set.seed = mc.set.seed, mc.cleanup = mc.cleanup))
+        }else{
+            return(mcmapply(FUN, ..., MoreArgs = MoreArgs, mc.cores = mc.cores,
+                              mc.preschedule = mc.preschedule, mc.set.seed = mc.set.seed, mc.cleanup =  mc.cleanup))
+        }
     }
 }
 
