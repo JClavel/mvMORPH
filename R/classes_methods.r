@@ -845,12 +845,21 @@ print.eic.mvgls<-function(x,...){
     is_apple_silicon <- is_macos && grepl("arm64|aarch64", R.version$arch)
     
     # switch depending on the options
-    if(is_apple_silicon & verbose==TRUE){
-        # Should switch to pbapply in the long term ? TODO
-        cl <- makeCluster(mc.cores)
-        result <- pblapply(..., FUN, cl=cl)
-        stopCluster(cl)
-        return(simplify2array(result))
+    if(is_apple_silicon){
+        
+        if(verbose){
+            # Should switch to pbapply in the long term ? TODO
+            cl <- makeCluster(mc.cores)
+            result <- pblapply(..., FUN, cl=cl)
+            stopCluster(cl)
+            return(simplify2array(result))
+        }else{
+            # Should switch to pbapply in the long term ? TODO
+            cl <- makeCluster(mc.cores)
+            result <- parLapply(cl = cl, ..., fun=FUN)
+            stopCluster(cl)
+            return(simplify2array(result))
+        }
         
     }else{
     

@@ -6,7 +6,7 @@ importFrom("stats", BIC, AIC, simulate, logLik, pchisq, df, qf, rnorm, runif, op
 importFrom("utils", combn)
 importFrom("graphics", abline, text, plot, curve, hist, points, arrows, lines, boxplot, polygon, legend)
 importFrom("pbmcapply", pbmcmapply)
-importFrom("parallel", mcmapply, makeCluster, stopCluster)
+importFrom("parallel", mcmapply, makeCluster, stopCluster, parLapply)
 importFrom("pbapply", pblapply)
 S3method(summary, mvmorph)
 S3method(logLik, mvmorph)
