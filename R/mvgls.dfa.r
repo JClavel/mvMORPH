@@ -256,9 +256,9 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     index_B <- (1:nrow(B))[object$classid]
     
     # FIXME: works for treatment contrasts. To be generalized
-    #if(any(object$fit$dims$assign==0)){
-    #    B[object$fit$dims$assign==object$term,] <-  sweep(B[object$fit$dims$assign==object$term,,drop=FALSE], 2, B[object$fit$dims$assign==0,], "+")
-    #}
+    if(any(object$fit$dims$assign==0)){
+        B[object$fit$dims$assign==object$term,] <-  sweep(B[object$fit$dims$assign==object$term,,drop=FALSE], 2, B[object$fit$dims$assign==0,], "+")
+    }
     
     # estimated (inverse) covariance matrix
     Rinv <- object$fit$sigma$P
@@ -288,7 +288,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
               const_prior <- -0.5*t(B[index_B[i],])%*%SB + log(prior[i])
               sapply(1:nrow(object$fit$variable$Y), function(x){
                 # t(object$fit$variable$Y[x,])%*%SB + const_prior
-                t(object$residuals[x,])%*%SB + const_prior
+                t(object$residuals[x,]+B[which(object$fit$dims$assign==0),])%*%SB + const_prior
               })
             })
             
@@ -300,7 +300,8 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
                 m <- model.frame(object$fit$terms, newdata, xlev = object$fit$xlevels, na.action = na.action)
                 X <- model.matrix(object$fit$terms, m, contrasts.arg = object$fit$contrasts)
                 var_reduc=which(object$fit$dims$assign!=object$term)
-                Ystand <- m$Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
+                Y <- model.response(m)
+                Ystand <- Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
             }else{
                 if(!is.data.frame(newdata) & !is.matrix(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree")
                 var_reduc=which(object$fit$dims$assign!=object$term)
@@ -340,7 +341,8 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             # as in "stats v3.3.0"
             m <- model.frame(object$fit$terms, newdata, xlev = object$fit$xlevels, na.action = na.action)
             X <- model.matrix(object$fit$terms, m, contrasts.arg = object$fit$contrasts)
-            Ystand <- m$Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
+            Y <- model.response(m)
+            Ystand <- Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
             predicted_names <- rownames(m$Y)
         }else{
             if(!is.data.frame(newdata) & !is.matrix(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree ")
