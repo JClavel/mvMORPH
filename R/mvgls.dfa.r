@@ -283,12 +283,15 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
         #if no datasets provided, classification rule is applied to the training dataset > see 9.12 in Rencher 2002
         # Bayes classifier for group "g" is d(x) = t(x)S^-1u - 0.5t(u)S^-1u + log(P(g)) => can be used to precompute quantities for multiple values to predict
         if(missing(newdata)){
+            # Add back the intercept (aka the baseline group) to the standardized variables (can just remove it from var_reduc ?)
+            Ystand <- object$residuals + object$fit$variables$X[1:nrow(object$residuals ), which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
+          
             prediction <- sapply(1:length(index_B), function(i){
               SB <- Rinv%*%B[index_B[i],]
               const_prior <- -0.5*t(B[index_B[i],])%*%SB + log(prior[i])
               sapply(1:nrow(object$fit$variable$Y), function(x){
                 # t(object$fit$variable$Y[x,])%*%SB + const_prior
-                t(object$residuals[x,]+B[which(object$fit$dims$assign==0),])%*%SB + const_prior
+                t(Ystand[x,])%*%SB + const_prior
               })
             })
             
@@ -302,11 +305,17 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
                 var_reduc=which(object$fit$dims$assign!=object$term)
                 Y <- model.response(m)
                 Ystand <- Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
+                
+                # Add back the intercept (aka the baseline group) to the standardized variables (can just remove it from var_reduc ?)
+                Ystand <- Ystand + X[, which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
             }else{
                 if(!is.data.frame(newdata) & !is.matrix(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree")
                 var_reduc=which(object$fit$dims$assign!=object$term)
                 # force to a matrix
                 Ystand <- as.matrix(newdata) - object$fit$variables$X[1:nrow(newdata),var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
+                
+                # Add back the intercept (aka the baseline group) to the standardized variables
+                Ystand <- Ystand + object$fit$variables$X[1:nrow(newdata), which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
             }
             
             prediction <- sapply(1:length(index_B), function(i){
@@ -344,10 +353,16 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             Y <- model.response(m)
             Ystand <- Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
             predicted_names <- rownames(m$Y)
+            
+            # Add back the intercept (aka the baseline group) to the standardized variables
+            Ystand <- Ystand + X[, which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
         }else{
             if(!is.data.frame(newdata) & !is.matrix(newdata)) stop("the \"newdata\" should be a data.frame object with column names matching predictors names, and row names matching names in the tree ")
             Ystand <- as.matrix(newdata) - object$fit$variables$X[1:nrow(newdata), var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
             predicted_names <- rownames(newdata)
+            
+            # Add back the intercept (aka the baseline group) to the standardized variables
+            Ystand <- Ystand + object$fit$variables$X[1:nrow(newdata), which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
         }
         
         # prep.
@@ -398,9 +413,9 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     if(missing(newdata)){
         confusion <- table(classif, object$fit$variables$X[,object$classid]%*%(1:object$nclass) ) # FIXME provide the categorical variable instead?
         rownames(confusion) = colnames(confusion) = names_variables
-        results <- list(class=classif, posterior=posterior, prior=prior, confusion=confusion, training=TRUE)
+        results <- list(class=classif, posterior=posterior, prior=prior, confusion=confusion, training=TRUE, residuals = Ystand)
     }else{
-        results <- list(class=classif, posterior=posterior, prior=prior, training=FALSE)
+        results <- list(class=classif, posterior=posterior, prior=prior, training=FALSE, residuals = Ystand)
     }
     class(results) <- "mvgls.dfa.predict"
     return(results)
