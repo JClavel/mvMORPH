@@ -245,6 +245,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     args <- list(...)
     if(is.null(args[["tree"]])) tree <- NULL else tree <- args$tree
     if(is.null(args[["na.action"]])) na.action <- na.pass else na.action <- args$na.action
+    if(is.null(args[["detscale"]])) detscale <- TRUE else detscale <- args$detscale
     # Checks that the model is based on dummy contrasts
     contrasts_types <- object$fit$contrasts[attr(object$fit$terms, "term.labels")]
     if(contrasts_types[object$term]!="contr.treatment") warning("Model assumed that the contrasts for the term of interest is of type \"contr.treatment\"")
@@ -267,6 +268,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
     # this make the vcv to the same scale as the traits.
     # should make the distance measure consistant with the Bayes rule between both OLS and GLS approaches.
     #if(!all(prior==prior[1])){ # Edit 26/06/23 => should scale it even when the priors are unequal, otherwise the height of the tree may have an impact on the estimation
+    if(detscale){
         if(object$fit$REML){ #TODO handle "const" in REML determinant for OUM
             scale_fct <- (1/exp( (object$fit$corrSt$det - determinant(crossprod(object$fit$corrSt$X))$modulus) * (1/object$fit$dims$n)))
             Rinv <- Rinv * scale_fct
@@ -274,7 +276,10 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             scale_fct <- (1/exp(object$fit$corrSt$det * (1/object$fit$dims$n)))
             Rinv <- Rinv * scale_fct
         }
-  
+    }else{
+        scale_fct <- 1/(sum(diag(vcv.phylo(object$fit$corrSt$phy)))/object$fit$dims$n)
+        Rinv <- Rinv * scale_fct
+    }
     
     # log-sum-exp trick to avoid over/under flow
     logsumexp <- function(v) max(v) + log(sum(exp(v - max(v))))
