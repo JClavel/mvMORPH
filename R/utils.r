@@ -61,4 +61,30 @@ aicw <- function(x,...){
    return(aics)
 }
 
+# ------------------------------------------------------------------------- #
+# Function to transform ancestral states reconstruction to a tree of class  #
+# "simmap"  (push to mvMORPH? current version is a bit quick & dirty)       #
+#                                                      J. CLAVEL - 2020     #
+# ------------------------------------------------------------------------- #
 
+# tree = the phylogenetic tree
+# ancestral = either a "describe.simmap" object from phytools or an "ace" object from ape.
+# tips = states at the tips. Check that the tree and data are in same order!
+
+mapping.asr <- function(tree, ancestral, tips){
+  
+  if(inherits(ancestral, "describe.simmap")){
+    names_grps <- colnames(ancestral$ace)
+    statesNodes <- names_grps[apply(ancestral$ace, 1, which.max)]
+  }else{
+    names_grps <- colnames(ancestral$lik.anc)
+    statesNodes <- names_grps[apply(ancestral$lik.anc, 1, which.max)]
+  }
+  
+  combined = as.character(c(tips, statesNodes))
+  treebis=tree
+  for(i in sort(tree$edge[,2])){
+    treebis <- paintBranches(treebis, i, combined[i], anc.state=combined[Ntip(tree)+1])
+  }
+  return(treebis)
+}
