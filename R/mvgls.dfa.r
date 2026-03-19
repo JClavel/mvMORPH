@@ -357,7 +357,7 @@ predict.mvgls.dfa <- function(object, newdata, prior = object$prior, ...){
             X <- model.matrix(object$fit$terms, m, contrasts.arg = object$fit$contrasts)
             Y <- model.response(m)
             Ystand <- Y - X[,var_reduc, drop=FALSE]%*%object$fit$coefficients[var_reduc,]
-            predicted_names <- rownames(m$Y)
+            predicted_names <- rownames(Y)
             
             # Add back the intercept (aka the baseline group) to the standardized variables
             Ystand <- Ystand + X[, which(object$fit$dims$assign==0), drop=FALSE]%*%object$fit$coefficients[which(object$fit$dims$assign==0),]
