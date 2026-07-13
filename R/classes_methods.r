@@ -825,7 +825,7 @@ print.gic.mvgls<-function(x,...){
 print.eic.mvgls<-function(x,...){
     cat("\n")
     message("-- Extended Information Criterion --","\n")
-    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n")
+    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n") # the criterion is 2*bias, so 2*(1.96*se)
     cat("\n")
 }
 
