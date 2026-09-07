@@ -49,6 +49,8 @@ Revell, L.J., 2009. Size-correction and principal components for intraspecific c
 \author{J. Clavel}
 
 \seealso{
+\code{\link{pcaShape}}
+\code{\link{p3ca}}
 \code{\link{mvgls}},
 \code{\link{mvols}},
 \code{\link{GIC}},

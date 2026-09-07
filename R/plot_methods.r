@@ -193,22 +193,29 @@ mvqqplot <- function(object, conf=0.95, ...){
 
 pcaShape <- function(object, axis=1, ndim=3, spp=NULL, plot=FALSE, ...){
  
-  if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" class objects. See ?mvgls or ?mvols")
   par = list(...)
-  phyl_pca <- mvgls.pca(object, plot=FALSE)
-  pcscores <- phyl_pca$scores
-  ancestral <- coef(object)
-  if(is.null(par[["landmarks"]])) landmarks = ncol(pcscores)/ndim else landmarks = par$landmarks
+  if(inherits(object,"mvgls")){
+      phyl_pca <- mvgls.pca(object, plot=FALSE)
+      pcscores <- phyl_pca$scores
+      pcvectors <- phyl_pca$vectors
+      ancestral <- coef(object)["(Intercept)",]
+  }else if(inherits(object,"p3ca")){
+      pcscores <- object$scores
+      pcvectors <- object$vectors
+      ancestral <- object$coef
+  }else stop("only works with \"mvgls\" class objects. See ?mvgls or ?mvols")
+   
+  if(is.null(par[["landmarks"]])) landmarks = length(ancestral)/ndim else landmarks = par$landmarks
 
   if(is.null(spp)){
-    pc_axis_min <- min(pcscores[, axis])%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
-    pc_axis_max <- max(pcscores[, axis])%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
+    pc_axis_min <- min(pcscores[, axis])%*%pcvectors[,axis] + ancestral
+    pc_axis_max <- max(pcscores[, axis])%*%pcvectors[,axis] + ancestral
     shape <- list()
     shape$min <- matrix(pc_axis_min, ncol=ndim, nrow=landmarks, byrow = TRUE)
     shape$max <- matrix(pc_axis_max, ncol=ndim, nrow=landmarks, byrow = TRUE)
   }else{
     shape <- lapply(spp, function(sp_name){
-        pc_specimen_shape <- pcscores[sp_name, axis]%*%phyl_pca$vectors[,axis] + ancestral["(Intercept)",]
+        pc_specimen_shape <- pcscores[sp_name, axis]%*%pcvectors[,axis] + ancestral
         shape <- matrix(pc_specimen_shape, ncol=ndim, nrow=landmarks, byrow=TRUE)
     })
     names(shape) = spp
@@ -292,4 +299,95 @@ dfaShape <- function(object, reference, axis=1, ndim=3, spp=NULL, scaling=1, plo
   
   # return the shapes
   return(shape)
+}
+
+## ------------------------------------------------------- ##
+##                                                         ##
+##  plot.p3ca or plot.pca: plot PC axes                    ##
+##  J. Clavel - 2026                                       ##
+##                                                         ##
+## ------------------------------------------------------- ##
+
+plot.p3ca <- function(x,...){
+    
+    # arguments to the plotting function
+    args <- list(...)
+    if(is.null(args[["axes"]])) axes <- 1:2 else axes <- args$axes
+    if(is.null(args[["cex"]])) cex <- 0.7 else cex <- args$cex
+    if(is.null(args[["col"]])) col <- "black" else col <- args$col
+    if(is.null(args[["pch"]])) pch <- 1 else pch <- args$pch
+    
+    #is there missing values ?
+    miss = x$prop_missing
+    
+    # switch between methods
+    switch(x$model,
+           "BM"={
+             plot_title = paste("P3CA - prop. missing (",round(miss*100, digits=3),"%)")
+           },
+           "lambda"={
+             plot_title = paste("P3CA (lambda=",round(x$par, digits=3),")"," prop. missing (",round(miss*100, digits=3),"%)")
+           })
+    
+    # plotting options
+    plot(x$scores[,axes], xlab=paste("P3C",axes[1],"(",round(x$varExp[axes[1]], digits = 3),"%)"),
+         ylab=paste("P3C",axes[2],"(",round(x$varExp[axes[2]], digits = 3),"%)"),
+         main=plot_title, las=1, col=col, pch=pch);
+    abline(h=0,v=0)
+    text(x$scores[,axes], rownames(x$scores), pos=2, cex=cex)
+}
+
+## ------------------------------------------------------- ##
+##                                                         ##
+##  pcaLoadings: plot P3CA loadings for the 'q' axes        ##
+##  J. Clavel - 2026                                       ##
+##                                                         ##
+## ------------------------------------------------------- ##
+
+pcaLoadings <- function(object, ...){
+  
+  args <- list(...)
+  if(is.null(args$color)) args$color <-c('red', 'white', 'blue4')
+  if(is.null(args$horizontal)) args$horizontal <- TRUE
+  if(is.null(args$scale)) args$scale <- 3
+  loadings <- t(object$L)
+  loadings_scale <- matrix(object$L, byrow=FALSE)
+  # dimensions
+  p <- nrow(loadings)
+  q <- ncol(loadings)
+  
+  # color options
+  fun = function(x) (x - min(x)) / diff(range(x))
+  palette <- colorRamp(args$color)
+  col = rgb(palette(fun(loadings_scale)), maxColorValue=255)
+  
+  # plot the loadings
+  grid_load <- expand.grid(list(as.factor(1:q), as.factor(1:p)))
+  par(oma=c(0,0,0,5))
+  
+  # horizontal plot
+  if(args$horizontal){
+    plot(y=as.integer(grid_load$Var1), x=as.integer(grid_load$Var2), pch=20,
+         cex=abs(loadings_scale)*args$scale, col=col, bty="n", axes = F, xlab="", ylab="Variables", bty='l',
+         main="P3CA loadings", xpd=TRUE)
+    axis(2, at = unique(as.integer(grid_load$Var1)), labels = colnames(loadings), lwd=0, las=2, cex.axis=0.5)
+    axis(1, at = unique(as.integer(grid_load$Var2)), labels = rownames(loadings), line = 0.5, las=2, cex.axis=0.5)
+    # add lines, we can also use grid...
+    abline(h=1:q, v=1:p, col="lightgrey", lwd=0.5, lty=2)
+    
+  }else{
+    # plot horizontally
+    plot(x=as.integer(grid_load$Var1), y=as.integer(grid_load$Var2), pch=20,
+         cex=abs(loadings_scale)*args$scale, col=col, bty="n", axes = F, xlab="Variables", ylab="", bty='l',
+         main="P3CA loadings", xpd=TRUE)
+    axis(2, at = unique(as.integer(grid_load$Var2)), labels = rownames(loadings), lwd=0, las=2, cex.axis=0.5)
+    axis(1, at = unique(as.integer(grid_load$Var1)), labels = colnames(loadings), line = 0.5, las=2, cex.axis=0.5)
+    abline(h=1:p, v=1:q, col="lightgrey", lwd=0.5, lty=2)
+  }
+  
+  # plot legend
+  range_val = seq(from=min(loadings_scale), to=max(loadings_scale), length.out = 10)
+  legend(par('usr')[2], par('usr')[4],title="Loadings",legend=round(range_val, digits = 2), pt.cex=abs(range_val)*args$scale, pch=20, col =rgb(palette(fun(range_val)), maxColorValue=255),
+         bty="n", xpd=NA)
+  
 }

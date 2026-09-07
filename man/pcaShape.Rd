@@ -58,8 +58,10 @@ Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for
 \seealso{
 \code{\link{mvgls}},
 \code{\link{mvols}},
-\code{\link{mvgls.pca}}
-\code{\link{dfaShape}}
+\code{\link{mvgls.pca}},
+\code{\link{dfaShape}},
+\code{\link{p3ca}},
+\code{\link{pcaLoadings}}
 
 }
 
@@ -79,6 +81,7 @@ polygon(proj_shape$Ametrida)
 }
 
 \keyword{ PCA projections }
+\keyword{ P3CA }
 \keyword{ GLS }
 \keyword{ OLS }
 \keyword{ Geometric Morphometrics }

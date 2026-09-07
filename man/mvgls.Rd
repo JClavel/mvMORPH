@@ -6,12 +6,14 @@ Fit linear model using Generalized Least Squares to multivariate (high-dimension
 %%  ~~function to do ... ~~
 }
 \description{
-This function uses maximum likelihood (or restricted likelihood) and penalized likelihood approaches to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). \code{mvgls} uses a penalized-likelihood (PL) approach (see descriptions in Clavel et al. 2019) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). The PL approach generally provides improved estimates compared to ML.
+This function uses maximum likelihood (or restricted likelihood) and regularization approaches (penalized likelihood and Empirical Bayes approaches) to fit linear models where the errors are allowed to be correlated (i.e. a GLS model for serially correlated phylogenetic and time-series data). 
+\code{mvgls} uses a penalized-likelihood (PL) or an Empirical Bayes (EmpBayes) approach (see descriptions in Clavel et al. 2019 and Montoya et al. 2026) to fit linear models to high-dimensional data sets (where the number of variables \emph{p} is approaching or is larger than the number of observations \emph{n}). 
+The PL and EmpBayes approaches generally provide improved estimates compared to ML.
 
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-mvgls(formula, data, tree, model, method=c("PL-LOOCV","LL"),
+mvgls(formula, data, tree, model, method=c("PL-LOOCV","LL","EmpBayes"),
       REML=TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -30,12 +32,12 @@ Phylogenetic tree (an object of class "\code{phylo}") or a time-series object (n
 }
 
 \item{model}{
-The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB" is Early Burst, "lambda" is Pagel's lambda transformation, and "BMM" is a multi-rates Brownian motion (needs a tree of class "simmap").
+The evolutionary model: "BM" is Brownian Motion, "OU" is Ornstein-Uhlenbeck, "EB" is Early Burst, "lambda" is Pagel's lambda transformation, "BMM" is a multi-rates Brownian motion, and "OUM" is an Ornstein-Uhlenbeck with multiple optima. Both BMM and OUM require a tree of class "simmap".
 
 }
 
 \item{method}{
-The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation). Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (i.e. of the form Y~1, see also details). In such a situation, we recommend the use of "H&L"" (which will coincide with "PL-LOOCV") over the "Mahalanobis" approach.
+The method used to fit the model. "PL-LOOCV" (or equivalently just "LOOCV") is the nominal leave one out cross-validation of the penalized log-likelihood, "LL" is the log-likelihood (used in the conventional ML and REML estimation), and "EmpBayes" is the Empirical Bayes approach. Two approximated LOOCV methods are also available: "H&L" and "Mahalanobis". The method "H&L" is a fast LOOCV approach based on Hoffbeck and Landgrebe (1996) tricks, and "Mahalanobis" is an approximation of the LOOCV score proposed by Theiler (2012). Both "H&L" and "Mahalanobis" work only with the "RidgeArch" penalty and for intercept only models (i.e. of the form Y~1, see also details). In such a situation, we recommend the use of "H&L"" (which will coincide with "PL-LOOCV") over the "Mahalanobis" approach.
 }
 
 \item{REML}{
@@ -49,9 +51,10 @@ Options to be passed through. For instance the type of penalization:
 
 }
 \details{
-\code{mvgls} allows fitting various multivariate linear models to multivariate (possibly high-dimensional, i.e. where the number of variables \emph{p} is larger than \emph{n}) datasets for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU). Models estimated using penalized likelihood (e.g., method="PL-LOOCV") are generally more accurate than those estimated by maximum likelihood methods (method="LL") when the number of traits approach the number of species. PL is the only solution when \emph{p}>\emph{n}.  Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function.
+\code{mvgls} allows fitting various multivariate linear models to multivariate (possibly high-dimensional, i.e. where the number of variables \emph{p} is larger than \emph{n}) datasets for which the residuals have a correlated structure (e.g. evolutionary models such as BM and OU).
+Models estimated using regularization such as penalized likelihood (e.g., method="PL-LOOCV"), or the Empirical Bayes approach (method="EmpBayes") are generally more accurate than those estimated by maximum likelihood methods (method="LL"), when the number of traits approaches the number of species. Only PL and EmpBayes are applicable when \emph{p}>\emph{n}. Models fit can be compared using the GIC or EIC criterion (see ?\code{GIC} and ?\code{EIC}) and hypothesis testing can be performed using the \code{manova.gls} function or \code{LRT}.
 
-The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally. Note that for the "BMM" model, a tree of class "simmap" must be provided to scale the BM variance-covariance matrix in different parts of the tree (see also \code{mvBM}).
+The tree is assumed to be fully dichotomic and in "postorder", otherwise the functions \code{multi2di} and \code{reorder.phylo} are used internally. Note that for the models "BMM" and "OUM" a tree of class "simmap" must be provided. For the "BMM", this will scale the BM variance-covariance matrix in different parts of the tree (see also \code{mvBM}). For the "OUM" model, this will indicate the selective regimes for different optima.
 
 To fit an ordinary multivariate linear model (possibly regularized), one can uses the \code{mvols} function instead.
 
@@ -74,6 +77,11 @@ The various \emph{arguments} that can be passed through \bold{"..."}:
 \bold{"lower"} - The lower bound for the parameter search with the "\code{L-BFGS-B}" method. See \code{optim} for details.
 
 \bold{"tol"} - Minimum value for the regularization parameter. Singularities can occur with a zero value in high-dimensional cases. (default is \code{NULL})
+
+\bold{"FCI"} - If \code{TRUE} confidence intervals for the estimated parameter (see "param" in value) are obtained from the Fisher information matrix (default \code{FALSE}). These are ~95\% confidence intervals, although this may depend on the \emph{p/n} ratio (see Montoya et al. 2026). Only available for method="EmpBayes".
+
+\bold{"MMSE"} - If \code{TRUE} (default) the regularised estimate of the matrix \emph{R} (matrix describing the trait variances and covariances) is computed. This corresponds to the minimum mean square error estimator of \emph{R} and it is returned as "Pinv" in the \code{sigma} element (see value). Only applicable to method="EmpBayes". When \code{FALSE}, a faster inference is made.
+
 
 %%\bold{"randomRoot"} - For model "OU" with non-ultrametric trees (default is TRUE), uses a "randomRoot" parameterization (see Clavel et al. 2015 and \code{mvOU}).
 
@@ -98,6 +106,7 @@ An object of class '\code{mvgls}'. It contains a list including the following co
 \item{penalty       }{the penalty used for the penalized likelihood approach}
 \item{target        }{the target used with the "RidgeArch" or "RidgeAlt" penalized likelihood approaches}
 \item{REML	    		}{logical indicating if the REML (\code{TRUE}) or ML (\code{FALSE}) method has been used}
+\item{FCI	    		  }{confidence intervals for the estimated parameters for method="EmpBayes"}
 \item{opt	    	  	}{optimizing function output. See \code{optim}}
 
 
@@ -109,15 +118,17 @@ An object of class '\code{mvgls}'. It contains a list including the following co
 }
 \references{
 
-Clavel, J., Aristide, L., Morlon, H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
+Clavel J., Aristide L., Morlon H., 2019. A Penalized Likelihood framework for high-dimensional phylogenetic comparative methods and an application to new-world monkeys brain evolution. Systematic Biology 68(1): 93-116.
 
-Clavel, J., Morlon, H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
+Clavel J., Morlon H. 2020. Reliable phylogenetic regressions for multivariate comparative data: illustration with the MANOVA and application to the effect of diet on mandible morphology in phyllostomid bats. Systematic Biology 69(5): 927-943.
 
 Friedman J., Hastie T., Tibshirani R. 2008. Sparse inverse covariance estimation with the graphical lasso. Biostatistics. 9:432-441.
 
 Hoffbeck J.P., Landgrebe D.A. 1996. Covariance matrix estimation and classification with limited training data. IEEE Trans. Pattern Anal. Mach. Intell. 18:763-767.
 
-Housworth E.A., Martins E.P., LynchM. 2004. The phylogenetic mixed model. Am. Nat. 163:84-96.
+Housworth E.A., Martins E.P., Lynch M. 2004. The phylogenetic mixed model. Am. Nat. 163:84-96.
+
+Montoya P., Fabre A-C., Goswami A., Morlon H., Clavel J. 2026. An Empirical Bayes Approach for the Study of Phenotypic Evolution from High-Dimensional Data. Systematic Biology: syag051, https://doi.org/10.1093/sysbio/syag051.
 
 Theiler J. 2012. The incredible shrinking covariance estimator. In: Automatic Target Recognition XXII. Proc. SPIE 8391, Baltimore, p. 83910P.
 
@@ -138,6 +149,7 @@ Julien Clavel
 \code{\link{manova.gls}}
 \code{\link{EIC}}
 \code{\link{GIC}}
+\code{\link{LRT}}
 \code{\link{mvgls.pca}}
 \code{\link{fitted.mvgls}}
 \code{\link{residuals.mvgls}}

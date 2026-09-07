@@ -11,7 +11,7 @@
 ################################################################################
 
 
-mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), REML=TRUE, ...){
+mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL","EmpBayes"), REML=TRUE, ...){
     
     # Recover options
     args <- list(...)
@@ -98,12 +98,12 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     
     # Miscellanous - pre-calculations | TODO handle time series
     precalc = .prepModel(tree, model, root)
+    precalc$root = root
     precalc$randomRoot = randomRoot
     precalc$root_std = root_std
-    k <- NULL
+    k <- 1
     if(inherits(tree, "simmap")){
-        if(model=="BMM") k <- ncol(tree$mapped.edge)
-        if(model=="OUM") m <- ncol(tree$mapped.edge)
+        if(model=="BMM" | model=="OUM") k <- ncol(tree$mapped.edge)
         # TODO handle cases with covariate for OUM
     }
     if(method=="LL") penalized=FALSE else penalized=TRUE
@@ -157,7 +157,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     ll_value <- -estimModel$value # either the loocv or the regular likelihood (minus because we minimize)
     const_mtdist = NA # Not efficient
     if(method=="EmpBayes" & comp_ll==TRUE){
-        v = p + 1 # This needs to be modified if it is allowed to select different values for v
+        v = p + 1 #This needs to be modified if it is allowed to select different values for v
         const_mtdist = -(lmvgamma((v+ndimCov+p-1)/2, p) - lmvgamma((v+p-1)/2, p) - 0.5*(ndimCov*p*log(pi)))
         ll_value = -(estimModel$value + const_mtdist)
     }
@@ -179,7 +179,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     numIter <- estimModel$count[1]
     
     # add an option to avoid the computation of the covariance matrix with EIC - EmpBayes method
-    if(MMSE==FALSE & method=="EmpBayes"){
+    if(model!="BMM" & MMSE==FALSE & method=="EmpBayes"){
         R <- NULL
     } else{
         S <- crossprod(residuals)/ndimCov
@@ -188,18 +188,20 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     
     # Computing confidence intervals using the Fisher information matrix. Only available for method='EmpBayes'
     if(FCI){
-      if(method!="EmpBayes") warning("The CI are available only for the EmpBayes method") else if(method=="EmpBayes"){
-          if(model=="BM") fci = NA else{
-        fisher_information<-solve(estimModel$hessian) # it's already the negative of the Hessian since the negative ll is minimized
-        sigma_for_ci<-sqrt(diag(fisher_information)) # the first entry is for the "regularization" term. For ML optimization it will be the first term
-        
-        # Does this work for BMM model or should it be constrain?
-        npar_for_ci = 2+(length(mod_par)-1)
-        upper_ci<-mod_par+1.96*sigma_for_ci[2:npar_for_ci]
-        lower_ci<-mod_par-1.96*sigma_for_ci[2:npar_for_ci]
-        fci = c('lw'=lower_ci, 'up'=upper_ci)
-      }}
-    }
+        if(method!="EmpBayes") warning("The CI are available only for the EmpBayes method") else if(method=="EmpBayes"){
+            if(model=="BM" | model=="BMM") fci = NA else{
+                fisher_information<-solve(estimModel$hessian) # it's already the negative of the Hessian since the negative ll is minimized
+                sigma_for_ci<-sqrt(diag(fisher_information)) # the first entry is for the "regularization" term. For ML optimization it will be the first term
+                
+                # Does this work for BMM model or should it be constrain?
+                upper_ci<-mod_par+1.96*sigma_for_ci[2]
+                lower_ci<-mod_par-1.96*sigma_for_ci[2]
+                if(!is.na(lower_ci) & lower_ci<bounds$lower[2]) lower_ci = bounds$lower[2]
+                if(!is.na(upper_ci) & upper_ci>bounds$upper[2]) upper_ci = bounds$upper[2]
+                fci = c('lw'=lower_ci, 'up'=upper_ci)
+            }
+        }
+        }
     
     # Multiple rates BMM - we scale the average rate (mean of the diagonal of the covariance matrix)
     if(inherits(tree, "simmap") && model=="BMM"){
@@ -215,7 +217,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
     }
     
     # number of dimensions
-    ndims <- list(n=n, p=p, m=m, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
+    ndims <- list(n=n, p=p, m=m, k=k, assign=assign, rank=qrx$rank, pivot=qrx$pivot, fullrank=fullrank)
     if(model=='OUM') variables <- list(Y=Y, X=X, tree=tree, regimes=X.formula) else variables <- list(Y=Y, X=X, tree=tree)
     # End
     if(echo==TRUE) message("Done in ", numIter," iterations.")
@@ -228,6 +230,7 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
         xlevels=xlevels,
         contrasts=contrasts,
         variables=variables,
+        bounds=bounds,
         dims=ndims,
         fitted=fitted.values,
         logLik=ll_value,
@@ -241,11 +244,12 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL"), 
         mserr=mserr_par,
         start_values=start,
         corrSt=corrSt,
+        precalc = precalc,
         penalty=if(method=="LL") "LL" else penalty,
         target=if(method=="LL") "LL" else target,
         REML=REML,
         FCI=if(isTRUE(FCI)) fci else NA,
-        const_mtd = const_mtdist,
+        const_mtd=const_mtdist,
         opt=estimModel)
     
     class(results) <- "mvgls"

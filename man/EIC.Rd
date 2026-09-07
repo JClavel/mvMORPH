@@ -57,6 +57,8 @@ Kitagawa G., Konishi S., 2010. Bias and variance reduction techniques for bootst
 
 Konishi S., Kitagawa G., 1996. Generalised information criteria in model selection. Biometrika. 83:875-890.
 
+Montoya P., Fabre A-C., Goswami A., Morlon H., Clavel J. 2026. An Empirical Bayes Approach for the Study of Phenotypic Evolution from High-Dimensional Data. Systematic Biology: syag051, https://doi.org/10.1093/sysbio/syag051.
+
 Verbyla A. P., 2019. A note on model selection using information criteria for general linear models estimated using REML. Aust. N. Z. J. Stat. 61:39-50.
 
 Yafune A., Funatogawa T., Ishiguro M., 2005. Extended information criterion (EIC) approach for linear mixed effects models under restricted maximum likelihood (REML) estimation. Statist. Med. 24:3417-3429.

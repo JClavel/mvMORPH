@@ -61,6 +61,7 @@ aicw <- function(x,...){
    return(aics)
 }
 
+
 # ------------------------------------------------------------------------- #
 # Function to transform ancestral states reconstruction to a tree of class  #
 # "simmap"  (push to mvMORPH? current version is a bit quick & dirty)       #
@@ -81,7 +82,7 @@ mapping.asr <- function(tree, ancestral, tips){
     statesNodes <- names_grps[apply(ancestral$lik.anc, 1, which.max)]
   }
   
-  combined = as.character(c(tips, statesNodes))
+  combined = c(as.character(tips), statesNodes)
   treebis=tree
   for(i in sort(tree$edge[,2])){
     treebis <- paintBranches(treebis, i, combined[i], anc.state=combined[Ntip(tree)+1])

@@ -5,7 +5,9 @@
 Multivariate Analysis of Variance
 }
 \description{
-Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} or the \code{mvols} function. With the regularized methods by penalized likelihood implemented in \code{mvgls} and \code{mvols} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variables is larger than the number of observations). When model fit is performed by maximum likelihood (\code{method="LL"}), both parametric and permutation tests are possible.}
+Performs a Multivariate Analysis of Variance (MANOVA) on an object fitted by the \code{mvgls} or the \code{mvols} function. 
+With the regularization methods (penalized likelihood and empirical bayes approach) implemented in \code{mvgls} and \code{mvols} (ridgeArch penalty), this function can be used to compare model fit on high-dimensional datasets (where the number of variables is larger than the number of observations). 
+When model fit is performed by maximum likelihood (\code{method="LL"}), both parametric and permutation tests are possible.}
 \usage{
 
 manova.gls(object, test=c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
@@ -23,7 +25,8 @@ The multivariate test statistic to compute - "Wilks", "Pillai", "Hotelling-Lawle
 The type of test (sums of squares and cross-products) - "I", "II", or "III"}
 
   \item{nperm}{
-The number of permutations used for building the null distribution of the chosen statistic. Permutation is the only available approach for high-dimensional PL models, but either permutations or parametric tests can be used with maximum likelihood (method "LL" in \code{mvgls} and \code{mvols})}
+The number of permutations used for building the null distribution of the chosen statistic. 
+Permutation is the only available approach for high-dimensional data (PL and EmpBayes methods), but either permutations or parametric tests can be used with maximum likelihood (method "LL" in \code{mvgls} and \code{mvols})}
 
   \item{L}{
 A (contrasts) matrix or a vector giving linear combinations of the coefficients rows.}
@@ -52,7 +55,7 @@ General Linear Hypothesis of the form:
 
 Where \bold{L} is a matrix specifying linear combinations of the model coefficients (\bold{B}) can be provided through the argument \code{L}. This type of "contrasts" matrix allows testing specific hypotheses (for instance pairwise differences - see \code{?pairwise.contrasts} and \code{?pairwise.glh}). The right-hand-side matrix \bold{O} is a constant matrix (of zeros by default) that can be provided through the argument \code{rhs}. \bold{P} is a matrix specifying linear combinations of the model coefficients (\bold{B}) estimated for each responses (usually used in repeated measures designs or for testing linear, quadratic, etc. relationships between successive responses).
 
-Permutations on high-dimensional datasets is time consuming. You can use the option \code{nbcores} to parallelize the calculus over several cores using forking in UNIX platforms (default is \code{nbcores=1L}. Estimated time to completion is displayed when \code{verbose=TRUE}.
+Performing permutations on high-dimensional datasets is time-consuming. You can use the option \code{nbcores} to parallelise the calculation over several cores using forking on UNIX platforms (the default is 'nbcores=1L'). The estimated time to completion is displayed when verbose mode is enabled.
 }
 
 \note{

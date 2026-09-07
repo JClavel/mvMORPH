@@ -1428,8 +1428,8 @@ halflife.mvmorph<-function(object){
 #                                                                           #
 # ------------------------------------------------------------------------- #
 lmvgamma <- function(x, p){
-  if(p < 1) error("p must be >=1")
-  if(x <= 0) error("x must be >=0")
+  if(p < 1) stop("p must be >=1")
+  if(x <= 0) stop("x must be >=0")
   lmv = (p*(p-1)/4)*log(pi) + sum(lgamma(x + (1-(1:p))/2))
   return(lmv)
 }

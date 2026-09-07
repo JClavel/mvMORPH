@@ -2,7 +2,7 @@ Package: mvMORPH
 Type: Package
 Title: Multivariate Comparative Tools for Fitting Evolutionary Models to Morphometric Data
 Version: 1.2.2
-Date: 2024-08-28
+Date: 2026-09-04
 Authors@R: c(person(given = "Julien",
                       family = "Clavel",
                       role = c("aut", "cre"),
@@ -14,10 +14,10 @@ Authors@R: c(person(given = "Julien",
                       family = "Paradis",
                       role = "aut"))
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
-Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees and time series. 'mvMORPH' also proposes high-dimensional multivariate comparative tools (linear models using Generalized Least Squares and multivariate tests) based on penalized likelihood.  See
-    Clavel et al. (2015) <DOI:10.1111/2041-210X.12420>, Clavel et al. (2019) <DOI:10.1093/sysbio/syy045>, and Clavel & Morlon (2020) <DOI:10.1093/sysbio/syaa010>.
+Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees and time series. 'mvMORPH' also proposes high-dimensional multivariate comparative tools (linear models using Generalized Least Squares and multivariate tests) based on penalized likelihood and Empirical Bayes approaches.  See
+    Clavel et al. (2015) <DOI:10.1111/2041-210X.12420>, Clavel et al. (2019) <DOI:10.1093/sysbio/syy045>, Clavel & Morlon (2020) <DOI:10.1093/sysbio/syaa010>, and Montoya et al. (2026) <DOI:10.1093/sysbio/syag051>.
 Depends: R(>= 2.9.1), phytools, ape, corpcor, subplex
-Imports: stats, utils, spam, graphics, glassoFast, parallel, pbmcapply, pbapply
+Imports: stats, utils, spam, graphics, glassoFast, parallel, pbmcapply, pbapply, grDevices
 Suggests: knitr, car
 License: GPL (>= 2.0)
 URL: https://github.com/JClavel/mvMORPH
