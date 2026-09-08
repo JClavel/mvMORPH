@@ -142,19 +142,14 @@ invisible(results)
 # Compute the log-likelihood ratio test (using asymptotic                   #
 # solution (nested models) and simulation)                                  #
 # ------------------------------------------------------------------------- #
-
-
 LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
   
   args <- list(...)
   if(is.null(args[["nsim"]])) nsim = 100 else nsim = args$nsim
   if(is.null(args[["nbcores"]])) nbcores = 1L else nbcores = args$nbcores
   if(is.null(args[["alternative"]])) alternative = FALSE else alternative = args$alternative
-  if(is.null(args[["parametric"]])) parametric = TRUE else parametric = args$parametric
+  if(is.null(args[["parametric"]])) parametric = FALSE else parametric = args$parametric
   if(is.null(args[["REML"]])) REML = FALSE else REML = args$REML
-  
-  # # to remove
-  #require(pbmcapply)
   
   # # generate the test statistic:
   if((model1$REML | model2$REML) & REML==FALSE){
@@ -172,67 +167,95 @@ LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
   # just for coercion
   lrt <- as.numeric(lrt)
   
-  # generate random samples from model 1
-  if(parametric) new_data <- simulate(model1, nsim=nsim) else new_data <- sbootstrap(model1, nboot=nsim)
- 
-  names_data = model1$corrSt$phy$tip.label
-
-  # prepar models
-  modelNull <- model1$call
-  modelAlt <- model2$call
-  modelNull$start <- model1$opt$par
-  modelAlt$start <- model2$opt$par
-  modelNull$grid.search <- modelAlt$grid.search <- quote(FALSE)
-  if(modelNull$method == "EmpBayes"){
-      modelNull$MMSE <- modelAlt$MMSE <- quote(FALSE)
-      modelNull$FCI <- modelAlt$FCI <- quote(FALSE)
-      modelNull$Hessian <- modelAlt$Hessian <- quote(FALSE)
-  }
+  n_phy <- Ntip(model1$corrSt$phy)
   
-  # loop over new datasets
-  stat_dist <- pbmcmapply(function(x){
-    rownames(new_data[[x]]) = names_data
-    modelNull$response <- modelAlt$response <- quote(new_data[[x]]);
-    estimModelNull <- eval(modelNull);
-    estimModelalt <- eval(modelAlt);
-    if(flag){
-      -2*(.reml_to_ml(estimModelNull) - .reml_to_ml(estimModelalt))
-    }else{
-      -2*(estimModelNull$logLik -estimModelalt$logLik)
-    }
-  },1:nsim, mc.cores= getOption("mc.cores", nbcores))
-  
-  # compute the p-value
-  lrtpval <- mean(as.numeric(lrt)<=stat_dist)
-  
-  ## Check if comparison to the alternative is wanted?
-  if(alternative){
-    if(parametric) new_data2 <- simulate(model2, nsim=nsim) else new_data2 <- sbootstrap(model2, nboot=nsim)
-
-    # loop over new datasets
-    stat_dist2 <- pbmcmapply(function(x){
-      rownames(new_data2[[x]]) = names_data
-      modelNull$response <- modelAlt$response <- quote(new_data2[[x]]);
-      estimModelNull <- eval(modelNull);
-      estimModelalt <- eval(modelAlt);
-      if(flag){
-        -2*(.reml_to_ml(estimModelNull) - .reml_to_ml(estimModelalt))
-      }else{
-        -2*(estimModelNull$logLik -estimModelalt$logLik)
-      }
-    },1:nsim, mc.cores= getOption("mc.cores", nbcores))
+  get_info_nonpar = function(object){
+    phyloSqrt <- pruning(object$corrSt$phy, trans=FALSE, inv=FALSE)$sqrtM
+    # retrieve the expected values (ancestral states)
+    expect = fitted(object)
+    # the normalized/decorrelated residuals
+    resid <- residuals(object, type="normalized")
     
+    return(list('phyloSqrt'=phyloSqrt,'expect'=expect,'resid'=resid))
   }
+  new_data <- get_info_nonpar(model1)
+  
+  names_data = model1$corrSt$phy$tip.label
+    
+      fun_dist_null <- function(x){
+          
+          if(parametric){
+              data_boot <- simulate(model1, nsim=1)
+              rownames(data_boot) <- model1$corrSt$phy$tip.label
+          }else{
+              bootstrap_residuals <- new_data$phyloSqrt %*% new_data$resid[c(sample(n_phy-1, replace = TRUE),n_phy),] # remove intercept from boostrapping if the pruning algorithm is used
+              data_boot <- new_data$expect + bootstrap_residuals
+              rownames(data_boot) <- model1$corrSt$phy$tip.label
+          }
+        
+        estimModelNull <- .mvgls.boot(Y=data_boot, object=model1)
+        estimModelAlt <- .mvgls.boot(Y=data_boot, object=model2)
+        
+          if(flag){
+            -2*(.reml_to_ml(estimModelNull) - .reml_to_ml(estimModelAlt))
+          }else{
+            -2*(estimModelNull$logLik -estimModelAlt$logLik)
+          }
+        
+      }
+
+    mc.cores = getOption("mc.cores", nbcores)
+    cl <- makeCluster(mc.cores)
+    #clusterExport(cl=cl, varlist=c("flag","names_data","new_data","n_phy","model1","model2"), envir=environment())
+    stat_dist <- pblapply(1:nsim, FUN=fun_dist_null, cl=cl)
+    stopCluster(cl)
+    stat_dist <- simplify2array(stat_dist)
+    
+    # compute the p-value
+    lrtpval <- mean(as.numeric(lrt)<=stat_dist)
+    
+    ## Check if comparison to the alternative is wanted?
+    if(alternative){
+        new_data2 <- get_info_nonpar(model2)
+        
+        fun_dist_alt = function(x){
+            
+            if(parametric){
+                data_boot2 <- simulate(model2, nsim=1)
+                rownames(data_boot2) <- model2$corrSt$phy$tip.label
+            }else{
+                bootstrap_residuals2 <- new_data2$phyloSqrt %*% new_data2$resid[c(sample(n_phy-1, replace = TRUE),n_phy),] # remove intercept from boostrapping if the pruning algorithm is used
+                data_boot2 <- new_data2$expect + bootstrap_residuals2
+                rownames(data_boot2) <-  model2$corrSt$phy$tip.label
+            }
+            
+            estimModelNull <- .mvgls.boot(Y=data_boot2, object=model1)
+            estimModelAlt <- .mvgls.boot(Y=data_boot2, object=model2)
+            
+            if(flag){
+                -2*(.reml_to_ml(estimModelNull) - .reml_to_ml(estimModelAlt))
+            }else{
+                -2*(estimModelNull$logLik -estimModelAlt$logLik)
+            }
+            
+        }
+        
+        cl <- makeCluster(mc.cores)
+        #clusterExport(cl=cl, varlist=c(var_list,"flag","names_data","new_data2","n_phy","modelNull","modelAlt"), envir=environment())
+        stat_dist2 <- pblapply(1:nsim, FUN=fun_dist_alt, cl=cl)
+        stopCluster(cl)
+        stat_dist2 <- simplify2array(stat_dist2)
+    }
   
   # plot
   if(plot & alternative==FALSE){
-      limits_x = c(min(stat_dist,lrt),max(stat_dist,lrt))
+    limits_x = c(min(stat_dist,lrt),max(stat_dist,lrt))
     hist(stat_dist, freq = FALSE, breaks=50, las=1, main=paste("LRT:",round(lrt, digits=3), "p-value", round(lrtpval, digits=5)),
          xlab="Null distribution", xlim=limits_x, ...); abline(v=lrt)
-  }else if(plot & alternative){
-      limits_x = c(min(stat_dist,stat_dist2,lrt),max(stat_dist,stat_dist2,lrt))
+  }else if(plot & alternative) {
+    limits_x = c(min(stat_dist,stat_dist2,lrt),max(stat_dist,stat_dist2,lrt))
     hist(stat_dist, freq = FALSE, breaks=50, las=1, main=paste("LRT:",round(lrt, digits=3), "p-value", round(lrtpval, digits=5)),
-                xlab="Likelihood ratio", xlim = limits_x, ...)
+         xlab="Likelihood ratio", xlim = limits_x, ...)
     hist(stat_dist2, freq = FALSE, breaks=50, las=1, add=TRUE, col="red"); abline(v=lrt, lty=2)
   }
   
@@ -242,14 +265,15 @@ LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
   
   # results
   if(alternative){
-      results = list(ratio=lrt, dist=stat_dist, pval=lrtpval, dist_alt=stat_dist2)
+    results = list(ratio=lrt, model1=model1$model, model2=model2$model, dist=stat_dist, pval=lrtpval, dist_alt=stat_dist2)
   } else{
-      results = list(ratio=lrt, dist=stat_dist, pval=lrtpval)
+    results = list(ratio=lrt, model1=model1$model, model2=model2$model, dist=stat_dist, pval=lrtpval)
   }
   
   invisible(results)
   
 }
+
 
 ## Function to perform semi-parametric bootstrap from model fit by mvgls
 sbootstrap <- function(object, nboot, ...){

@@ -462,6 +462,12 @@
         # Weight matrix OUM
         W <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(precalc$root_std))
         
+        #  m and k differ?
+        if(ncol(X)>ncol(W)){
+            W <- cbind(W,X[,(ncol(W)+1):ncol(X)])
+            colnames(W) <- colnames(X)
+        }
+        
         # transform the tree
         D = numeric(n)
         
@@ -524,6 +530,11 @@
     "OU1"={
         # Weight matrix OU1
         W <- .Call(mvmorph_weights, nterm=as.integer(n), epochs=precalc$epochs, lambda=param, S=1, S1=1, beta=precalc$listReg, root=as.integer(precalc$root_std))
+        # check m and k
+        if(ncol(X)>ncol(W)){
+            W <- cbind(W,X[,(ncol(W)+1):ncol(X)])
+            colnames(W) <- colnames(X)
+        }
         
         # transform the tree
         D = numeric(n)
@@ -630,10 +641,11 @@
     
     # Adjust the determinant for non-ultrametric OU (see Ho & Ane 2014 - Syst. Bio., p. 401)
     if(flag) deterM <- deterM + 2*sum(log(diagWeight))
+    deterM_ml <- deterM
     if(REML) deterM <- deterM + determinant(crossprod(X))$modulus - const
     
     # Return the score, variances, and scaled tree
-    return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM, const=const))
+    return(list(phy=phy, diagWeight=diagWeight, X=X, Y=Y, det=deterM, det_ml = deterM_ml, const=const))
 }
 
 # Vec operator
@@ -706,6 +718,10 @@
             id1 <- 1; id2 <- 2:k; id3 <- k+1
         }else if(model=="BM"){
             id1 <- id2 <- 1; id3 <- 2
+        }else if(k>1){
+            if(model=="OUM"){
+                id1 <- 1; id2 <- 2; id3 <- 3
+            }
         }else{
             id1 <- 1; id2 <- 2; id3 <- 3
         }
@@ -720,6 +736,10 @@
             id1 <- 1; id2 <- 1:(k-1); id3 <- k
         }else if(model=="BM"){
             id1 <- id2 <- id3 <- 1
+        }else if(k>1){
+            if(model=="OUM"){
+                id1 <- 1; id2 <- 2; id3 <- 3
+            }
         }else{
             id1 <- 1; id2 <- 1; id3 <- 2
         }
@@ -742,7 +762,6 @@
     # model parameter
     switch(model,
     "OU"={ transformPar <- function(x) (x[id2])},
-    "OUM"={ transformPar <- function(x) (x[id2])},
     "BM" ={ transformPar <- function(x) (x[id2])},
     "EB" ={ transformPar <- function(x) (x[id2])},
     "lambda" ={ transformPar <- function(x) (x[id2])},
@@ -764,7 +783,8 @@
 # tol,                                                                      #
 # ------------------------------------------------------------------------- #
 
-.startGuess <- function(corrModel, cvmethod, mserr=NULL, target, penalty, echo=TRUE, penalized=TRUE, tol=NULL,...){
+.startGuess <- function(corrModel, cvmethod, mserr=NULL, target, penalty, echo=TRUE, penalized=TRUE, tol=NULL, nparam=NULL,
+m=NULL, k=NULL, ...){
     if(echo==TRUE) message("Initialization via grid search. Please wait...")
     # Penalization parameters guesses
     if(penalized){
@@ -934,5 +954,5 @@
     residuals <- Y - X%*%B
     
     # Return the residuals
-    return(residuals)
+    return(crossprod(residuals)/Ntip(phylo))
     }
