@@ -10,7 +10,7 @@ This function compares the fit of two nested models of trait evolution with a lo
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-LRT(model1, model2, echo = TRUE, plot=TRUE, ...)
+LRT(model1, model2, echo = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,11 +24,6 @@ The second model under comparison (fitted object).
 }
   \item{echo}{
 Whether to return the result or not.
-%%     ~~Describe \code{echo} here~~
-}
-
-  \item{plot}{
-Plot the distribution of the LRT statistic (under the null and alternative for simulation based approach with \code{mvgls} model fit.)
 %%     ~~Describe \code{echo} here~~
 }
 
@@ -84,7 +79,7 @@ Verbyla A. P., 2019. A note on model selection using information criteria for ge
 %% ~put references to the literature/web site here ~
 }
 \author{
-Julien Clavel
+Julien Clavel, Paola Montoya
 %%  ~~who you are~~
 }
 
@@ -149,6 +144,14 @@ mean(simulations>=LRT_stat)
 
 plot(density(simulations), main="Non-parametric LRT");
 abline(v=LRT_stat, col="red")
+
+
+# LRT using mvgls
+mod1<-mvgls(traits~1, tree=tree, model="BM", method="EmpBayes")
+mod2<-mvgls(traits~1, tree=tree, model="BMM", method="EmpBayes")
+lrt_mvgls <- LRT(mod1, mod2, echo=FALSE, alternative=TRUE)
+# plot the results
+plot(lrt_mvgls)
 }
 
 }

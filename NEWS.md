@@ -1,3 +1,10 @@
+## mvMORPH 1.2.2
+    + implements the "EmpBayes" method for high-dimensional linear models fit.
+    + implements the p3ca method
+    + pcLoadings function for displaying PCs loading for the p3ca (soon the mvgls.pca function)
+    + update LRT, EIC and manova.gls to include EmpBayes method. Update pcaShape to work with "p3ca" fit
+    + update method for parallel computing
+    + mapping.asr method
 ## mvMORPH 1.2.1
     + fix type for integer in C header file
 ## mvMORPH 1.2.0

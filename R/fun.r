@@ -1177,6 +1177,17 @@ print.mvmorph.lrt<-function(x,...){
     cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
 }
 
+print.mvgls.lrt<-function(x,...){
+    if(x$pval<0.000001){signif<-c("***")}else if(x$pval<0.001){
+        signif<-c("**") }else if(x$pval<0.01){signif<-c("*")}else if(x$pval<0.05){signif<-c(".")}else{signif<-""}
+    cat("-- Log-likelihood Ratio Test --","\n")
+    cat("Model",x$model1," versus ",x$model2,"\n")
+    cat("Number of simulations :",length(x$dist),"\n")
+    cat("LRT statistic:",x$ratio," p-value:",x$pval,signif,"\n")
+    cat("---","\n")
+    cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1")
+}
+
 print.mvmorph.precalc<-function(x,...){
     cat("A tree with",length(x$tree$tip.label),"species used in precalc","\n")
     cat("Optimized for:","\n")

@@ -9,10 +9,10 @@
 ################################################################################
 
 ## ------------------------ S3 Method for switching between LRT options ------ ##
-LRT <- function(model1, model2, echo=TRUE, plot=TRUE, ...) UseMethod("LRT")
+LRT <- function(model1, model2, echo=TRUE, ...) UseMethod("LRT")
 
 ## LRT for class mvMORPH
-LRT.mvmorph<-function(model1, model2, echo=TRUE, plot=TRUE,...){
+LRT.mvmorph<-function(model1, model2, echo=TRUE,...){
 
 ## Options (TODO)
 args <- list(...)
@@ -142,7 +142,7 @@ invisible(results)
 # Compute the log-likelihood ratio test (using asymptotic                   #
 # solution (nested models) and simulation)                                  #
 # ------------------------------------------------------------------------- #
-LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
+LRT.mvgls <- function(model1, model2, echo=TRUE, ...){
   
   args <- list(...)
   if(is.null(args[["nsim"]])) nsim = 100 else nsim = args$nsim
@@ -247,21 +247,10 @@ LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
         stat_dist2 <- simplify2array(stat_dist2)
     }
   
-  # plot
-  if(plot & alternative==FALSE){
-    limits_x = c(min(stat_dist,lrt),max(stat_dist,lrt))
-    hist(stat_dist, freq = FALSE, breaks=50, las=1, main=paste("LRT:",round(lrt, digits=3), "p-value", round(lrtpval, digits=5)),
-         xlab="Null distribution", xlim=limits_x, ...); abline(v=lrt)
-  }else if(plot & alternative) {
-    limits_x = c(min(stat_dist,stat_dist2,lrt),max(stat_dist,stat_dist2,lrt))
-    hist(stat_dist, freq = FALSE, breaks=50, las=1, main=paste("LRT:",round(lrt, digits=3), "p-value", round(lrtpval, digits=5)),
-         xlab="Likelihood ratio", xlim = limits_x, ...)
-    hist(stat_dist2, freq = FALSE, breaks=50, las=1, add=TRUE, col="red"); abline(v=lrt, lty=2)
-  }
   
   # TODO :> use the print options from LRT (define it as class(results)<-c("mvmorph.lrt"))
   # print
-  cat("LRT test (non-parametric)", lrt," p-value:",lrtpval, "log-lik model 1:",ll1, "log-lik model 2:", ll2)
+  if(echo) cat("LRT test (non-parametric)", lrt," p-value:",lrtpval, "log-lik model 1:",ll1, "log-lik model 2:", ll2)
   
   # results
   if(alternative){
@@ -269,7 +258,7 @@ LRT.mvgls <- function(model1, model2, echo=TRUE, plot=TRUE, ...){
   } else{
     results = list(ratio=lrt, model1=model1$model, model2=model2$model, dist=stat_dist, pval=lrtpval)
   }
-  
+  class(results)<-c("mvgls.lrt")
   invisible(results)
   
 }
@@ -297,4 +286,29 @@ sbootstrap <- function(object, nboot, ...){
        })
   
   return(sim)
+}
+
+# ------------------------------------------------------------------------- #
+# plot.mvgls.lrt                                                            #
+# options: x, ...                                                           #
+# Plot the LRT statistics obtained through simulations (for both the        #
+# alternative and the "null" distributions)                                 #
+# ------------------------------------------------------------------------- #
+
+plot.mvgls.lrt <- function(x, breaks=50, ...){
+    
+  # plot
+  if(!is.null(x$dist_alt)){
+    limits_x = c(min(x$dist,x$dist_alt,x$ratio),max(x$dist,x$dist_alt,x$ratio))
+    hist_dist = hist(x$dist, breaks=breaks, plot=FALSE)
+    hist_dist_alt = hist(x$dist_alt, breaks=breaks, plot=FALSE)
+    limits_y = c(0,max(hist_dist$density,hist_dist_alt$density))
+    plot(hist_dist, freq=FALSE, las=1, main=paste("LRT:",round(x$ratio, digits=3), "p-value", round(x$pval, digits=5)),
+         xlab="Likelihood ratio", xlim = limits_x, ylim= limits_y, ...)
+    plot(hist_dist_alt, freq=FALSE, las=1, add=TRUE, col="red"); abline(v=x$ratio, lty=2)
+  }else{
+    limits_x = c(min(x$dist,x$ratio),max(x$dist,x$ratio))
+    hist(x$dist, freq = FALSE, breaks=breaks, las=1, main=paste("LRT:",round(x$ratio, digits=3), "p-value", round(x$pval, digits=5)),
+         xlab="Null distribution", xlim=limits_x, ...); abline(v=x$ratio, lty=2)
+  }
 }

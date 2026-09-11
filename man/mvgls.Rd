@@ -221,6 +221,8 @@ data=list(Y=Y)
 # Fast LOOCV using "H&L" with RidgeArch penalization
 summary(mvgls(Y~1, data=data, tree, model="BM", penalty="RidgeArch", method="H&L"))
 
+# Even faster using "Empirical Bayes" approach:
+summary(mvgls(Y~1, data=data, tree, model="BM", method="EmpBayes"))
 
 
 }

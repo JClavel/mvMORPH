@@ -5,7 +5,8 @@
 Mapping ancestral character estimates onto a phylogenetic tree
 }
 \description{
-The function maps ancestral state estimates for discrete characters onto a phylogenetic tree. Ancestral character estimates should be obtained prior to use the function.
+The function constructs a phylogenetic tree of class \code{simmap} that maps ancestral state of discrete characters at the nodes of a phylogenetic tree.
+Ancestral character estimates can be obtained from the \code{ace} function of the package "ape", or from a set of stochastic mappings summarized by the \code{describe.simmap} function.
 }
 \usage{
 
@@ -17,15 +18,15 @@ mapping.asr(tree, ancestral, tips)
 Phylogenetic tree (class \code{phylo}).
 }
   \item{ancestral}{
-Ancestral state estimates. Either an object of class \code{describe.simmap} or \code{ace}. 
+Ancestral state estimates. Either an object of class \code{describe.simmap} or from the function \code{ace}. 
 }
  \item{tips}{
-Character states at the tips. Either an object of class \code{character} or \code{factor}, which elements are named and ordered according to the phylogenetic tree.
+Character states at the tips. Either an object of class \code{character} or \code{factor}, which elements are named and ordered as in the phylogenetic tree.
 }
 }
 
 \details{
-The function follows the structure of the function \code{make.simmap()} from the package \code{phytools}, adding two elements describing the time spent in each state per edge. A phylogenetic tree with the ancestral state estimate mapped onto it is used to model trait evolution under multiple selective regimes in functions such as \code{mvgls()}.  }
+The function follows the structure of the function \code{make.simmap()} from the package \code{phytools}, adding two elements describing the time spent in each state per edge. A phylogenetic tree with the ancestral state estimate mapped onto it is used to model trait evolution under multiple selective regimes in functions such as \code{mvgls()} or \code{mvBM()} and \code{mvOU}.  }
 
 \value{
 	A phylogenetic tree of class \code{simmap}. Two elements are added:
@@ -68,6 +69,18 @@ anc_state = ace(phyllos_trait, phyllos_tree, type="discrete",
 new_tree = mapping.asr(tree=phyllos_tree, ancestral=anc_state, tips=phyllos_trait)
 plot(new_tree)
 
+
+# Character states estimated by stochastic mapping
+simmap_trees = make.simmap(phyllos_tree, phyllos_trait, nsim="10")
+simmap_list = describe.simmap(simmap_trees)
+
+# Mapping the reconstruction on the phylogenetic tree
+new_tree2 = mapping.asr(tree=phyllos_tree, ancestral=simmap_list, tips=phyllos_trait)
+plot(new_tree2)
+
+# For comparison
+plot(phyllos_tree)
+nodelabels(pie =simmap_list$ace)
 #### Example ends ####
 }
 }

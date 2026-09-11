@@ -166,6 +166,10 @@ plot(p3ca_phyllos_nas$scores[,axes], pch=19, col=c('dodgerblue3','forestgreen')[
      main = paste('P3CA (EM) - ', p3ca_phyllos_nas$model, ' ',
      round(p3ca_phyllos_nas$par,1), sep=''))
 
+# We can also visualize the shapes changes along PCs using "pcaShape"
+proj_shape <- pcaShape(p3ca_phyllos, axis=1, ndim=2, spp="Ametrida", plot=TRUE)
+polygon(proj_shape$Ametrida)
+
 ### Example ends ###
 
 }

@@ -40,7 +40,7 @@ Montoya P., Joseph J., Goswami A., Morlon H., Clavel J. 2026. A probabilistic an
 Joseph J., Montoya P., Baudat F., Ruiz-Herrera A., Clavel J. 2026. Explaining the rapid evolution of mammalian meiotic recombination proteins. doi.org/10.64898/2026.06.01.729254. 
 }
 
-\author{J. Clavel}
+\author{J. Clavel, J. Joseph, P. Montoya}
 
 \seealso{
 \code{\link{p3ca}},

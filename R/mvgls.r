@@ -177,6 +177,8 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL","E
     glsStruct <- corrSt
     method <- method
     numIter <- estimModel$count[1]
+    corrSt$bounds <- bounds
+    corrSt$precalc <- precalc
     
     # add an option to avoid the computation of the covariance matrix with EIC - EmpBayes method
     if(model!="BMM" & MMSE==FALSE & method=="EmpBayes"){
@@ -230,7 +232,6 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL","E
         xlevels=xlevels,
         contrasts=contrasts,
         variables=variables,
-        bounds=bounds,
         dims=ndims,
         fitted=fitted.values,
         logLik=ll_value,
@@ -244,12 +245,10 @@ mvgls <- function(formula, data=list(), tree, model, method=c("PL-LOOCV","LL","E
         mserr=mserr_par,
         start_values=start,
         corrSt=corrSt,
-        precalc = precalc,
         penalty=if(method=="LL") "LL" else penalty,
         target=if(method=="LL") "LL" else target,
         REML=REML,
         FCI=if(isTRUE(FCI)) fci else NA,
-        const_mtd=const_mtdist,
         opt=estimModel)
     
     class(results) <- "mvgls"

@@ -26,20 +26,18 @@ BIC.mvgls <- function(object, ...){
     # retrieve arguments
     args <- list(...)
     if(is.null(args[["REML"]])) args$forceREML <- TRUE else args$forceREML <- args$REML
+    
+    p <- object$dims$p
+    n <- object$dims$n # should take n or n*p? # TO CHECK: should we use log(n) or log(n-m) when using the REML?
+    
     if(object$REML & args$forceREML==FALSE) LL <- .reml_to_ml(object) else LL <- object$logLik
     
     # TODO generalize to mvXX functions
     if(object$method=="LL"){
-        p <- object$dims$p
-        n <- object$dims$n # should take n or n*p?
-
         nparam = if(object$model=="BM") (length(object$start_values)-1) + length(object$coefficients) + p*(p + 1)/2 else length(object$start_values) + length(object$coefficients) + p*(p + 1)/2
         # BIC
         BIC = -2*LL+ log(n)*nparam
     }else if(object$method=="EmpBayes"){
-        p <- object$dims$p
-        n <- object$dims$n # should take n or n*p?
-
         nparam = if(object$model=="BM") (length(object$start_values)-1) + length(object$coefficients) else length(object$start_values) + length(object$coefficients)
         # BIC
         BIC = -2*LL+ log(n)*nparam
@@ -273,8 +271,7 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
   ## if REML=FALSE : args$forceREML=FALSE
   #if(object$REML & args$forceREML==TRUE) ndimCov = object$dims$n - m else ndimCov = object$dims$n
   if(args$forceREML==TRUE) ndimCov = object$dims$n - object$dims$m else ndimCov = object$dims$n
-  tuning <- object$tuning
-  penalty <- object$penalty
+  #penalty <- object$penalty
 
   # Weight matrix (OU, etc)
   if(is.null(object$corrSt$diagWeight)){
@@ -488,15 +485,12 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
 # bias_type, ...                                                            #
 # Compute the log-likelihood with bootstrap or empirical model fit in EIC   #
 # ------------------------------------------------------------------------- #
-.llik_fn <- function(object_boot, object_emp, residualsBoot, method, Ccov, n, m, p, v, bias_type, nTarget, ...){
+.llik_fn <- function(object_boot, object_emp, residualsBoot, method, Ccov, n, p, v, bias_type, nTarget){
   
   if(method=="EmpBayes"){
-    
-    
     # Switch between various evaluation of the bootstrapped samples
     switch(bias_type,
            "D1_1"={ # Y*|param* or for Y|param*
-             
              if(object_emp$target=="Variance"){
                target = colSums(residualsBoot^2)*(1/nTarget)*object_boot$tuning
                SigS2 <- .fast_eigen_val(residualsBoot*sqrt(1/target))
@@ -506,7 +500,6 @@ EIC.mvgls <- function(object, nboot=100L, nbcores=1L, ...){
                SigS2 <- .fast_eigen_val(residualsBoot*sqrt(1/target))
                detSig <- p*log((v-p)*target) # note, with default df, v-p=1
              }
-             
            },
            "D1_2"={ # Y*|param
              
@@ -832,7 +825,7 @@ print.gic.mvgls<-function(x,...){
 print.eic.mvgls<-function(x,...){
     cat("\n")
     message("-- Extended Information Criterion --","\n")
-    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n")
+    cat("EIC:",x$EIC,"| +/-",3.92*x$se,"| Log-likelihood",x$LogLikelihood,"\n") # Perhaps this can specify what corresponds the 3.92 to
     cat("\n")
 }
 
@@ -1352,7 +1345,7 @@ ancestral.mvgls <- function(object, ...){
   #precalc$randomRoot = randomRoot
   #precalc$root_std = root_std
   
-  precalc = object$precalc
+  precalc = object$corrSt$precalc
   
   if(method=="LL") penalized=FALSE else penalized=TRUE
   if(isTRUE(REML)) ndimCov = n - m else ndimCov = n
@@ -1363,7 +1356,7 @@ ancestral.mvgls <- function(object, ...){
                     nloo=nloo, precalc=precalc)
   
   # Set bounds for parameter search
-  bounds <- corrModel$bounds <- object$bounds
+  bounds <- corrModel$bounds <- object$corrSt$bounds
   #bounds <- corrModel$bounds <- .setBounds(penalty=penalty, model=model, lower=low, upper=up, tol=tol, mserr=mserr, penalized=penalized, corrModel=corrModel, k=k)
   
   # Optimization
