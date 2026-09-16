@@ -1330,6 +1330,7 @@ simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
   p <- object$dims$p
   n <- object$dims$n
   theta <- numeric(p)
+  if(is.null(param[["bootstrap"]])){ boot = FALSE }else if(param$bootstrap==TRUE){ sbootstrap(object, nboot=nsim)}
   if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
   
   if(!is.ultrametric(object$variables$tree) & (object$model=="OU" | object$model=="OUM")){
