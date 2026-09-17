@@ -1286,7 +1286,7 @@ print.mvmorph.aicw<-function(x,...){
     cat("-- Akaike weights --","\n")
     aics <- data.frame(Rank=1:length(x$models), AIC=x$AIC, diff=x$diff, wi=x$wi, AICw=x$aicweights)
     row.names(aics) <- as.character(x$models)
-    aics <- aics[order(aics$wi, decreasing=TRUE),]
+    aics <- aics[order(aics$AIC),]
     aics$Rank <- 1:length(x$models)
     aics[,c(4,5)][aics[,c(4,5)]<1e-8]<-0
     print(aics, zero.print = ".", digits=3)

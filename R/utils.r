@@ -33,7 +33,8 @@ aicw <- function(x,...){
                 })
         }else{
                 aic_model <- unlist(x)
-                models_names <- as.character(1:length(aic_model))
+                if(!is.null(names(x))) models_names <- names(x)
+                    else models_names <- as.character(1:length(aic_model))
         }
         
         aics <- data.frame(models=models_names, AIC=aic_model, diff=aic_model)

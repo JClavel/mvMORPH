@@ -45,6 +45,8 @@ The mvSIM function allows simulating continuous trait (univariate or multivariat
 
 The "simulate" wrapper can also be used with a fitted object of class "mvmorph":
     simulate(object, nsim=1, tree=tree). See example below.
+    
+When "simulate" is used on an object fitted by \code{mvgls}, we can use the \code{bootstrap=TRUE} option to perform semi-parametric bootstrap (residuals of the model are bootstrapped for generating replicate - see Montoya et al. 2026).
 
 If parameter values are not provided, the default values are fixed to 1 (sigma, sig, alpha, beta) or to 0 for the mean at the root (ancestral state).
 
@@ -69,7 +71,9 @@ A matrix with simulated traits (columns) for the univariate case, or a list of m
 %% ...
 }
 \references{
-Paradis E. 2012. Analysis of Phylogenetics and Evolution with R. New York: Springer.
+Paradis E., 2012. Analysis of Phylogenetics and Evolution with R. New York: Springer.
+
+Montoya P., Fabre A-C., Goswami A., Morlon H., Clavel J. 2026. An Empirical Bayes Approach for the Study of Phenotypic Evolution from High-Dimensional Data. Systematic Biology: syag051, https://doi.org/10.1093/sysbio/syag051.
 
 %% ~put references to the literature/web site here ~
 }
