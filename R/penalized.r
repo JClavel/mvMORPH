@@ -591,7 +591,7 @@
     },
     "lambda"={
         # Pagel's lambda tree transformation
-        if(param!=1) {
+        if(param<=1) {
             root2tipDist <- node.depth.edgelength(phy)[1:n] # for non-ultrametric trees. The 'up' limit should be exactly 1 to avoid singularity issues
             phy$edge.length <- phy$edge.length * param
             phy$edge.length[extern] <- phy$edge.length[extern] + (root2tipDist * (1-param))
