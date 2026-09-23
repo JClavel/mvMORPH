@@ -135,17 +135,17 @@ data(phyllostomid)
 phyllos_data = phyllostomid$mandible[,-1]
 phyllos_tree = phyllostomid$tree
 
-# Perfoming the P3CA on the complete dataset - Analytical solution
+# Apply the P3CA on the complete dataset - Analytical solution
 p3ca_phyllos = p3ca(phyllos_data, phyllos_tree, q=5, model='lambda')
 p3ca_phyllos$logLik
 p3ca_phyllos$par
 
-# Dataset including missing values
+# We will introduce some missing values to illustrate the EM.
 id_for_nas = sample(1:length(phyllos_data),100)
 phyllos_data_nas = phyllos_data
 phyllos_data_nas[id_for_nas]=NA
 
-# Perfoming the P3CA on the incomplete dataset - EM algorithm
+# Apply the P3CA on the incomplete dataset - EM algorithm
 p3ca_phyllos_nas = p3ca(phyllos_data_nas, phyllos_tree, q=5, model='lambda')
 p3ca_phyllos_nas$logLik
 p3ca_phyllos_nas$par
