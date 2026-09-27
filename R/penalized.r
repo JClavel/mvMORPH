@@ -851,34 +851,40 @@ m=NULL, k=NULL, ...){
             
             # guess starting values
             start_values <- function(tree, data, predictors){
-                tip_values <- 1:Ntip(tree)
-                index_tips <- tree$edge[,2]%in%tip_values
-                maps <- sapply(tree$maps[index_tips], function(x) names(x[length(x)]))
-                # check if any tips are missing?
-                k = ncol(tree$mapped.edge)
-                if(length(unique(maps))<k) {
-                    mod_val <- mean(diag(rate_pic(tree, data)))
-                    guesses <- as.list(rep(sqrt(mod_val), k))
-                }else{
-                    guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
-                        dat_red <- which(maps==map_names)
-                        sp_to_remove <- tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]]
-                        # Sanity check => because errors with current phytools function | example reported by Jake
-                        if(Ntip(tree) - length(sp_to_remove) <= 1) {
-                                # select a second species at random
-                                sp_to_remove <- sp_to_remove[-sample(length(sp_to_remove), size = 1)]
-                              }
-                        tree_red=drop.tip(tree, sp_to_remove)
-                        if(Ntip(tree_red)<=1){
-                                 # simple estimate on the whole tree
-                                 sqrt(mean(apply(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,]) , 2, var)))
-                             }else{
-                                 sqrt(mean(apply(.rate_guess(tree_red, data[tree_red$tip.label,], predictors[tree_red$tip.label,]) , 2, var)))
-                             }
-                    })
-                }
+              tip_values <- 1:Ntip(tree)
+              index_tips <- tree$edge[,2]%in%tip_values
+              maps <- sapply(tree$maps[index_tips], function(x) names(x[length(x)]))
+              # check if any tips are missing?
+              k = ncol(tree$mapped.edge)
+              if(length(unique(maps))<k) {
+                mod_val <- mean(diag(rate_pic(tree, data)))
+                guesses <- as.list(rep(sqrt(1/mod_val), k))
+              }else{
+                guesses <- lapply(colnames(tree$mapped.edge), function(map_names) {
+                  dat_red <- which(maps==map_names)
+                  sp_to_remove <- tree$tip.label[!tree$tip.label%in%tree$tip.label[dat_red]]
+                  # Sanity check => because errors with current phytools function | example reported by Jake
+                  if(Ntip(tree) - length(sp_to_remove) <= 1) {
+                    # select a second species at random
+                    sp_to_remove <- sp_to_remove[-sample(length(sp_to_remove), size = 1)]
+                  }
+                  tree_red=drop.tip(tree, sp_to_remove)
+                  if(Ntip(tree_red)<=1){
+                    # simple estimate on the whole tree
+                    mean(apply(.rate_guess(tree, data[tree$tip.label,], predictors[tree$tip.label,]) , 2, var))
+                  }else{
+                    mean(apply(.rate_guess(tree_red, data[tree_red$tip.label,], predictors[tree_red$tip.label,]) , 2, var))
+                  }
+                })
                 
-                return(guesses)
+                scale_unit <- 1/guesses[[1]]
+                guesses[2:ncol(tree$mapped.edge)] <- lapply(guesses[ 2:ncol(tree$mapped.edge)], function(x){
+                  if(x<=.Machine$double.eps)  1 else sqrt(x*scale_unit)
+                })
+                # we scale so that the first rate is assumed to be 1 (as in the transformation of the tree branch lengths)
+              }
+              
+              return(guesses)
             }
             
             mod_val <- start_values(corrModel$structure, corrModel$Y, corrModel$X)[-1]
@@ -954,5 +960,5 @@ m=NULL, k=NULL, ...){
     residuals <- Y - X%*%B
     
     # Return the residuals
-    return(crossprod(residuals)/Ntip(phylo))
+    return(residuals)
     }

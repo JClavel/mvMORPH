@@ -1327,10 +1327,16 @@ simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
   
   # parameters
   param <- list(...)
-  p <- object$dims$p
-  n <- object$dims$n
-  theta <- numeric(p)
-  if(is.null(param[["bootstrap"]])){ boot = FALSE }else if(param$bootstrap==TRUE){ sbootstrap(object, nboot=nsim)}
+  if(is.null(param[["bootstrap"]])){ boot = FALSE }else{ boot = param$bootstrap }
+  if(boot){
+      
+      sbootstrap(object, nboot=nsim)
+      
+  }else{
+   p <- object$dims$p
+   n <- object$dims$n
+   theta <- numeric(p)
+  
   if(is.null(param[["method"]])){ methodSim <- "cholesky" }else{ methodSim <- param$method }
   
   if(!is.ultrametric(object$variables$tree) & (object$model=="OU" | object$model=="OUM")){
@@ -1367,6 +1373,7 @@ simulate.mvgls<-function(object,nsim=1,seed=NULL,...){
     new_dataset <- effects + residuals_sim
   }
   return(new_dataset)
+  }
 }
 
 ## Return the stationary variance for the multivariate Ornstein-Uhlenbeck
