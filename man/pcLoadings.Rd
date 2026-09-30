@@ -63,6 +63,11 @@ p3ca_phyllos = p3ca(phyllos_data, phyllos_tree, q=5, model='BM')
 
 # plot the loadings
 pcaLoadings(p3ca_phyllos)
+
+# Test with mvgls.pca()
+fit <- mvgls(phyllos_data~1, tree=phyllos_tree, model="BM")
+phypca <- mvgls.pca(fit)
+pcaLoadings(phypca, q=5)
 }
 }
 

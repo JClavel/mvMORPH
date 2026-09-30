@@ -24,7 +24,7 @@ msg= c("##",paste0(" On est deja grands : .................")," ##\n",
 
 .onAttach <- function(...) {
     # echo output to screen
-    packageStartupMessage("##\n## mvMORPH package (1.2.2)")
+    packageStartupMessage("##\n## mvMORPH package (1.2.3)")
     packageStartupMessage(msg)
     packageStartupMessage("## Multivariate evolutionary models")
     packageStartupMessage("##\n## See the tutorials: browseVignettes(\"mvMORPH\")")

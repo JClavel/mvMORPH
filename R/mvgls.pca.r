@@ -29,8 +29,8 @@ mvgls.pca <- function(object, plot=TRUE, ...){
     if(!inherits(object,"mvgls")) stop("only works with \"mvgls\" or \"mvols\" class objects. See ?mvgls or ?mvols")
     covR <- object$sigma$Pinv
     
-    # for OU process, we should instead take the stationary covariance
-    if(object$model=="OU" & mode!="corr") covR <- covR/2*object$param # because alpha is scalar diagonal otherwise use "stationary"
+    # for OU process, we should instead take the stationary covariance. NB: not necessary as we used the eigenvectors for the rotation, and it's just an overall scaling here
+    # if(object$model=="OU" & mode!="corr") covR <- covR/2*object$param # because alpha is scalar diagonal otherwise use "stationary"
     if(mode=="corr") covR <- cov2cor(covR)
 
     # compute the scores
@@ -39,6 +39,17 @@ mvgls.pca <- function(object, plot=TRUE, ...){
     U <- eig$vectors
     resids <- object$residuals
     S <- resids%*%U
+    
+    # mvMORPH 1.2.3 - compute the loadings for use with PCA loadings
+    if(object$REML) n <- object$dims$n - object$dims$m else n <- object$dims$n
+    p <- object$dims$p
+    sqrtM <- pruning(object$corrSt$phy, inv=TRUE)$sqrtMat
+    if(!is.null(object$corrSt$diagWeight)) resids <- (1/object$corrSt$diagWeight)*resids 
+    if(!is.null(object$corrSt$diagWeight)) scores <-(1/object$corrSt$diagWeight)*S else scores = S
+    Ccv<-crossprod(sqrtM%*%resids, sqrtM%*%scores)/n # compute cross covariance matrix and loadings
+    L<-matrix(0,p,min(p,n),dimnames=list(colnames(resids),paste("PC",1:min(n,p),sep="")))
+    for(i in 1:p) for(j in 1:min(p,n)) L[i,j]<-Ccv[i,j]/(sqrt(covR[i,i])*sqrt(values[j]))
+   
     
     # plot
     if(plot){
@@ -53,7 +64,7 @@ mvgls.pca <- function(object, plot=TRUE, ...){
         text(S[,axes],object$corrSt$phy$tip.label, pos=2, cex=cex)
     }
     
-    res <- list(scores=S, values=values, vectors=U, rank=qr(covR)$rank)
+    res <- list(scores=S, values=values, vectors=U, rank=qr(covR)$rank, L=L)
     class(res) <- "mvgls.pca"
     invisible(res)
 }

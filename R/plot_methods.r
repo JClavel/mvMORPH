@@ -350,11 +350,10 @@ pcaLoadings <- function(object, ...){
   if(is.null(args$color)) args$color <-c('red', 'white', 'blue4')
   if(is.null(args$horizontal)) args$horizontal <- TRUE
   if(is.null(args$scale)) args$scale <- 3
-  loadings <- t(object$L)
+  if(is.null(args$q))  q <- ncol(object$L) else q <- args$q
   loadings_scale <- matrix(object$L, byrow=FALSE)
   # dimensions
-  p <- nrow(loadings)
-  q <- ncol(loadings)
+  p <- nrow(object$L)
   
   # color options
   fun = function(x) (x - min(x)) / diff(range(x))
@@ -362,27 +361,30 @@ pcaLoadings <- function(object, ...){
   col = rgb(palette(fun(loadings_scale)), maxColorValue=255)
   
   # plot the loadings
-  grid_load <- expand.grid(list(as.factor(1:q), as.factor(1:p)))
+  grid_load <- expand.grid(list(as.factor(1:p), as.factor(1:q)))
   par(oma=c(0,0,0,5))
+  
+  # title for the plot
+  if(inherits(object, "mvgls.pca")) title = paste("Phylogenetic PCA loadings") else title = paste("P3CA loadings")
   
   # horizontal plot
   if(args$horizontal){
     plot(y=as.integer(grid_load$Var1), x=as.integer(grid_load$Var2), pch=20,
          cex=abs(loadings_scale)*args$scale, col=col, bty="n", axes = F, xlab="", ylab="Variables", bty='l',
-         main="P3CA loadings", xpd=TRUE)
-    axis(2, at = unique(as.integer(grid_load$Var1)), labels = colnames(loadings), lwd=0, las=2, cex.axis=0.5)
-    axis(1, at = unique(as.integer(grid_load$Var2)), labels = rownames(loadings), line = 0.5, las=2, cex.axis=0.5)
+         main=title, xpd=TRUE)
+    axis(2, at = unique(as.integer(grid_load$Var1)), labels = rownames(object$L), lwd=0, las=2, cex.axis=0.5)
+    axis(1, at = unique(as.integer(grid_load$Var2)), labels = colnames(object$L[,1:q]), line = 0.5, las=2, cex.axis=0.5)
     # add lines, we can also use grid...
-    abline(h=1:q, v=1:p, col="lightgrey", lwd=0.5, lty=2)
+    abline(h=1:p, v=1:q, col="lightgrey", lwd=0.5, lty=2)
     
   }else{
     # plot horizontally
     plot(x=as.integer(grid_load$Var1), y=as.integer(grid_load$Var2), pch=20,
          cex=abs(loadings_scale)*args$scale, col=col, bty="n", axes = F, xlab="Variables", ylab="", bty='l',
-         main="P3CA loadings", xpd=TRUE)
-    axis(2, at = unique(as.integer(grid_load$Var2)), labels = rownames(loadings), lwd=0, las=2, cex.axis=0.5)
-    axis(1, at = unique(as.integer(grid_load$Var1)), labels = colnames(loadings), line = 0.5, las=2, cex.axis=0.5)
-    abline(h=1:p, v=1:q, col="lightgrey", lwd=0.5, lty=2)
+         main=title, xpd=TRUE)
+    axis(2, at = unique(as.integer(grid_load$Var2)), labels = colnames(object$L[,1:q]), lwd=0, las=2, cex.axis=0.5)
+    axis(1, at = unique(as.integer(grid_load$Var1)), labels = rownames(object$L), line = 0.5, las=2, cex.axis=0.5)
+    abline(h=1:q, v=1:p, col="lightgrey", lwd=0.5, lty=2)
   }
   
   # plot legend

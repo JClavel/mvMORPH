@@ -4,26 +4,26 @@ mvMORPH: an R package for fitting multivariate evolutionary models to morphometr
 This package allows the fitting of multivariate evolutionary models (Ornstein-Uhlenbeck, Brownian motion, Early burst, Shift models) on species trees and time series.
 It also provides functions to compute log-likelihood of users specified models with fast methods (*e.g.*, for Bayesian approaches or customized comparative methods), simulates correlated traits under various models, constrain various parts of multivariate models...
 
-The package implement now efficient methods for high-dimensional multivariate comparative methods (mvgls) based on Penalized likelihood as well as associated tests (Wilks, Pillai...)
+The package implement now efficient methods for high-dimensional multivariate comparative methods (mvgls) based on Penalized likelihood and Empirical Bayes principle, as well as associated tests for multivariate linear models (Wilks, Pillai...)
 
 The package is designed to handle ultrametric and non-ultrametric trees (*i.e.* with fossil species) and missing data in multivariate datasets (NA values), SIMMAP mapping of discrete traits, measurement error, etc...
 
 See the packages vignettes for details and examples: browseVignettes("mvMORPH").
 
-**mvMORPH 1.2.2**
+**mvMORPH 1.2.3**
 
-1. This is the version 1.2.2:
+1. This is the version 1.2.3:
   + Check the NEWS file for detailled updates
 
 2. _TODO_:
   + Incorporation of a tests-suite
-  + Implement the sampler (upcomming mvMORPH) 
+  + Implement the sampler 
   + Code improvements
   + Extend the shift model to TS
   + Improved mvOU model
   + Threshold model for categorical data
 
-The current stable version of the mvMORPH package (1.2.2) is on the CRAN repository.
+The current stable version of the mvMORPH package (1.2.3) is on the CRAN repository.
 [https://cran.r-project.org/package=mvMORPH](https://cran.r-project.org/package=mvMORPH)
 
 ## **Package Installation**

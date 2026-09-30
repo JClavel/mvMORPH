@@ -878,7 +878,7 @@ m=NULL, k=NULL, ...){
                 })
                 
                 scale_unit <- 1/guesses[[1]]
-                guesses[2:ncol(tree$mapped.edge)] <- lapply(guesses[ 2:ncol(tree$mapped.edge)], function(x){
+                guesses[2:k] <- lapply(guesses[2:k], function(x){
                   if(x<=.Machine$double.eps)  1 else sqrt(x*scale_unit)
                 })
                 # we scale so that the first rate is assumed to be 1 (as in the transformation of the tree branch lengths)

@@ -1,7 +1,12 @@
+## mvMORPH 1.2.3
+    + Fix typos in starting values for BMM in mvgls (reported by Jake Berv - previous version was crashing some tests in "bifrost" package)
+    + Fix typos in simulations using bootstrap=TRUE in "simulate()" wrapper for mvgls/mvols model fit.
+    + output loadings in "mvgls.pca()" for use in pcaLoadings() function 
+    + remove scaling in mvgls.pca() for OU model covariance. This is not useful for computing the eigenvectors or relative contributions.
 ## mvMORPH 1.2.2
     + implements the "EmpBayes" method for high-dimensional linear models fit.
     + implements the p3ca method
-    + pcLoadings function for displaying PCs loading for the p3ca (soon the mvgls.pca function)
+    + pcaLoadings function for displaying PCs loading for the p3ca (soon the mvgls.pca function)
     + update LRT, EIC and manova.gls to include EmpBayes method. Update pcaShape to work with "p3ca" fit
     + update method for parallel computing
     + mapping.asr method

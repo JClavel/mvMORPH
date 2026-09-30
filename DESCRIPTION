@@ -1,8 +1,8 @@
 Package: mvMORPH
 Type: Package
 Title: Multivariate Comparative Tools for Fitting Evolutionary Models to Morphometric Data
-Version: 1.2.2
-Date: 2026-09-04
+Version: 1.2.3
+Date: 2026-09-30
 Authors@R: c(person(given = "Julien",
                       family = "Clavel",
                       role = c("aut", "cre"),
@@ -12,6 +12,9 @@ Authors@R: c(person(given = "Julien",
                       role = "aut"),
                person(given = "Emmanuel",
                       family = "Paradis",
+                      role = "aut"),
+               person(given = "Paola",
+                      family = "Montoya",
                       role = "aut"))
 Maintainer: Julien Clavel <julien.clavel@hotmail.fr>
 Description: Fits multivariate (Brownian Motion, Early Burst, ACDC, Ornstein-Uhlenbeck and Shifts) models of continuous traits evolution on trees and time series. 'mvMORPH' also proposes high-dimensional multivariate comparative tools (linear models using Generalized Least Squares and multivariate tests) based on penalized likelihood and Empirical Bayes approaches.  See

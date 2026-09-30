@@ -654,7 +654,7 @@ compute_log_det2 <- function(missing, C_lambda, C_lambda_inv, sigma2, index, mis
   
   # WtW + sigma2*I
   diag.R <- rowSums(W^2)+s2#diag(eig_W$u%*%(eig_W$d^2*t(eig_W$u))) + s2
-  sqrtM <- pruning(tree_trans, inv=TRUE)$sqrtMat
+  sqrtM <- pruning(tree_trans, inv=TRUE)$sqrtMat # NB, JC: not working with OU on non-ultrametric trees
   
   # compute the loadfit_bmm_diet_meansings => correlations between axes and data [check Revell 2010 for the pPCA version]
   Ccv<-(t(Y_cent)%*%crossprod(sqrtM)%*%scores)/n # compute cross covariance matrix and loadings
