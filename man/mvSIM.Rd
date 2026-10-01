@@ -112,7 +112,7 @@ tree<-pbtree(n=50)
 sta<-as.vector(c(rep("Forest",20),rep("Savannah",30))); names(sta)<-tree$tip.label
 
 # Making the simmap tree with mapped states
-tree<-make.simmap(tree,sta , model="ER", nsim=1)
+tree<-make.simmap(tree, sta, model="ER", nsim=1)
 col<-c("blue","orange"); names(col)<-c("Forest","Savannah")
 
 # Plot of the phylogeny for illustration
@@ -139,6 +139,17 @@ simul2<-mvSIM(tree,nsim=nsim,param=model_fit)
 
 # or try with generic "simulate" function
 simul3<-simulate(model_fit,nsim=nsim,tree=tree)
+
+
+## High-dimensional models. We can also use the 'simulate' wrapper
+## on the model fit by the "mvols" or "mvlgs" functions. This will either
+## performs parametric (generate data by sampling from the model with
+## estimated parameters) or semi-parametric bootstrap (generating data by 
+## resampling residuals).
+fit <- mvgls(simul[[1]]~1, tree=tree, model="BM", method="EmpBayes")
+
+new_data <- simulate(fit, nsim=1)
+new_data_boot <- simulate(fit, nsim=1, bootstrap=TRUE)
 
 ## Just-for-fun :Comparing parameters
 \donttest{

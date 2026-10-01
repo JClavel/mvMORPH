@@ -225,6 +225,12 @@ summary(mvgls(Y~1, data=data, tree, model="BM", penalty="RidgeArch", method="H&L
 summary(mvgls(Y~1, data=data, tree, model="BM", method="EmpBayes"))
 
 
+# NB: We can simulate new data from models fit by mvgls using either
+# parametric (generate data by sampling from the model)
+# or semi-parametric bootstrap (generate data by resampling residuals):
+fit <- mvgls(Y~1, data=data, tree, model="BM", method="EmpBayes")
+new_data <- simulate(fit, nsim=1)
+new_data_boot <- simulate(fit, nsim=1, bootstrap=TRUE)
 }
 
 }
