@@ -8,8 +8,7 @@ Modelling multivariate trait evolution using a Probabilistic and Phylogenetic Pr
 %%  ~~function to do ... ~~
 }
 \description{
-The function performs a probabilistic and phylogenetic PCA, a maximum likelihood-based approach which models the evolution of multiple traits (describing one or more phenotypes) using a 
-fewer set of variables (called latent variables) than in the original dataset. This approach incorporates the dependency arising from the evolutionary shared history of comparative data in the probabilistic PCA (Tipping and Bishop, 1999; Roweis, 1997; Li et al., 2009). It includes an Expectation-Maximisation (EM) algorithm that allows to make parameter inference while accounting for missing values. A complete description of the approach can be found in Montoya et al., 2026.
+The function performs probabilistic and phylogenetic principal component analysis (PCA), which is a maximum likelihood-based approach that models the evolution of multiple traits (describing one or more phenotypes) using fewer variables (called latent variables) than in the original dataset. This approach incorporates dependency arising from the shared evolutionary history of comparative data in probabilistic PCA (Tipping and Bishop, 1999; Roweis, 1997; Li et al., 2009). It incorporates an Expectation-Maximisation (EM) algorithm that enables parameter inference to be performed while accounting for missing values. A full description of the method can be found in Montoya et al. (2026).
 
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
